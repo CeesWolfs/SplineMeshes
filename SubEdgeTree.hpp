@@ -6,27 +6,25 @@
 #include <algorithm>
 #include <utility>
 
-static constexpr float eps = 1e-7;
-
 // The subEdge tree data structure, memory layout of a 'node' is |int32 - parent|float - left end|hf - left sub|hf - right sub| So each node takes 4x4 = 16 bytes
 // Lookups can be done in a tree like fashion. SubEdges are stored from low coordinate -> high coordinate
 class SubEdgeTree
 {
 public:
-	uint32_t findSubEdge(halfEdge start, const halfEdge opposite, const float splitpoint) const;
-	uint32_t getsubEdges(const halfEdge start, std::vector<halfEdge>& subEdges) const;
-	inline halfEdge splitHalfEdge(const halfEdge Edge, const halfEdge left_child, const halfEdge right_child, const float splitpoint);
-	inline void removeNode(const halfEdge hf);
-	inline const std::pair<halfEdge, halfEdge> subdivideTree(const halfEdge tree_head, const float splitpoint);
+	uint32_t findSubEdge(halfEdge start, halfEdge opposite, float splitpoint) const;
+	uint32_t getsubEdges(halfEdge start, std::vector<halfEdge>& subEdges) const;
+	inline halfEdge splitHalfEdge(halfEdge Edge, halfEdge left_child, halfEdge right_child, float splitpoint);
+	inline void removeNode(halfEdge hf);
+	inline std::pair<halfEdge, halfEdge> subdivideTree(halfEdge tree_head, float splitpoint);
 	// Iterator like functions
 	inline uint32_t next(uint32_t index);
 	inline uint32_t begin(uint32_t head);
-	inline uint32_t end() { return -1; };
-	inline const uint32_t toIndex(const halfEdge key) const { return (key.id & 0x7fffffff); }
+	static inline uint32_t end() { return -1; };
+	static inline uint32_t toIndex(const halfEdge key) { return (key.id & 0x7fffffff); }
 	halfEdge& operator[](const halfEdge index) { return _storage[toIndex(index)]; };
 
 private:
-	
+
 	inline halfEdge toParent(const uint32_t index) const { return _storage[(index/4)*4]; }
 	std::vector<halfEdge> _storage;
 };
@@ -78,7 +76,8 @@ inline uint32_t SubEdgeTree::getsubEdges(const halfEdge start, std::vector<halfE
 // Split a (sub)halfEdge in two with a left and right child, returns a reference to the top of the tree
 inline halfEdge SubEdgeTree::splitHalfEdge(const halfEdge Edge, const halfEdge left_child, const halfEdge right_child, float splitpoint)
 {
-	if (Edge.isBorder()) return -1;
+	if (Edge.isBorder()) { return -1;
+}
 	uint32_t subface_ref = _storage.size();
 	if (Edge.isSubdivided()) {
 		// Already subdivided, find the subedge that corresponds to the split edge
@@ -90,13 +89,13 @@ inline halfEdge SubEdgeTree::splitHalfEdge(const halfEdge Edge, const halfEdge l
 		_storage.push_back(right_child);
 		return Edge;
 	}
-	else {
+
 		_storage.push_back(Edge);  // parent
 		_storage.push_back(reinterpret_cast<halfEdge &>(splitpoint)); // split
 		_storage.push_back(left_child);
 		_storage.push_back(right_child);
 		return halfEdge((1 << 31) + subface_ref);
-	}
+
 }
 
 inline void SubEdgeTree::removeNode(const halfEdge hf)
@@ -122,7 +121,8 @@ inline uint32_t SubEdgeTree::next(uint32_t index)
 	if (isRight(node.id)) {
 		while (isRight(toIndex(node))) {
 			node = toParent(toIndex(node));
-			if (!node.isSubdivided()) return -1;
+			if (!node.isSubdivided()) { return -1;
+}
 		}
 	}
 	// Left child, so go to right
@@ -142,7 +142,7 @@ inline uint32_t SubEdgeTree::begin(uint32_t head)
 	return head + 2;
 }
 
-inline const std::pair<halfEdge, halfEdge> SubEdgeTree::subdivideTree(const halfEdge tree_head, const float splitpoint)
+inline std::pair<halfEdge, halfEdge> SubEdgeTree::subdivideTree(const halfEdge tree_head, const float splitpoint)
 {
 	// Runs recursively trough all the points assign parents appropriately
 	std::pair<halfEdge, halfEdge> ret = { border_id, border_id };
@@ -150,7 +150,7 @@ inline const std::pair<halfEdge, halfEdge> SubEdgeTree::subdivideTree(const half
 	float split = reinterpret_cast<float&>(split_he);
 	halfEdge& left = _storage[toIndex(tree_head) + 2];
 	halfEdge& right = _storage[toIndex(tree_head) + 3];
-	if (abs(split - splitpoint) < eps) {
+	if (std::abs(split - splitpoint) < eps) {
 		// Split happens exactly in the middle
 		ret = { left, right };
 		// Remove the current node as it is no longer necassary
