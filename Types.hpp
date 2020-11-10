@@ -14,10 +14,10 @@ typedef struct _element
 } Element;
 
 constexpr uint32_t border_id = -1;
-typedef struct _halfFacet
+typedef struct _halfEdge
 {
 	uint32_t id;
-	bool operator==(const _halfFacet& other) const {
+	bool operator==(const _halfEdge& other) const {
 		return id == other.id;
 	}
 	char* toStr(char buf[20]) const {
@@ -36,13 +36,13 @@ typedef struct _halfFacet
 	const bool isBorder() const {
 		return this->id == border_id;
 	}
-	_halfFacet(uint32_t face, uint8_t local_id) {
+	_halfEdge(uint32_t face, uint8_t local_id) {
 		id = (face << 2) + local_id;
 	}
-	_halfFacet(uint32_t id_num) {
+	_halfEdge(uint32_t id_num) {
 		id = id_num;
 	}
-} halfFacet;
+} halfEdge;
 
 enum axis
 {
