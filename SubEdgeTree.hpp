@@ -76,8 +76,7 @@ inline uint32_t SubEdgeTree::getsubEdges(const halfEdge start, std::vector<halfE
 // Split a (sub)halfEdge in two with a left and right child, returns a reference to the top of the tree
 inline halfEdge SubEdgeTree::splitHalfEdge(const halfEdge Edge, const halfEdge left_child, const halfEdge right_child, float splitpoint)
 {
-	if (Edge.isBorder()) { return -1;
-}
+	if (Edge.isBorder()) { return -1;}
 	uint32_t subface_ref = _storage.size();
 	if (Edge.isSubdivided()) {
 		// Already subdivided, find the subedge that corresponds to the split edge
@@ -101,6 +100,7 @@ inline halfEdge SubEdgeTree::splitHalfEdge(const halfEdge Edge, const halfEdge l
 inline void SubEdgeTree::removeNode(const halfEdge hf)
 {
 	auto parent = _storage.end() - 4;
+	if((*parent).isSubdivided())
 	_storage[toIndex(*parent)] = hf;
 	std::iter_swap(_storage.begin() + toIndex(hf), _storage.end() - 4);
 	std::iter_swap(_storage.begin() + toIndex(hf) + 1, _storage.end() - 3);

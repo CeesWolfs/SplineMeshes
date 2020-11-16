@@ -38,7 +38,6 @@ typedef struct _halfEdge
 	bool isBorder() const {
 		return this->id == border_id;
 	}
-	_halfEdge() {}
 	_halfEdge(uint32_t face, uint8_t local_id) {
 		id = (face << 2) + local_id;
 	}
