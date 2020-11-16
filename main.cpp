@@ -1,5 +1,4 @@
 #include "Mesh.hpp"
-#include "Spline.hpp"
 
 int main() {
 	Mesh2D mesh;
