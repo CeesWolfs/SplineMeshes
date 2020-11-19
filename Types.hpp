@@ -2,18 +2,25 @@
 #include <cstdint>
 #include <cstdio>
 #include <utility>
+#include <array>
 
 constexpr float eps = 1e-6;
 
 typedef struct _vertex
 {
-	float x, y;
+	float x, y, z{0};
 } Vertex;
 
-typedef struct _element
-{
-	uint32_t v1, v2, v3, v4;
-} Element;
+
+
+typedef union _element {
+	struct
+	{
+		uint32_t v1, v2, v3, v4;
+	};
+	std::array<uint32_t, 4> vertices;
+}
+Element;
 
 constexpr uint32_t border_id = -1;
 typedef struct _halfEdge
@@ -38,7 +45,6 @@ typedef struct _halfEdge
 	bool isBorder() const {
 		return this->id == border_id;
 	}
-	_halfEdge() {}
 	_halfEdge(uint32_t face, uint8_t local_id) {
 		id = (face << 2) + local_id;
 	}
