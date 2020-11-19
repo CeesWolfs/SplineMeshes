@@ -5,6 +5,7 @@
 #include <vector>
 #include <numeric>
 #include <stdint.h>
+#include <cstdio>
 #include <string>
 #include <fstream>
 #include "tinyply.hpp" // For saving the mesh

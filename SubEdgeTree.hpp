@@ -84,6 +84,7 @@ inline uint32_t SubEdgeTree::getsubEdges(const halfEdge start, std::vector<halfE
 inline halfEdge SubEdgeTree::splitHalfEdge(const halfEdge twin, const halfEdge Edge, const halfEdge original, const halfEdge left_child, const halfEdge right_child, float splitpoint)
 {
 	assert(!twin.isBorder());
+	if (Edge.isBorder()) { return -1;}
 	uint32_t subface_ref = _storage.size();
 	if (twin.isSubdivided()) {
 		// Already subdivided, find the subedge that corresponds to the split edge
