@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _TYPES_HPP // Header guard
+#define _TYPES_HPP
 #include <cstdint>
 #include <cstdio>
 #include <utility>
@@ -8,25 +9,29 @@ constexpr float eps = 1e-6;
 
 typedef struct _vertex
 {
-	float x, y, z{0};
+	float x, y, z;
 } Vertex;
 
-
-
-typedef union _element {
+typedef union _cuboid {
 	struct
 	{
-		uint32_t v1, v2, v3, v4;
+		uint32_t v1, v2, v3, v4, v5, v6, v7, v8;
 	};
-	std::array<uint32_t, 4> vertices;
-}
-Element;
+	std::array<uint32_t, 8> vertices;
+} Cuboid;
 
+/**
+ * half face stores both its parent cuboid, and its local id
+ * like <cuboid, local_id> e.g. <1,4>. Six faces per cuboid so, local
+ * id 0-5 -> stored in lowest three bits. Local id 6 means the half face is
+ * a reference to the subhalfface data structure. Local id 7 denotes a border half
+*/
 constexpr uint32_t border_id = -1;
-typedef struct _halfEdge
+
+typedef struct _halfFace
 {
 	uint32_t id;
-	bool operator==(const _halfEdge& other) const {
+	bool operator==(const _halfFace& other) const {
 		return id == other.id;
 	}
 	char* toStr(char buf[20]) const {
@@ -34,25 +39,28 @@ typedef struct _halfEdge
 		return buf;
 	}
 	uint8_t getLocalId() const {
-		return id & 0x3;
+		return id & 0x7;
 	}
 	uint32_t getElement() const {
-		return id >> 2;
+		return id >> 3;
 	}
+    // Check if it is a pointer to a node in the subfacetree
 	bool isSubdivided() const {
-		return (id & (1 << 31)) != 0u;
+		return getLocalId() == 6 || getLocalId() == 7;
 	}
 	bool isBorder() const {
-		return this->id == border_id;
+		return id == -1;
 	}
-	_halfEdge(uint32_t face, uint8_t local_id) {
-		id = (face << 2) + local_id;
+	_halfFace(uint32_t face, uint8_t local_id) {
+		id = (face << 3) + local_id;
 	}
-	_halfEdge(uint32_t id_num) : id(id_num) {}
-} halfEdge;
+	_halfFace(uint32_t id_num) : id(id_num) {}
+} halfFace;
 
-enum axis
-{
-	x,
-	y
-};
+// enum axis
+// {
+// 	x,
+// 	y,
+//     z
+// };
+#endif
