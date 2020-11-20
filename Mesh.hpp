@@ -18,10 +18,10 @@ private:
     std::vector<halfFace> F2f;
 
 public:
-    halfFace Twin(halfFace hf) const { F2f[hf.id]; };
-    uint32_t SplitAlongXY(uint32_t elem, float z_split);
-    uint32_t SplitAlongYZ(uint32_t elem, float x_split);
-    uint32_t SplitAlongXZ(uint32_t elem, float y_split);
+    halfFace Twin(const halfFace hf) const;
+    uint32_t SplitAlongXY(uint32_t elem_id, float z_split);
+    uint32_t SplitAlongYZ(uint32_t elem_id, float x_split);
+    uint32_t SplitAlongXZ(uint32_t elem_id, float y_split);
     Mesh(/* args */);
     ~Mesh();
 };

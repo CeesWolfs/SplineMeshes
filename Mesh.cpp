@@ -22,6 +22,14 @@ Mesh::Mesh(/* args */) {
 }
 
 /**
+ * Returns the twin half face of the given half face "hf"
+*/
+halfFace Mesh::Twin(const halfFace hf) const {
+    // TODO: maybe use F2f.at(hf.id) instead ? So that also out-of-range lookups are checked by the vector. 
+    return F2f[hf.id];
+}
+
+/**
  * Create a new cuboid above the split line, and let its bottom face point to top face bottom element
  * Split the four original faces in two, update all twin faces
  * Create 4 new vertices, merge if vertex already exists in neigboring element
@@ -50,8 +58,15 @@ uint32_t Mesh::SplitAlongXY(uint32_t elem_id, float z_split) {
  * Create 4 new vertices, merge if vertex already exists in neigboring element.
  * 
 */
-uint32_t Mesh::SplitAlongYZ(uint32_t elem, float x_split) {
-    // TODO
+uint32_t Mesh::SplitAlongYZ(uint32_t elem_id, float x_split) {
+    const uint32_t new_elem_id = cuboids.size();
+    // All the new vertices
+    const Vertex v1_new = { vertices[cuboids[elem_id].v1].x, vertices[cuboids[elem_id].v1].y, x_split };
+    const Vertex v2_new = { vertices[cuboids[elem_id].v2].x, vertices[cuboids[elem_id].v2].y, x_split };
+    const Vertex v3_new = { vertices[cuboids[elem_id].v3].x, vertices[cuboids[elem_id].v3].y, x_split };
+    const Vertex v4_new = { vertices[cuboids[elem_id].v4].x, vertices[cuboids[elem_id].v4].y, x_split };
+
+    // TODO:
 }
 
 /**
@@ -61,6 +76,6 @@ uint32_t Mesh::SplitAlongYZ(uint32_t elem, float x_split) {
  * Create 4 new vertices, merge if vertex already exists in neigboring element.
  * 
 */
-uint32_t Mesh::SplitAlongXZ(uint32_t elem, float y_split) {
+uint32_t Mesh::SplitAlongXZ(uint32_t elem_id, float y_split) {
     // TODO
 }
