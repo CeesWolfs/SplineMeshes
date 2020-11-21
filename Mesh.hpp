@@ -21,6 +21,7 @@ private:
 
 public:
     halfFace Twin(const halfFace hf) const;
+    uint32_t getVertexIndex(const Vertex& v);
     uint32_t SplitAlongXY(uint32_t cuboid_id, float z_split);
     uint32_t SplitAlongYZ(uint32_t cuboid_id, float x_split);
     uint32_t SplitAlongXZ(uint32_t cuboid_id, float y_split);

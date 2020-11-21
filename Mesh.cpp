@@ -32,13 +32,30 @@ halfFace Mesh::Twin(const halfFace hf) const {
 }
 
 /**
+ * Gets vertex index of a vertex in the vertices vector if it exists.
+ * Otherwise -1 is returned which means that vertex is not in the vertices vector.
+*/
+uint32_t Mesh::getVertexIndex(const Vertex& v) {
+    auto it = std::find(this->vertices.begin(), this->vertices.end(), v);
+ 
+    // If element was found
+    if (it != this->vertices.end()) 
+    {
+        // calculate the index and return
+        return (it - this->vertices.begin());
+    }
+    else {
+        return -1;
+    }
+}
+
+/**
  * Create a new cuboid above the split line, and let its bottom face point to top face bottom element
  * Split the four original faces in two, update all twin faces
  * Create 4 new vertices, merge if vertex already exists in neigboring element
  * 
 */
 uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
-
     // border checks
     if ((z_split <= vertices[cuboids[cuboid_id].v1].z) || z_split >= vertices[cuboids[cuboid_id].v5].z) {
 			return -1; // Splitpoint not in cuboid
@@ -56,24 +73,48 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     const Vertex v3_new = { v3_old.x, v3_old.y, z_split };
     const Vertex v4_new = { v4_old.x, v4_old.y, z_split };
 
-    // if a vertex is not available yet in the verties vector, then add it.
-    bool notcontains = std::find(vertices.begin(), vertices.end(), v1_new) == vertices.end();
+    // Check whether the new vertices already exist in the vectors array.
+    const uint32_t v1_idx = getVertexIndex(v1_new);
+    const uint32_t v2_idx = getVertexIndex(v2_new);
+    const uint32_t v3_idx = getVertexIndex(v3_new);
+    const uint32_t v4_idx = getVertexIndex(v4_new);
 
-    // Update old cuboid vertices
-    uint32_t v1_new_ref = vertices.size();
-    uint32_t v2_new_ref = v1_new_ref + 1;
-    uint32_t v3_new_ref = v1_new_ref + 2;
-    uint32_t v4_new_ref = v1_new_ref + 3;
+    const bool notcontainsv1 = false ? v1_idx >= 0 : true;
+    const bool notcontainsv2 = false ? v2_idx >= 0 : true;
+    const bool notcontainsv3 = false ? v3_idx >= 0 : true;
+    const bool notcontainsv4 = false ? v4_idx >= 0 : true;
 
-    if (notcontains) {
+    bool v1added = false;
+    bool v2added = false;
+    bool v3added = false;
+    bool v4added = false;
+
+    if (notcontainsv1) {
         vertices.push_back(v1_new);
+        v1added = true;
+    }
+    if (notcontainsv2) {
         vertices.push_back(v2_new);
+        v2added = true;
+    }
+    if (notcontainsv3) {
         vertices.push_back(v3_new);
+        v3added = true;
+    }
+    if (notcontainsv4) {
         vertices.push_back(v4_new);
-    } else {
-        return -1;
+        v4added = true;
     }
 
+    // assign ref ints of new vertices only if they have been added.
+    // otherwise assign them to the old idx that they already have in vertices (as they in this case already exist).
+    // TODO: check whether it is possible that vertices can already exist and whether this implementaiton makes sense in this case.
+    const uint32_t v1_new_ref = vertices.size() ? !v1added : v1_idx;
+    const uint32_t v2_new_ref = v1_new_ref + 1 ? !v2added : v2_idx;
+    const uint32_t v3_new_ref = v1_new_ref + 2 ? !v3added : v3_idx;
+    const uint32_t v4_new_ref = v1_new_ref + 3 ? !v4added : v4_idx;
+
+    // Update old cuboid vertices
     const uint32_t new_cuboid_id = cuboids.size();
     Cuboid old_cuboid = cuboids[cuboid_id];
     cuboids.push_back(old_cuboid);
@@ -114,8 +155,13 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
  * 
 */
 uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
+    // border checks
+    if ((x_split <= vertices[cuboids[cuboid_id].v2].x) || x_split >= vertices[cuboids[cuboid_id].v3].x) {
+			return -1; // Splitpoint not in cuboid
+	}
+
     const uint32_t new_cuboid_id = cuboids.size();
-    
+
     // All the old vertices
     const Vertex v1_old = vertices[cuboids[cuboid_id].v1];
     const Vertex v2_old = vertices[cuboids[cuboid_id].v2];
@@ -132,15 +178,19 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
 }
 
 /**
- * w.r.t XZ plane, create a new cuboid on the side of set of vertices with highest coordinates split line, 
- * and let its right face point to left face right element.
+ * w.r.t XZ plane, same needs to happens as the splits defined above but now with another orientation.
  * Split the four original faces in two, update all twin faces.
  * Create 4 new vertices, merge if vertex already exists in neigboring element.
  * 
 */
 uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
+    // border checks
+    if ((y_split <= vertices[cuboids[cuboid_id].v1].y) || y_split >= vertices[cuboids[cuboid_id].v2].y) {
+			return -1; // Splitpoint not in cuboid
+	}
+
     const uint32_t new_cuboid_id = cuboids.size();
-    
+
     // All the old vertices
     const Vertex v1_old = vertices[cuboids[cuboid_id].v1];
     const Vertex v2_old = vertices[cuboids[cuboid_id].v2];
