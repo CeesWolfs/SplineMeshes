@@ -138,8 +138,6 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
         return -1; // Splitpoint not in cuboid
     }
 
-    const uint32_t new_cuboid_id = cuboids.size();
-
     // All the old vertices
     const Vertex v1_old = vertices[cuboids[cuboid_id].v1];
     const Vertex v2_old = vertices[cuboids[cuboid_id].v2];
@@ -211,8 +209,6 @@ uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
     if ((y_split <= vertices[cuboids[cuboid_id].v2].y) || y_split >= vertices[cuboids[cuboid_id].v3].y) {
         return -1; // Splitpoint not in cuboid
     }
-
-    const uint32_t new_cuboid_id = cuboids.size();
 
     // All the old vertices
     const Vertex v1_old = vertices[cuboids[cuboid_id].v1];
