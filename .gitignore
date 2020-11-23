@@ -34,3 +34,6 @@
 
 # Skip auto generated vscode folder
 .vscode
+
+# Skip build folder
+build
