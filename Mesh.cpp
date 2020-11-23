@@ -6,18 +6,18 @@
 Mesh::Mesh(/* args */) {
     // Add 8 initial vertices
     vertices.push_back({ 0.0,0.0,0.0 });
-	vertices.push_back({ 1.0,0.0,0.0 });
-	vertices.push_back({ 1.0,1.0,0.0 });
-	vertices.push_back({ 0.0,1.0,0.0 });
+    vertices.push_back({ 1.0,0.0,0.0 });
+    vertices.push_back({ 1.0,1.0,0.0 });
+    vertices.push_back({ 0.0,1.0,0.0 });
     vertices.push_back({ 0.0,0.0,1.0 });
-	vertices.push_back({ 1.0,0.0,1.0 });
-	vertices.push_back({ 1.0,1.0,1.0 });
-	vertices.push_back({ 0.0,1.0,1.0 });
+    vertices.push_back({ 1.0,0.0,1.0 });
+    vertices.push_back({ 1.0,1.0,1.0 });
+    vertices.push_back({ 0.0,1.0,1.0 });
     // Add initial 3D cuboid
-    cuboids.push_back({0,1,2,3,4,5,6,7});
+    cuboids.push_back({ 0,1,2,3,4,5,6,7 });
 
     // Add 6 border faces
-    for (int i=0;i<6;i++) {
+    for (int i = 0; i < 6; i++) {
         F2f.push_back(halfFace(border_id));
         V2f.push_back({ 0,i });
     }
@@ -27,7 +27,6 @@ Mesh::Mesh(/* args */) {
  * Returns the twin half face of the given half face "hf"
 */
 halfFace Mesh::Twin(const halfFace hf) const {
-    // TODO: maybe use F2f.at(hf.id) instead ? So that also out-of-range lookups are checked by the vector. 
     return F2f[hf.id];
 }
 
@@ -37,9 +36,9 @@ halfFace Mesh::Twin(const halfFace hf) const {
 */
 uint32_t Mesh::getVertexIndex(const Vertex& v) {
     auto it = std::find(this->vertices.begin(), this->vertices.end(), v);
- 
+
     // If element was found
-    if (it != this->vertices.end()) 
+    if (it != this->vertices.end())
     {
         // calculate the index and return
         return (it - this->vertices.begin());
@@ -53,20 +52,20 @@ uint32_t Mesh::getVertexIndex(const Vertex& v) {
  * Create a new cuboid above the split line, and let its bottom face point to top face bottom element
  * Split the four original faces in two, update all twin faces
  * Create 4 new vertices, merge if vertex already exists in neigboring element
- * 
+ *
 */
 uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     // border checks
     if ((z_split <= vertices[cuboids[cuboid_id].v1].z) || z_split >= vertices[cuboids[cuboid_id].v5].z) {
-			return -1; // Splitpoint not in cuboid
-	}
+        return -1; // Splitpoint not in cuboid
+    }
 
     // All the old vertices
     const Vertex v1_old = vertices[cuboids[cuboid_id].v1];
     const Vertex v2_old = vertices[cuboids[cuboid_id].v2];
     const Vertex v3_old = vertices[cuboids[cuboid_id].v3];
     const Vertex v4_old = vertices[cuboids[cuboid_id].v4];
-    
+
     // All the new vertices
     const Vertex v1_new = { v1_old.x, v1_old.y, z_split };
     const Vertex v2_new = { v2_old.x, v2_old.y, z_split };
@@ -152,13 +151,13 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
  * Create a new cuboid to the left of split line, and let its right face point to left face right element.
  * Split the four original faces in two, update all twin faces.
  * Create 4 new vertices, merge if vertex already exists in neigboring element.
- * 
+ *
 */
 uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
     // border checks
     if ((x_split <= vertices[cuboids[cuboid_id].v2].x) || x_split >= vertices[cuboids[cuboid_id].v3].x) {
-			return -1; // Splitpoint not in cuboid
-	}
+        return -1; // Splitpoint not in cuboid
+    }
 
     const uint32_t new_cuboid_id = cuboids.size();
 
@@ -181,13 +180,13 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
  * w.r.t XZ plane, same needs to happens as the splits defined above but now with another orientation.
  * Split the four original faces in two, update all twin faces.
  * Create 4 new vertices, merge if vertex already exists in neigboring element.
- * 
+ *
 */
 uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
     // border checks
     if ((y_split <= vertices[cuboids[cuboid_id].v1].y) || y_split >= vertices[cuboids[cuboid_id].v2].y) {
-			return -1; // Splitpoint not in cuboid
-	}
+        return -1; // Splitpoint not in cuboid
+    }
 
     const uint32_t new_cuboid_id = cuboids.size();
 

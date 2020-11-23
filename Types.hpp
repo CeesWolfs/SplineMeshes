@@ -10,6 +10,7 @@ constexpr float eps = 1e-6;
 typedef struct _vertex
 {
 	float x, y, z;
+	operator ==()
 } Vertex;
 
 typedef union _cuboid {
@@ -20,14 +21,14 @@ typedef union _cuboid {
 	std::array<uint32_t, 8> vertices;
 } Cuboid;
 
-constexpr uint32_t border_id = -1;
-
 /**
  * half face stores both its parent cuboid, and its local id
  * like <cuboid, local_id> e.g. <1,4>. Six faces per cuboid so, local
  * id 0-5 -> stored in lowest three bits. Local id 6 means the half face is
  * a reference to the subhalfface data structure. Local id 7 denotes a border half
 */
+constexpr uint32_t border_id = -1;
+
 typedef struct _halfFace
 {
 	uint32_t id;
@@ -44,7 +45,7 @@ typedef struct _halfFace
 	uint32_t getElement() const {
 		return id >> 3;
 	}
-    // Check if it is a pointer to a node in the subfacetree
+    // Check if it is a pointer to a node in the subfacetree. Id 6 incidates that the node is left, id 7 -> right.
 	bool isSubdivided() const {
 		return getLocalId() == 6 || getLocalId() == 7;
 	}
@@ -57,10 +58,10 @@ typedef struct _halfFace
 	_halfFace(uint32_t id_num) : id(id_num) {}
 } halfFace;
 
-// enum axis
-// {
-// 	x,
-// 	y,
-//  z
-// };
+typedef enum class _axis
+{
+ 	x,
+ 	y,
+    z
+} Axis;
 #endif
