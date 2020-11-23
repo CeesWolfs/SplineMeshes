@@ -12,5 +12,5 @@ mkdir build && cd build
 conan install ..
 ```
 Then finally 
-```cmake -G "Visual Studio 16" ..``` Windows
-```cmake -G "Unix Makefiles" .. ``` Linux
+run ```cmake -G "Visual Studio 16" ..``` for Windows <br>
+and ```cmake -G "Unix Makefiles" .. ``` Linux
