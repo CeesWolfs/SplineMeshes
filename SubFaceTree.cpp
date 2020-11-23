@@ -52,15 +52,15 @@ auto SubFaceTree::find(halfFace start_node, halfFace toFind, Vertex toFindmiddle
         split = split_point.x;
         break;
     case Axis::y:
-        split = split_point.x;
+        split = split_point.y;
         break;
     case Axis::z:
-        split = split_point.x;
+        split = split_point.z;
         break;
     }
     // Push back the new node
     uint32_t new_index = nodes.size();
-    const Node node = {*ref, split_point.x, split_axis, lower, higher};
+    const Node node = {*ref, split, split_axis, lower, higher};
     nodes.push_back(node);
     *ref = halfFace(new_index, 6);
 }
