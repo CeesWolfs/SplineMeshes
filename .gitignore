@@ -35,5 +35,6 @@
 # Skip auto generated vscode folder
 .vscode
 
-# Skip build folder
-build
+# Skip auto generated folders
+.vs
+out
