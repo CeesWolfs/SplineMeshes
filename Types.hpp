@@ -1,19 +1,18 @@
 #ifndef _TYPES_HPP // Header guard
 #define _TYPES_HPP
-#include <cstdint>
-#include <cstdio>
 #include <utility>
 #include <array>
+#include <iostream>
 
-constexpr float eps = 1e-6;
+constexpr float eps = 1e-7;
 
 typedef struct _vertex
 {
 	float x, y, z;
-	bool operator==(const _vertex& other) {
-		const bool same_x = (this->x - other.x) < eps;
-		const bool same_y = (this->y - other.y) < eps;
-		const bool same_z = (this->z - other.z) < eps;
+	bool operator==(const _vertex& other) const {
+		const bool same_x = std::abs(this->x - other.x) < eps;
+		const bool same_y = std::abs(this->y - other.y) < eps;
+		const bool same_z = std::abs(this->z - other.z) < eps;
 		return (same_x && same_y && same_z);
 	}
 } Vertex;
