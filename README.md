@@ -8,7 +8,8 @@ pip install conan
 ```
 Then to install the project and dependencies issue the following commands
 ```
-mkdir build && cd build
+mkdir build
+cd build
 conan install ..
 ```
 Then finally 
