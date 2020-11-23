@@ -32,6 +32,11 @@ public:
     bool mergeVertexifExists(const Vertex& v, uint32_t& vref);
 
     /**
+     * Add function which pushes the new half and twin half faces of the new cuboid in vector F2F
+     * 
+    */
+   void addHalfFaces(uint32_t cuboid_id);
+    /**
      * Create a new cuboid above the split line, and let its bottom face point to top face bottom element
      * Split the four original faces in two, update all twin faces
      * Create 4 new vertices, merge if vertex already exists in neigboring element

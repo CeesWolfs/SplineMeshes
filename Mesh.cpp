@@ -44,6 +44,18 @@ bool Mesh::mergeVertexifExists(const Vertex& v, uint32_t& vref) {
     }
 }
 
+void Mesh::addHalfFaces(uint32_t cuboid_id) {
+    // For the new cuboid point the lower face to the top face of the old element
+    F2f.push_back(halfFace(cuboid_id, 1));
+
+    // For now just push back the twins of the original element
+    F2f.push_back(Twin(halfFace(cuboid_id, 1)));
+    F2f.push_back(Twin(halfFace(cuboid_id, 2)));
+    F2f.push_back(Twin(halfFace(cuboid_id, 3)));
+    F2f.push_back(Twin(halfFace(cuboid_id, 4)));
+    F2f.push_back(Twin(halfFace(cuboid_id, 5)));
+}
+
 
 uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     // border checks
@@ -105,15 +117,7 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     new_cuboid.v3 = v3_idx;
     new_cuboid.v4 = v4_idx;
 
-    // For the new cuboid point the lower face to the top face of the old element
-    F2f.push_back(halfFace(cuboid_id, 1));
-
-    // For now just push back the twins of the original element
-    F2f.push_back(Twin(halfFace(cuboid_id, 1)));
-    F2f.push_back(Twin(halfFace(cuboid_id, 2)));
-    F2f.push_back(Twin(halfFace(cuboid_id, 3)));
-    F2f.push_back(Twin(halfFace(cuboid_id, 4)));
-    F2f.push_back(Twin(halfFace(cuboid_id, 5)));
+    addHalfFaces(cuboid_id);
 
     // TODO: Update V2f half faces 
 
@@ -130,7 +134,7 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
 */
 uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
     // border checks
-    if ((x_split <= vertices[cuboids[cuboid_id].v2].x) || x_split >= vertices[cuboids[cuboid_id].v3].x) {
+    if ((x_split <= vertices[cuboids[cuboid_id].v1].x) || x_split >= vertices[cuboids[cuboid_id].v2].x) {
         return -1; // Splitpoint not in cuboid
     }
 
@@ -148,7 +152,52 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
     const Vertex v3_new = { x_split, v3_old.y, v3_old.z };
     const Vertex v4_new = { x_split, v4_old.y, v4_old.z };
 
+    uint32_t v1_idx = vertices.size();
+    uint32_t v2_idx = v1_idx + 1;
+    uint32_t v3_idx = v2_idx + 2;
+    uint32_t v4_idx = v3_idx + 3;
+
+    if (!mergeVertexifExists(v1_new, v1_idx)) {
+        vertices.push_back(v1_new);
+        v2_idx--;
+        v3_idx--;
+        v4_idx--;
+    }
+    if (!mergeVertexifExists(v2_new, v2_idx)) {
+        vertices.push_back(v2_new);
+        v3_idx--;
+        v4_idx--;
+    }
+    if (!mergeVertexifExists(v3_new, v3_idx)) {
+        vertices.push_back(v3_new);
+        v4_idx--;
+    }
+    if (!mergeVertexifExists(v4_new, v4_idx)) {
+        vertices.push_back(v4_new);
+    }
+
+     // Update old cuboid vertices
+    const uint32_t new_cuboid_id = cuboids.size();
+    Cuboid old_cuboid = cuboids[cuboid_id];
+    cuboids.push_back(old_cuboid);
+
+    old_cuboid.v1 = v1_idx;
+    old_cuboid.v4 = v2_idx;
+    old_cuboid.v8 = v3_idx;
+    old_cuboid.v5 = v4_idx;
+
+    // Update new cuboid vertices
+    Cuboid new_cuboid = cuboids[new_cuboid_id];
+    new_cuboid.v2 = v1_idx;
+    new_cuboid.v3 = v2_idx;
+    new_cuboid.v7 = v3_idx;
+    new_cuboid.v6 = v4_idx;
+
+    addHalfFaces(cuboid_id);
+
     // TODO:
+
+    return new_cuboid_id;
 }
 
 /**
@@ -159,7 +208,7 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
 */
 uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
     // border checks
-    if ((y_split <= vertices[cuboids[cuboid_id].v1].y) || y_split >= vertices[cuboids[cuboid_id].v2].y) {
+    if ((y_split <= vertices[cuboids[cuboid_id].v2].y) || y_split >= vertices[cuboids[cuboid_id].v3].y) {
         return -1; // Splitpoint not in cuboid
     }
 
@@ -177,5 +226,50 @@ uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
     const Vertex v3_new = { v3_old.x, y_split, v3_old.z };
     const Vertex v4_new = { v4_old.x, y_split, v4_old.z };
 
+
+    uint32_t v1_idx = vertices.size();
+    uint32_t v2_idx = v1_idx + 1;
+    uint32_t v3_idx = v2_idx + 2;
+    uint32_t v4_idx = v3_idx + 3;
+
+    if (!mergeVertexifExists(v1_new, v1_idx)) {
+        vertices.push_back(v1_new);
+        v2_idx--;
+        v3_idx--;
+        v4_idx--;
+    }
+    if (!mergeVertexifExists(v2_new, v2_idx)) {
+        vertices.push_back(v2_new);
+        v3_idx--;
+        v4_idx--;
+    }
+    if (!mergeVertexifExists(v3_new, v3_idx)) {
+        vertices.push_back(v3_new);
+        v4_idx--;
+    }
+    if (!mergeVertexifExists(v4_new, v4_idx)) {
+        vertices.push_back(v4_new);
+    }
+
+     // Update old cuboid vertices
+    const uint32_t new_cuboid_id = cuboids.size();
+    Cuboid old_cuboid = cuboids[cuboid_id];
+    cuboids.push_back(old_cuboid);
+    old_cuboid.v1 = v1_idx;
+    old_cuboid.v2 = v2_idx;
+    old_cuboid.v6 = v3_idx;
+    old_cuboid.v5 = v4_idx;
+
+    // Update new cuboid vertices
+    Cuboid new_cuboid = cuboids[new_cuboid_id];
+    new_cuboid.v4 = v1_idx;
+    new_cuboid.v3 = v2_idx;
+    new_cuboid.v7 = v3_idx;
+    new_cuboid.v8 = v4_idx;
+
+    addHalfFaces(cuboid_id);
+
     // TODO:
+
+    return new_cuboid_id;
 }
