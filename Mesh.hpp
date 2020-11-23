@@ -20,8 +20,23 @@ private:
     std::vector<halfFace> V2f;
 
 public:
+    /**
+     * Returns the twin half face of the given half face "hf"
+    */
     halfFace Twin(const halfFace hf) const;
-    uint32_t getVertexIndex(const Vertex& v);
+
+    /**
+     * Gets vertex index of a vertex in the vertices vector if it exists.
+     * Otherwise -1 is returned which means that vertex is not in the vertices vector.
+    */
+    bool mergeVertexifExists(const Vertex& v, uint32_t& vref);
+
+    /**
+     * Create a new cuboid above the split line, and let its bottom face point to top face bottom element
+     * Split the four original faces in two, update all twin faces
+     * Create 4 new vertices, merge if vertex already exists in neigboring element
+     *
+    */
     uint32_t SplitAlongXY(uint32_t cuboid_id, float z_split);
     uint32_t SplitAlongYZ(uint32_t cuboid_id, float x_split);
     uint32_t SplitAlongXZ(uint32_t cuboid_id, float y_split);
