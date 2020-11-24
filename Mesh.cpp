@@ -43,74 +43,57 @@ bool Mesh::mergeVertexIfExists(const Vertex& v, uint32_t& vref) {
 }
 
 
-bool Mesh::mergeVertexIfExistsNew(const Vertex& v, uint32_t& vref, uint32_t cuboid_id, const Axis split_axis) {
+bool Mesh::mergeVertexIfExistsNew(const Vertex& v, uint32_t& vref, const uint32_t cuboid_id, const float split_point, const Axis split_axis) {
     // init default hf vars
     halfFace hf1(-1, -1);
     halfFace hf2(-1, -1);
     halfFace hf3(-1, -1);
     halfFace hf4(-1, -1);
-    uint8_t local_id_hf1 = hf1.getLocalId();
-    uint8_t local_id_hf2 = hf2.getLocalId();
-    uint8_t local_id_hf3 = hf3.getLocalId();
-    uint8_t local_id_hf4 = hf4.getLocalId();
-    bool vertexAlreadyExists = false;
 
     if (split_axis == Axis::x) { // This is the axis of splitYZ
         // use twin half faces of {v1,v2,v3,v4}, {v1,v2,v5,v6}, {v3,v4,v7,v8}, {v5,v6,v7,v8}
         // to check neighbouring cuboids
-        local_id_hf1 = 0;
-        local_id_hf2 = 1;
-        local_id_hf3 = 2;
-        local_id_hf4 = 3;
-        hf1 = Twin(halfFace(cuboid_id, local_id_hf1)); // bottom half face
-        hf2 = Twin(halfFace(cuboid_id, local_id_hf2)); // upper half face
-        hf3 = Twin(halfFace(cuboid_id, local_id_hf3)); // back half face
-        hf4 = Twin(halfFace(cuboid_id, local_id_hf4)); // front half face
+        hf1 = Twin(halfFace(cuboid_id, 0)); // bottom half face
+        hf2 = Twin(halfFace(cuboid_id, 1)); // upper half face
+        hf3 = Twin(halfFace(cuboid_id, 2)); // back half face
+        hf4 = Twin(halfFace(cuboid_id, 3)); // front half face
     } 
     else if (split_axis == Axis::y) { // This is the axis of splitXZ
         // use twin half faces of {v1,v2,v3,v4}, {v2,v3,v6,v7}, {v1,v4,v5,v8}, {v5,v6,v7,v8}
         // to check neighbouring cuboids
-        local_id_hf1 = 0;
-        local_id_hf2 = 1;
-        local_id_hf3 = 3;
-        local_id_hf4 = 5;
-        hf1 = Twin(halfFace(cuboid_id, local_id_hf1)); // bottom half face
-        hf2 = Twin(halfFace(cuboid_id, local_id_hf2)); // upper half face
-        hf3 = Twin(halfFace(cuboid_id, local_id_hf3)); // right half face
-        hf4 = Twin(halfFace(cuboid_id, local_id_hf4)); // left half face
+        hf1 = Twin(halfFace(cuboid_id, 0)); // bottom half face
+        hf2 = Twin(halfFace(cuboid_id, 1)); // upper half face
+        hf3 = Twin(halfFace(cuboid_id, 3)); // right half face
+        hf4 = Twin(halfFace(cuboid_id, 5)); // left half face
     }
     else if (split_axis == Axis::z) { // This is the axis of splitXY
         // use twin half faces of {v2,v3,v6,v7}, {v1,v2,v5,v6}, {v1,v4,v5,v8}, {v1,v2,v3,v4}
         // to check neighbouring cuboids
-        local_id_hf1 = 2;
-        local_id_hf2 = 3;
-        local_id_hf3 = 4;
-        local_id_hf4 = 5;
-        hf1 = Twin(halfFace(cuboid_id, local_id_hf1)); // left half face
-        hf2 = Twin(halfFace(cuboid_id, local_id_hf2)); // right half face
-        hf3 = Twin(halfFace(cuboid_id, local_id_hf3)); // front half face
-        hf4 = Twin(halfFace(cuboid_id, local_id_hf4)); // back half face 
+        hf1 = Twin(halfFace(cuboid_id, 2)); // left half face
+        hf2 = Twin(halfFace(cuboid_id, 3)); // right half face
+        hf3 = Twin(halfFace(cuboid_id, 4)); // front half face
+        hf4 = Twin(halfFace(cuboid_id, 5)); // back half face 
     }
 
     if (!hf1.isBorder()) {
         if (hf1.isSubdivided()) {
             // TODO: traverse tree, check whether an identical split already exists in the neighbouring cuboids
         }
-        else {
-            // no split exists in the opposite cuboid, so check the bottom and upper cuboids of twin hf for a split
-            const halfFace hf1_bottom = Twin(halfFace(hf1.getCuboid(), 0));
-            const halfFace hf1_upper = Twin(halfFace(hf1.getCuboid(), 1));
+        else { // no split exists in the opposite cuboid
 
-            // since hf1 can only have local ids of 2 or 0, we need to check both cases as we need to access
-            // different faces of the other cuboids depending on this local id
-            if (local_id_hf1 == 0) {
-
+            // check the correct cuboids depending of the axis split
+            if (split_axis == Axis::x) {
+                // TODO:
             }
-            else {
-
+            else if (split_axis == Axis::y) {
+                // TODO:
             }
+            else if (split_axis == Axis::z) {
+                const halfFace hf1_bottom = Twin(halfFace(hf1.getCuboid(), 0));
+                const halfFace hf1_upper = Twin(halfFace(hf1.getCuboid(), 1));
 
-            // TODO:
+                // TODO:
+            }
         }
     }
 
@@ -119,7 +102,16 @@ bool Mesh::mergeVertexIfExistsNew(const Vertex& v, uint32_t& vref, uint32_t cubo
             // TODO: traverse tree, check whether a split already exists in the neighbouring cuboids
         }
         else {
-            // TODO:
+            // check the correct cuboids depending of the axis split
+            if (split_axis == Axis::x) {
+                // TODO:
+            }
+            else if (split_axis == Axis::y) {
+                // TODO:
+            }
+            else if (split_axis == Axis::z) {
+                // TODO:
+            }
         }   
     }
 
@@ -128,7 +120,16 @@ bool Mesh::mergeVertexIfExistsNew(const Vertex& v, uint32_t& vref, uint32_t cubo
             // TODO: traverse tree, check whether a split already exists in the neighbouring cuboids
         }
         else {
-            // TODO:
+            // check the correct cuboids depending of the axis split
+            if (split_axis == Axis::x) {
+                // TODO:
+            }
+            else if (split_axis == Axis::y) {
+                // TODO:
+            }
+            else if (split_axis == Axis::z) {
+                // TODO:
+            }
         }
     }
 
@@ -137,11 +138,21 @@ bool Mesh::mergeVertexIfExistsNew(const Vertex& v, uint32_t& vref, uint32_t cubo
             // TODO: traverse tree, check whether a split already exists in the neighbouring cuboids
         }
         else {
-            // TODO:
+            // check the correct cuboids depending of the axis split
+            if (split_axis == Axis::x) {
+                // TODO:
+            }
+            else if (split_axis == Axis::y) {
+                // TODO:
+            }
+            else if (split_axis == Axis::z) {
+                // TODO:
+            }
         }   
     }
 
-    return vertexAlreadyExists;
+    // if none of the checks returned true, then vertex does not exist yet
+    return false;
 }
 
 void Mesh::addHalfFaces(uint32_t cuboid_id) {
@@ -271,6 +282,7 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
     }
 
      // Update old cuboid vertices
+    const uint32_t new_cuboid_id = cuboids.size();
     Cuboid& old_cuboid = cuboids[cuboid_id];
     cuboids.push_back(old_cuboid);
 
