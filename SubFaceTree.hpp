@@ -32,7 +32,7 @@ public:
     std::vector<Node> nodes; 
     SubFaceTree(/* args */) = default;
     static uint32_t toNodeIndex(halfFace from) {return from.id >> 3;}
-    SubFaceIterator find(halfFace& start_node, const halfFace& toFind, const Vertex& toFindmiddle);
+    SubFaceIterator find(halfFace start_node, const halfFace toFind, const Vertex toFindmiddle);
     halfFace splitHalfFace(const halfFace start_node, const halfFace twin, const Axis split_axis ,const Vertex split_point,const halfFace lower,const halfFace higher);
     void removeNode(uint32_t node_index, std::vector<halfFace>& F2f);
     // Obtain an iterator to iterate through the subHalfFace tree starting at the start node

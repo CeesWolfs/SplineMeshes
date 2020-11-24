@@ -107,7 +107,7 @@ bool Mesh::mergeVertexIfExistsNew(
             }
             else if (split_axis == Axis::z) {
                 
-                const halfFace hf1_upper = Twin(halfFace(hf1.getCuboid(), 1));
+                //const halfFace hf1_upper = Twin(halfFace(hf1.getCuboid(), 1));
 
                 // TODO:
             }

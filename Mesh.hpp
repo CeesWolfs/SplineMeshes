@@ -8,6 +8,7 @@
 #include <fstream>
 #include <algorithm>
 #include "Types.hpp"
+#include "SubFaceTree.hpp"
 
 class Mesh
 {
