@@ -92,36 +92,53 @@ bool Mesh::mergeVertexIfExistsNew(const Vertex& v, uint32_t& vref, uint32_t cubo
         hf4 = Twin(halfFace(cuboid_id, local_id_hf4)); // back half face 
     }
 
-    if (hf1.isSubdivided()) {
-        // TODO: traverse tree, check whether an identical split already exists
-    }
-    else {
-        // no split exists in the opposite cuboid, so check the bottom and upper cuboids of hf1 for a split
-        const halfFace hf1_bottom = Twin(halfFace(hf1.getCuboid(), 0));
-        const halfFace hf1_upper = Twin(halfFace(hf1.getCuboid(), 1));
+    if (!hf1.isBorder()) {
+        if (hf1.isSubdivided()) {
+            // TODO: traverse tree, check whether an identical split already exists in the neighbouring cuboids
+        }
+        else {
+            // no split exists in the opposite cuboid, so check the bottom and upper cuboids of twin hf for a split
+            const halfFace hf1_bottom = Twin(halfFace(hf1.getCuboid(), 0));
+            const halfFace hf1_upper = Twin(halfFace(hf1.getCuboid(), 1));
 
-        // TODO: 
-    }
+            // since hf1 can only have local ids of 2 or 0, we need to check both cases as we need to access
+            // different faces of the other cuboids depending on this local id
+            if (local_id_hf1 == 0) {
 
-    if (hf2.isSubdivided()) {
-        // TODO: traverse tree, check whether a split already exists
-    }
-    else {
-        // TODO: 
-    }
+            }
+            else {
 
-    if (hf3.isSubdivided()) {
-        // TODO: traverse tree, check whether a split already exists
-    }
-    else {
-        // TODO: 
+            }
+
+            // TODO:
+        }
     }
 
-    if (hf4.isSubdivided()) {
-        // TODO: traverse tree, check whether a split already exists
+    if (!hf2.isBorder()) {
+        if (hf2.isSubdivided()) {
+            // TODO: traverse tree, check whether a split already exists in the neighbouring cuboids
+        }
+        else {
+            // TODO:
+        }   
     }
-    else {
-        // TODO: 
+
+    if (!hf3.isBorder()) {
+        if (hf3.isSubdivided()) {
+            // TODO: traverse tree, check whether a split already exists in the neighbouring cuboids
+        }
+        else {
+            // TODO:
+        }
+    }
+
+    if (!hf4.isBorder()) {
+        if (hf4.isSubdivided()) {
+            // TODO: traverse tree, check whether a split already exists in the neighbouring cuboids
+        }
+        else {
+            // TODO:
+        }   
     }
 
     return vertexAlreadyExists;
@@ -341,4 +358,8 @@ uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
     // TODO:
 
     return new_cuboid_id;
+}
+
+Mesh::~Mesh() {
+
 }
