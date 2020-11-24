@@ -64,8 +64,8 @@ bool Mesh::mergeVertexIfExistsNew(
         hf1 = Twin(halfFace(cuboid_id, 0)); // bottom half face
         hf2 = Twin(halfFace(cuboid_id, 1)); // upper half face
         hf3 = Twin(halfFace(cuboid_id, 2)); // back half face
-        hf4 = Twin(halfFace(cuboid_id, 3)); // front half face
-    } 
+        hf4 = Twin(halfFace(cuboid_id, 4)); // front half face
+    }
     else if (split_axis == Axis::y) { // This is the axis of splitXZ
         // use twin half faces of {v1,v2,v3,v4}, {v2,v3,v6,v7}, {v1,v4,v5,v8}, {v5,v6,v7,v8}
         // to check neighbouring cuboids
@@ -77,10 +77,10 @@ bool Mesh::mergeVertexIfExistsNew(
     else if (split_axis == Axis::z) { // This is the axis of splitXY
         // use twin half faces of {v2,v3,v6,v7}, {v1,v2,v5,v6}, {v1,v4,v5,v8}, {v1,v2,v3,v4}
         // to check neighbouring cuboids
-        hf1 = Twin(halfFace(cuboid_id, 2)); // left half face
+        hf1 = Twin(halfFace(cuboid_id, 2)); // back half face
         hf2 = Twin(halfFace(cuboid_id, 3)); // right half face
         hf3 = Twin(halfFace(cuboid_id, 4)); // front half face
-        hf4 = Twin(halfFace(cuboid_id, 5)); // back half face 
+        hf4 = Twin(halfFace(cuboid_id, 5)); // left half face 
     }
 
     if (!hf1.isBorder()) {

@@ -36,7 +36,7 @@ public:
     bool mergeVertexIfExists(const Vertex& v, uint32_t& vref);
 
     /*
-    * Better merging function
+    * Better merging function. Assign vref to merged vertex.
     * //TODO: implement more complicated but much faster function, returns true if merged
     */
     bool Mesh::mergeVertexIfExistsNew(
