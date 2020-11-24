@@ -44,7 +44,7 @@ public:
      * Add function which pushes the new half and twin half faces of the new cuboid in vector F2F
      * 
     */
-    void addHalfFaces(uint32_t cuboid_id);
+    void addHalfFaces(const uint32_t cuboid_id, const Axis split_axis);
 
     /**
      * Create a new cuboid above the split line, and let its bottom face point to top face bottom element

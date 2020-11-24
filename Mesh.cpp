@@ -155,16 +155,40 @@ bool Mesh::mergeVertexIfExistsNew(const Vertex& v, uint32_t& vref, const uint32_
     return false;
 }
 
-void Mesh::addHalfFaces(uint32_t cuboid_id) {
-    // For the new cuboid point the lower face to the top face of the old element
-    F2f.push_back(halfFace(cuboid_id, 1));
+/**
+* This method adds 4 half faces (2 border twin faces and 2 twin faces in the middle face of the mesh). 
+*/
+void Mesh::addHalfFaces(const uint32_t cuboid_id, const Axis split_axis) {
+    if (split_axis == Axis::x) {
+        /**
+        // For the new cuboid point the lower face to the top face of the old element
+        F2f.push_back(halfFace(cuboid_id, 1));
 
-    // For now just push back the twins of the original element
-    F2f.push_back(Twin(halfFace(cuboid_id, 1)));
-    F2f.push_back(Twin(halfFace(cuboid_id, 2)));
-    F2f.push_back(Twin(halfFace(cuboid_id, 3)));
-    F2f.push_back(Twin(halfFace(cuboid_id, 4)));
-    F2f.push_back(Twin(halfFace(cuboid_id, 5)));
+        // For now just push back the twins of the original element
+        F2f.push_back(Twin(halfFace(cuboid_id, 1)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 2)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 3)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 4)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 5)));
+        */
+        F2f.push_back(Twin(halfFace(cuboid_id, 0)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 1)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 2)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 3)));
+    }
+    else if (split_axis == Axis::y) {
+        F2f.push_back(Twin(halfFace(cuboid_id, 0)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 1)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 3)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 5)));
+
+    }
+    else if (split_axis == Axis::z) {
+        F2f.push_back(Twin(halfFace(cuboid_id, 2)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 3)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 4)));
+        F2f.push_back(Twin(halfFace(cuboid_id, 5)));
+    }
 }
 
 
@@ -174,6 +198,7 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     if ((z_split <= vertices[cuboids[cuboid_id].v1].z) || z_split >= vertices[cuboids[cuboid_id].v5].z) {
         return -1; // Splitpoint not in cuboid
     }
+    const uint32_t new_cuboid_id = cuboids.size();
 
     // All the old vertices
     const Vertex v1_old = vertices[cuboids[cuboid_id].v1];
@@ -213,7 +238,6 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     }
 
     // Update old cuboid vertices
-    const uint32_t new_cuboid_id = cuboids.size();
     Cuboid old_cuboid = cuboids[cuboid_id];
     cuboids.push_back(old_cuboid);
 
@@ -229,9 +253,10 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     new_cuboid.v3 = v3_idx;
     new_cuboid.v4 = v4_idx;
 
-    addHalfFaces(cuboid_id);
+    addHalfFaces(cuboid_id, Axis::z);
 
     // TODO: Update V2f half faces 
+
 
     // TODO: Update the twin faces.
 
@@ -298,7 +323,7 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
     new_cuboid.v7 = v3_idx;
     new_cuboid.v6 = v4_idx;
 
-    addHalfFaces(cuboid_id);
+    addHalfFaces(cuboid_id, Axis::x);
 
     // TODO:
 
@@ -364,7 +389,7 @@ uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
     new_cuboid.v7 = v3_idx;
     new_cuboid.v8 = v4_idx;
 
-    addHalfFaces(cuboid_id);
+    addHalfFaces(cuboid_id, Axis::y);
 
     // TODO:
 
