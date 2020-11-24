@@ -17,7 +17,7 @@ SubFaceIterator SubFaceTree::end() {
     return {*this, (uint32_t)-1, false};
 }
 
-SubFaceIterator SubFaceTree::find(halfFace start_node, halfFace toFind, Vertex toFindmiddle)
+SubFaceIterator SubFaceTree::find(halfFace& start_node, const halfFace& toFind, const Vertex& toFindmiddle)
 {
     assert(start_node.isSubdivided());
     bool lower = false;

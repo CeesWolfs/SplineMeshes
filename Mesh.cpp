@@ -1,4 +1,5 @@
 #include "Mesh.hpp"
+#include "SubFaceTree.hpp"
 
 /*
 * Default construct the mesh the a unit cube
@@ -43,7 +44,14 @@ bool Mesh::mergeVertexIfExists(const Vertex& v, uint32_t& vref) {
 }
 
 
-bool Mesh::mergeVertexIfExistsNew(const Vertex& v, uint32_t& vref, const uint32_t cuboid_id, const float split_point, const Axis split_axis) {
+bool Mesh::mergeVertexIfExistsNew(
+    const Vertex& v,
+    uint32_t& vref,
+    const uint32_t cuboid_id,
+    const Axis split_axis,
+    SubFaceTree& sft
+) {
+
     // init default hf vars
     halfFace hf1(-1, -1);
     halfFace hf2(-1, -1);
@@ -83,13 +91,22 @@ bool Mesh::mergeVertexIfExistsNew(const Vertex& v, uint32_t& vref, const uint32_
 
             // check the correct cuboids depending of the axis split
             if (split_axis == Axis::x) {
-                // TODO:
+                // in this case local id of hf1 is always 0
+
+                // getting the requried half faces in the bottom cuboid
+                const halfFace hf1_front = halfFace(hf1.getCuboid(), 2);
+                const halfFace hf1_back = halfFace(hf1.getCuboid(), 4);
+
+                if (hf1_front.isSubdivided()) {
+                    // TODO: check whether hf1_front has a split that is identical to split
+                    // TODO: SubFaceIterator iter = sft.find();
+                }
             }
             else if (split_axis == Axis::y) {
                 // TODO:
             }
             else if (split_axis == Axis::z) {
-                const halfFace hf1_bottom = Twin(halfFace(hf1.getCuboid(), 0));
+                
                 const halfFace hf1_upper = Twin(halfFace(hf1.getCuboid(), 1));
 
                 // TODO:
@@ -233,7 +250,7 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
 
     // TODO: Update V2f half faces 
 
-    // TODO: Update the twin faces.
+    // TODO: Update the twin faces (mark them as subdivided).
 
     return new_cuboid_id;
 }
@@ -300,8 +317,10 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
 
     addHalfFaces(cuboid_id);
 
-    // TODO:
+    // TODO: Update V2f half faces 
 
+    // TODO: Update the twin faces (mark them as subdivided).
+    
     return new_cuboid_id;
 }
 
@@ -366,7 +385,9 @@ uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
 
     addHalfFaces(cuboid_id);
 
-    // TODO:
+    // TODO: Update V2f half faces 
+
+    // TODO: Update the twin faces (mark them as subdivided).
 
     return new_cuboid_id;
 }
