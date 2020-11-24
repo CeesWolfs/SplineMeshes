@@ -37,4 +37,6 @@
 
 # Skip auto generated folders
 .vs
+build
 out
+graph_info.json
