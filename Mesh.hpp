@@ -8,6 +8,7 @@
 #include <fstream>
 #include <algorithm>
 #include "Types.hpp"
+#include "SubFaceTree.hpp"
 
 class Mesh
 {
@@ -35,10 +36,16 @@ public:
     bool mergeVertexIfExists(const Vertex& v, uint32_t& vref);
 
     /*
-    * Better merging function
+    * Better merging function. Assign vref to merged vertex.
     * //TODO: implement more complicated but much faster function, returns true if merged
     */
-    bool Mesh::mergeVertexIfExistsNew(const Vertex& v, uint32_t& vref, const uint32_t cuboid_id, const float split_point, Axis split_axis);
+    bool Mesh::mergeVertexIfExistsNew(
+        const Vertex& v,
+        uint32_t& vref, 
+        const uint32_t cuboid_id,
+        Axis split_axis,
+        SubFaceTree& sft
+    );
 
     /**
      * Add function which pushes the new half and twin half faces of the new cuboid in vector F2F
