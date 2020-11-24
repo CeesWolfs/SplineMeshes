@@ -4,8 +4,9 @@
 * TODO a SubDivide Faces method, which divides subfaces between two parents
 */
 
-SubFaceIterator SubFaceTree::begin(uint32_t start_node_index) {
-    auto node_index = start_node_index;
+SubFaceIterator SubFaceTree::begin(halfFace start_node) {
+    assert(start_node.isSubdivided());
+    auto node_index = toNodeIndex(start_node);
     while(nodes[node_index].lower_child.isSubdivided()) {
         node_index = toNodeIndex(nodes[node_index].lower_child);
     }
@@ -16,14 +17,15 @@ SubFaceIterator SubFaceTree::end() {
     return {*this, (uint32_t)-1, false};
 }
 
-auto SubFaceTree::find(halfFace start_node, halfFace toFind, Vertex toFindmiddle)
+SubFaceIterator SubFaceTree::find(halfFace start_node, halfFace toFind, Vertex toFindmiddle)
 {
     assert(start_node.isSubdivided());
-    while (start_node.isSubdivided())
+    bool lower = false;
+    auto child = start_node;
+    while (child.isSubdivided())
     {
-        float split = nodes[toNodeIndex(start_node)].split_coord;
-        bool lower = false;
-        switch (nodes[toNodeIndex(start_node)].split_axis)
+        float split = nodes[toNodeIndex(child)].split_coord;
+        switch (nodes[toNodeIndex(child)].split_axis)
         {
         case Axis::x:
             lower = (eps + toFindmiddle.x <= split);
@@ -34,17 +36,23 @@ auto SubFaceTree::find(halfFace start_node, halfFace toFind, Vertex toFindmiddle
         case Axis::z:
             lower = (eps + toFindmiddle.z <= split);
             break;
-
-            start_node = lower ? nodes[toNodeIndex(start_node)].lower_child : nodes[toNodeIndex(start_node)].top_child;
         }
-        assert(start_node == toFind);
-        return SubFaceIterator(*this, toNodeIndex(start_node), lower);
+        start_node = child;
+        child = lower ? nodes[toNodeIndex(start_node)].lower_child : nodes[toNodeIndex(start_node)].top_child;
     }
-    return end();
+    assert(child == toFind);
+    return SubFaceIterator(*this, toNodeIndex(start_node), lower);
 }
-    void SubFaceTree::splitHalfFace(halfFace start_node, halfFace toSplit, Axis split_axis ,Vertex split_point, halfFace lower, halfFace higher)
+
+/*
+* Called whenever the twin of a halfFace is split in two
+* Splits the twin of a halfFace, either starting a new tree in the subfacetree datastructure,
+*  or first finding and splitting a subface already in a tree
+* Depends on the halfFace lower already in the tree
+*  returns the head of the tree
+*/
+halfFace SubFaceTree::splitHalfFace(const halfFace start_node, const halfFace twin, const Axis split_axis ,const Vertex split_point,const halfFace lower,const halfFace higher)
 {
-    const auto ref = find(start_node, toSplit, split_point);
     float split;
     switch (split_axis)
     {
@@ -58,11 +66,27 @@ auto SubFaceTree::find(halfFace start_node, halfFace toFind, Vertex toFindmiddle
         split = split_point.z;
         break;
     }
-    // Push back the new node
+    
     uint32_t new_index = nodes.size();
-    const Node node = {*ref, split, split_axis, lower, higher};
-    nodes.push_back(node);
-    *ref = halfFace(new_index, 6);
+    // Already a tree node
+    if (start_node.isSubdivided())
+    {
+        const auto ref = find(start_node, lower, split_point); 
+        const Node node = {ref.toIndex(), split, split_axis, lower, higher};
+        nodes.push_back(node);
+        // Create a link to the new node
+        *ref = halfFace(new_index, 6);
+        // Return just the head of the tree
+        return start_node;   
+    }
+    // Create a new subfacetree
+    else {
+        const Node node = {twin, split, split_axis, lower, higher};
+        nodes.push_back(node);
+        // return new head
+        return halfFace(new_index, 6);   
+    }
+    
 }
 
 void SubFaceTree::removeNode(uint32_t node_index, std::vector<halfFace>& F2f) 
