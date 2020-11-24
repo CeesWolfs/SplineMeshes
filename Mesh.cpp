@@ -177,8 +177,7 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
     }
 
      // Update old cuboid vertices
-    const uint32_t new_cuboid_id = cuboids.size();
-    Cuboid old_cuboid = cuboids[cuboid_id];
+    Cuboid& old_cuboid = cuboids[cuboid_id];
     cuboids.push_back(old_cuboid);
 
     old_cuboid.v1 = v1_idx;
@@ -187,7 +186,7 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
     old_cuboid.v5 = v4_idx;
 
     // Update new cuboid vertices
-    Cuboid new_cuboid = cuboids[new_cuboid_id];
+    Cuboid &new_cuboid = cuboids[new_cuboid_id];
     new_cuboid.v2 = v1_idx;
     new_cuboid.v3 = v2_idx;
     new_cuboid.v7 = v3_idx;
@@ -211,8 +210,6 @@ uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
     if ((y_split <= vertices[cuboids[cuboid_id].v2].y) || y_split >= vertices[cuboids[cuboid_id].v3].y) {
         return -1; // Splitpoint not in cuboid
     }
-
-    const uint32_t new_cuboid_id = cuboids.size();
 
     // All the old vertices
     const Vertex v1_old = vertices[cuboids[cuboid_id].v1];

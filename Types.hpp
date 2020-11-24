@@ -10,7 +10,12 @@ constexpr float eps = 1e-6;
 typedef struct _vertex
 {
 	float x, y, z;
-	operator ==()
+	bool operator==(const _vertex& other) const {
+		const bool x_same = (this->x - other.x) < eps;
+		const bool y_same = (this->y - other.y) < eps;
+		const bool z_same = (this->z - other.z) < eps;
+		return (x_same && y_same && z_same);
+	};
 } Vertex;
 
 typedef union _cuboid {
