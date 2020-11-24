@@ -49,39 +49,56 @@ bool Mesh::mergeVertexIfExistsNew(const Vertex& v, uint32_t& vref, uint32_t cubo
     halfFace hf2(-1, -1);
     halfFace hf3(-1, -1);
     halfFace hf4(-1, -1);
+    uint8_t local_id_hf1 = hf1.getLocalId();
+    uint8_t local_id_hf2 = hf2.getLocalId();
+    uint8_t local_id_hf3 = hf3.getLocalId();
+    uint8_t local_id_hf4 = hf4.getLocalId();
     bool vertexAlreadyExists = false;
 
     if (split_axis == Axis::x) { // This is the axis of splitYZ
         // use twin half faces of {v1,v2,v3,v4}, {v1,v2,v5,v6}, {v3,v4,v7,v8}, {v5,v6,v7,v8}
         // to check neighbouring cuboids
-        hf1 = Twin(halfFace(cuboid_id, 0)); // bottom half face
-        hf2 = Twin(halfFace(cuboid_id, 1)); // upper half face
-        hf3 = Twin(halfFace(cuboid_id, 2)); // back half face
-        hf4 = Twin(halfFace(cuboid_id, 3)); // front half face
+        local_id_hf1 = 0;
+        local_id_hf2 = 1;
+        local_id_hf3 = 2;
+        local_id_hf4 = 3;
+        hf1 = Twin(halfFace(cuboid_id, local_id_hf1)); // bottom half face
+        hf2 = Twin(halfFace(cuboid_id, local_id_hf2)); // upper half face
+        hf3 = Twin(halfFace(cuboid_id, local_id_hf3)); // back half face
+        hf4 = Twin(halfFace(cuboid_id, local_id_hf4)); // front half face
     } 
     else if (split_axis == Axis::y) { // This is the axis of splitXZ
         // use twin half faces of {v1,v2,v3,v4}, {v2,v3,v6,v7}, {v1,v4,v5,v8}, {v5,v6,v7,v8}
         // to check neighbouring cuboids
-        hf1 = Twin(halfFace(cuboid_id, 0)); // bottom half face
-        hf2 = Twin(halfFace(cuboid_id, 1)); // upper half face
-        hf3 = Twin(halfFace(cuboid_id, 3)); // right half face
-        hf4 = Twin(halfFace(cuboid_id, 5)); // left half face
+        local_id_hf1 = 0;
+        local_id_hf2 = 1;
+        local_id_hf3 = 3;
+        local_id_hf4 = 5;
+        hf1 = Twin(halfFace(cuboid_id, local_id_hf1)); // bottom half face
+        hf2 = Twin(halfFace(cuboid_id, local_id_hf2)); // upper half face
+        hf3 = Twin(halfFace(cuboid_id, local_id_hf3)); // right half face
+        hf4 = Twin(halfFace(cuboid_id, local_id_hf4)); // left half face
     }
     else if (split_axis == Axis::z) { // This is the axis of splitXY
         // use twin half faces of {v2,v3,v6,v7}, {v1,v2,v5,v6}, {v1,v4,v5,v8}, {v1,v2,v3,v4}
         // to check neighbouring cuboids
-        hf1 = Twin(halfFace(cuboid_id, 2)); // left half face
-        hf2 = Twin(halfFace(cuboid_id, 3)); // right half face
-        hf3 = Twin(halfFace(cuboid_id, 4)); // front half face
-        hf4 = Twin(halfFace(cuboid_id, 5)); // back half face 
+        local_id_hf1 = 2;
+        local_id_hf2 = 3;
+        local_id_hf3 = 4;
+        local_id_hf4 = 5;
+        hf1 = Twin(halfFace(cuboid_id, local_id_hf1)); // left half face
+        hf2 = Twin(halfFace(cuboid_id, local_id_hf2)); // right half face
+        hf3 = Twin(halfFace(cuboid_id, local_id_hf3)); // front half face
+        hf4 = Twin(halfFace(cuboid_id, local_id_hf4)); // back half face 
     }
 
     if (hf1.isSubdivided()) {
         // TODO: traverse tree, check whether an identical split already exists
     }
     else {
-        // no split exists, so check the bottom cuboid of hf1 for a split
+        // no split exists in the opposite cuboid, so check the bottom and upper cuboids of hf1 for a split
         const halfFace hf1_bottom = Twin(halfFace(hf1.getCuboid(), 0));
+        const halfFace hf1_upper = Twin(halfFace(hf1.getCuboid(), 1));
 
         // TODO: 
     }
