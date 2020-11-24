@@ -40,13 +40,13 @@ typedef struct _halfFace
 		return id == other.id;
 	}
 	char* toStr(char buf[20]) const {
-		snprintf(buf,20,"<%d,%d>",this->getElement(), this->getLocalId());
+		snprintf(buf,20,"<%d,%d>",this->getCuboid(), this->getLocalId());
 		return buf;
 	}
 	uint8_t getLocalId() const {
 		return id & 0x7;
 	}
-	uint32_t getElement() const {
+	uint32_t getCuboid() const {
 		return id >> 3;
 	}
     // Check if it is a pointer to a node in the subfacetree. Id 6 incidates that the node is left, id 7 -> right.
@@ -56,8 +56,8 @@ typedef struct _halfFace
 	bool isBorder() const {
 		return id == -1;
 	}
-	_halfFace(uint32_t face, uint8_t local_id) {
-		id = (face << 3) + local_id;
+	_halfFace(uint32_t cuboid_id, uint8_t local_id) {
+		id = (cuboid_id << 3) + local_id;
 	}
 	_halfFace(uint32_t id_num) : id(id_num) {}
 } halfFace;

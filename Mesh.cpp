@@ -23,14 +23,12 @@ Mesh::Mesh(/* args */) {
     }
 }
 
-halfFace Mesh::Twin(const halfFace hf) const {
+halfFace Mesh::Twin(const halfFace& hf) const {
     return F2f[hf.id];
 }
 
-/*
-* Right now O(n) (bad) TODO reimplement more complicated but much faster function, returns true if merged
-*/
-bool Mesh::mergeVertexifExists(const Vertex& v, uint32_t& vref) {
+
+bool Mesh::mergeVertexIfExists(const Vertex& v, uint32_t& vref) {
     auto it = std::find(this->vertices.begin(), this->vertices.end(), v);
     // If element was found
     if (it != this->vertices.end())
@@ -44,6 +42,74 @@ bool Mesh::mergeVertexifExists(const Vertex& v, uint32_t& vref) {
     }
 }
 
+
+bool Mesh::mergeVertexIfExistsNew(const Vertex& v, uint32_t& vref, uint32_t cuboid_id, const Axis split_axis) {
+    // init default hf vars
+    halfFace hf1(-1, -1);
+    halfFace hf2(-1, -1);
+    halfFace hf3(-1, -1);
+    halfFace hf4(-1, -1);
+    bool vertexAlreadyExists = false;
+
+    if (split_axis == Axis::x) { // This is the axis of splitYZ
+        // use twin half faces of {v1,v2,v3,v4}, {v1,v2,v5,v6}, {v3,v4,v7,v8}, {v5,v6,v7,v8}
+        // to check neighbouring cuboids
+        hf1 = Twin(halfFace(cuboid_id, 0)); // bottom half face
+        hf2 = Twin(halfFace(cuboid_id, 1)); // upper half face
+        hf3 = Twin(halfFace(cuboid_id, 2)); // back half face
+        hf4 = Twin(halfFace(cuboid_id, 3)); // front half face
+    } 
+    else if (split_axis == Axis::y) { // This is the axis of splitXZ
+        // use twin half faces of {v1,v2,v3,v4}, {v2,v3,v6,v7}, {v1,v4,v5,v8}, {v5,v6,v7,v8}
+        // to check neighbouring cuboids
+        hf1 = Twin(halfFace(cuboid_id, 0)); // bottom half face
+        hf2 = Twin(halfFace(cuboid_id, 1)); // upper half face
+        hf3 = Twin(halfFace(cuboid_id, 3)); // right half face
+        hf4 = Twin(halfFace(cuboid_id, 5)); // left half face
+    }
+    else if (split_axis == Axis::z) { // This is the axis of splitXY
+        // use twin half faces of {v2,v3,v6,v7}, {v1,v2,v5,v6}, {v1,v4,v5,v8}, {v1,v2,v3,v4}
+        // to check neighbouring cuboids
+        hf1 = Twin(halfFace(cuboid_id, 2)); // left half face
+        hf2 = Twin(halfFace(cuboid_id, 3)); // right half face
+        hf3 = Twin(halfFace(cuboid_id, 4)); // front half face
+        hf4 = Twin(halfFace(cuboid_id, 5)); // back half face 
+    }
+
+    if (hf1.isSubdivided()) {
+        // TODO: traverse tree, check whether an identical split already exists
+    }
+    else {
+        // no split exists, so check the bottom cuboid of hf1 for a split
+        const halfFace hf1_bottom = Twin(halfFace(hf1.getCuboid(), 0));
+
+        // TODO: 
+    }
+
+    if (hf2.isSubdivided()) {
+        // TODO: traverse tree, check whether a split already exists
+    }
+    else {
+        // TODO: 
+    }
+
+    if (hf3.isSubdivided()) {
+        // TODO: traverse tree, check whether a split already exists
+    }
+    else {
+        // TODO: 
+    }
+
+    if (hf4.isSubdivided()) {
+        // TODO: traverse tree, check whether a split already exists
+    }
+    else {
+        // TODO: 
+    }
+
+    return vertexAlreadyExists;
+}
+
 void Mesh::addHalfFaces(uint32_t cuboid_id) {
     // For the new cuboid point the lower face to the top face of the old element
     F2f.push_back(halfFace(cuboid_id, 1));
@@ -55,6 +121,7 @@ void Mesh::addHalfFaces(uint32_t cuboid_id) {
     F2f.push_back(Twin(halfFace(cuboid_id, 4)));
     F2f.push_back(Twin(halfFace(cuboid_id, 5)));
 }
+
 
 
 uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
@@ -81,22 +148,22 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     uint32_t v3_idx = v2_idx + 2;
     uint32_t v4_idx = v3_idx + 3;
 
-    if (!mergeVertexifExists(v1_new, v1_idx)) {
+    if (!mergeVertexIfExists(v1_new, v1_idx)) {
         vertices.push_back(v1_new);
         v2_idx--;
         v3_idx--;
         v4_idx--;
     }
-    if (!mergeVertexifExists(v2_new, v2_idx)) {
+    if (!mergeVertexIfExists(v2_new, v2_idx)) {
         vertices.push_back(v2_new);
         v3_idx--;
         v4_idx--;
     }
-    if (!mergeVertexifExists(v3_new, v3_idx)) {
+    if (!mergeVertexIfExists(v3_new, v3_idx)) {
         vertices.push_back(v3_new);
         v4_idx--;
     }
-    if (!mergeVertexifExists(v4_new, v4_idx)) {
+    if (!mergeVertexIfExists(v4_new, v4_idx)) {
         vertices.push_back(v4_new);
     }
 
@@ -126,12 +193,7 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     return new_cuboid_id;
 }
 
-/**
- * Create a new cuboid to the left of split line, and let its right face point to left face right element.
- * Split the four original faces in two, update all twin faces.
- * Create 4 new vertices, merge if vertex already exists in neigboring element.
- *
-*/
+
 uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
     // border checks
     if ((x_split <= vertices[cuboids[cuboid_id].v1].x) || x_split >= vertices[cuboids[cuboid_id].v2].x) {
@@ -155,22 +217,22 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
     uint32_t v3_idx = v2_idx + 2;
     uint32_t v4_idx = v3_idx + 3;
 
-    if (!mergeVertexifExists(v1_new, v1_idx)) {
+    if (!mergeVertexIfExists(v1_new, v1_idx)) {
         vertices.push_back(v1_new);
         v2_idx--;
         v3_idx--;
         v4_idx--;
     }
-    if (!mergeVertexifExists(v2_new, v2_idx)) {
+    if (!mergeVertexIfExists(v2_new, v2_idx)) {
         vertices.push_back(v2_new);
         v3_idx--;
         v4_idx--;
     }
-    if (!mergeVertexifExists(v3_new, v3_idx)) {
+    if (!mergeVertexIfExists(v3_new, v3_idx)) {
         vertices.push_back(v3_new);
         v4_idx--;
     }
-    if (!mergeVertexifExists(v4_new, v4_idx)) {
+    if (!mergeVertexIfExists(v4_new, v4_idx)) {
         vertices.push_back(v4_new);
     }
 
@@ -198,12 +260,6 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
     return new_cuboid_id;
 }
 
-/**
- * w.r.t XZ plane, same needs to happens as the splits defined above but now with another orientation.
- * Split the four original faces in two, update all twin faces.
- * Create 4 new vertices, merge if vertex already exists in neigboring element.
- *
-*/
 uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
     // border checks
     if ((y_split <= vertices[cuboids[cuboid_id].v2].y) || y_split >= vertices[cuboids[cuboid_id].v3].y) {
@@ -228,22 +284,22 @@ uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
     uint32_t v3_idx = v2_idx + 2;
     uint32_t v4_idx = v3_idx + 3;
 
-    if (!mergeVertexifExists(v1_new, v1_idx)) {
+    if (!mergeVertexIfExists(v1_new, v1_idx)) {
         vertices.push_back(v1_new);
         v2_idx--;
         v3_idx--;
         v4_idx--;
     }
-    if (!mergeVertexifExists(v2_new, v2_idx)) {
+    if (!mergeVertexIfExists(v2_new, v2_idx)) {
         vertices.push_back(v2_new);
         v3_idx--;
         v4_idx--;
     }
-    if (!mergeVertexifExists(v3_new, v3_idx)) {
+    if (!mergeVertexIfExists(v3_new, v3_idx)) {
         vertices.push_back(v3_new);
         v4_idx--;
     }
-    if (!mergeVertexifExists(v4_new, v4_idx)) {
+    if (!mergeVertexIfExists(v4_new, v4_idx)) {
         vertices.push_back(v4_new);
     }
 
