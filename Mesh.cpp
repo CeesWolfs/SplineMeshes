@@ -286,6 +286,8 @@ bool Mesh::mergeVertexIfExistsNew(
         hf3 = Twin(halfFace(cuboid_id, 4)); // front half face
         hf4 = Twin(halfFace(cuboid_id, 5)); // left half face 
 
+        // TODO: check whether to check more half faces in all sides, or are the checks below enough?
+
         // check twin hf1
         if (!hf1.isBorder()) {
             if (hf1.isSubdivided()) {
