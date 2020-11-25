@@ -54,6 +54,7 @@ bool Mesh::mergeVertexIfExistsNew(
 
     // TODO: check whether border checks are necessary (except for twins because that is necessary)
     // TODO: make this function shorter by adding helper functions and re-organize the code to make it more readable 
+    // TODO: check whether there are half faces that cannot exist yet. So then maybe we should check whether they exist before doing the isBorder or isSubdivided checks?
 
     // init default hf vars
     halfFace hf1(-1, -1);
