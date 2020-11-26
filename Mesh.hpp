@@ -36,6 +36,13 @@ public:
     bool mergeVertexIfExists(const Vertex& v, uint32_t& vref);
 
     /*
+     * Helper functions for checks that are needed to find vertex of split on x, y and z axises
+     */
+    bool findVertexAxisX(const halfFace& hf1, const halfFace& hf2, const halfFace& hf3, const halfFace& hf4);
+    bool findVertexAxisY(const halfFace& hf1, const halfFace& hf2, const halfFace& hf3, const halfFace& hf4);
+    bool findVertexAxisZ(const halfFace& hf1, const halfFace& hf2, const halfFace& hf3, const halfFace& hf4);
+
+    /*
     * Better merging function. Assign vref to merged vertex.
     * //TODO: implement more complicated but much faster function, returns true if merged
     */
