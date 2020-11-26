@@ -6,6 +6,10 @@
 
 constexpr float eps = 1e-7;
 
+static inline bool floatSame(const float a, const float b) {
+	return std::abs(a-b) < eps;
+}
+
 typedef struct _vertex
 {
 	float x, y, z;

@@ -17,7 +17,7 @@ SubFaceIterator SubFaceTree::end() {
     return {*this, (uint32_t)-1, false};
 }
 
-SubFaceIterator SubFaceTree::find(halfFace start_node, const halfFace toFind, const Vertex toFindmiddle)
+SubFaceIterator SubFaceTree::find(halfFace start_node, const halfFace toFind, const Vertex& toFindmiddle)
 {
     assert(start_node.isSubdivided());
     bool lower = false;
@@ -51,7 +51,7 @@ SubFaceIterator SubFaceTree::find(halfFace start_node, const halfFace toFind, co
 * Depends on the halfFace lower already in the tree
 *  returns the head of the tree
 */
-halfFace SubFaceTree::splitHalfFace(const halfFace start_node, const halfFace twin, const Axis split_axis ,const Vertex split_point,const halfFace lower,const halfFace higher)
+halfFace SubFaceTree::splitHalfFace(const halfFace start_node, const halfFace twin, const Axis split_axis ,const Vertex& split_point,const halfFace lower,const halfFace higher)
 {
     float split;
     switch (split_axis)
@@ -86,7 +86,66 @@ halfFace SubFaceTree::splitHalfFace(const halfFace start_node, const halfFace tw
         // return new head
         return halfFace(new_index, 6);   
     }
-    
+}
+
+std::pair<halfFace, halfFace> SubFaceTree::splitTree(const halfFace tree_head, const Axis split_axis, const float split_point, std::vector<halfFace>& F2f)
+{
+    if (!tree_head.isSubdivided()) return { tree_head, tree_head };
+    halfFace lower_head{(uint32_t)-1}, top_head{(uint32_t)-1};
+    auto node_idx = toNodeIndex(tree_head);
+    const Node node = nodes[node_idx];
+    if (node.split_axis == split_axis)
+    {
+        if (floatSame(split_point, node.split_coord))
+        {
+            // Split point is exactly on this nodes[node_idx]
+            // It is no longer needed so remove it
+            lower_head = node.lower_child;
+            top_head = node.top_child;
+            removeNode(toNodeIndex(tree_head), F2f);
+            return {lower_head, top_head};
+        }
+        if (split_point < nodes[node_idx].split_coord)
+        {
+            // Split point is on the lower side
+            // The current node can be shifted to the top side
+            top_head = tree_head;
+            // Split the lower side
+            auto ret = splitTree(node.lower_child, split_axis, split_point, F2f);
+            updateParent(ret.second, halfFace(toNodeIndex(tree_head), 6));
+            nodes[node_idx].lower_child = ret.second;
+            return {ret.first, top_head};
+        }
+        else
+        {
+            // Split point is on the higher side
+            // The current node can be shifted to the lower
+            lower_head = tree_head;
+            // Split the top side
+            auto ret = splitTree(node.top_child, split_axis, split_point, F2f);
+            updateParent(ret.first, halfFace(toNodeIndex(tree_head), 7));
+            nodes[node_idx].top_child = ret.first;
+            return {lower_head, ret.second};
+        }
+    }
+    else {
+        // Both directions need to be split, copy the current node
+        lower_head = tree_head;
+        top_head = halfFace(nodes.size(), 6);
+        nodes.push_back(node);
+        lower_head = tree_head;
+        // Split the lower child further
+        auto ret = splitTree(node.lower_child, split_axis, split_point, F2f);
+        nodes[node_idx].lower_child = ret.first;
+        nodes.back().lower_child = ret.second;
+        updateParent(ret.second, halfFace(toNodeIndex(top_head), 6));
+        // Split the higher child further 
+        ret = splitTree(node.top_child, split_axis, split_point, F2f);
+        nodes[node_idx].top_child = ret.first;
+        nodes.back().top_child = ret.second;
+        updateParent(ret.second, halfFace(toNodeIndex(top_head), 7));
+    }
+    return {lower_head, top_head};
 }
 
 void SubFaceTree::removeNode(uint32_t node_index, std::vector<halfFace>& F2f) 

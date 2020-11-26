@@ -66,3 +66,27 @@ TEST_CASE("A subface can be changed", "[SubFaceTree]")
 	CHECK(std::find(subFaces.begin(), subFaces.end(), halfFace({ 3,0 })) != subFaces.end());
 	CHECK(subFaces.size() == 6);
 }
+
+TEST_CASE("A subface tree can be split in two", "[SubFaceTree]")
+{
+	SubFaceTree subfaces;
+	std::vector<halfFace> F2f{ (uint32_t)-1,{0,1},(uint32_t)-1,(uint32_t)-1,(uint32_t)-1,(uint32_t)-1 };
+	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.5, 0.5 }, { 1,0 }, { 5,0 });
+	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.25, 0.5, 0.5 }, { 1,0 }, { 6,0 });
+	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.75, 0.5, 0.5 }, { 5,0 }, { 7,0 });
+	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::x, { 0.75, 0.25, 0.5 }, { 5,0 }, { 8,0 });
+	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.75, 0.75, 0.5 }, { 7,0 }, { 9,0 });
+	auto split_res = subfaces.splitTree(F2f[1], Axis::x, 0.6, F2f);
+	subfaces.updateParent(split_res.first, { 1,0 });
+	subfaces.updateParent(split_res.second, { 2,0 });
+	std::vector<halfFace> subFaces;
+	for (auto it = subfaces.begin(split_res.first); it != subfaces.end(); ++it) {
+		subFaces.push_back(*it);
+	}
+	CHECK(subFaces.size() == 5);
+	subFaces.clear();
+	for (auto it = subfaces.begin(split_res.second); it != subfaces.end(); ++it) {
+		subFaces.push_back(*it);
+	}
+	CHECK(subFaces.size() == 4);
+}

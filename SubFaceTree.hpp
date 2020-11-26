@@ -21,20 +21,23 @@ typedef struct _node
 class SubFaceIterator;
 
 /*  SubFaceTree class, stores all subfaces in the mesh
-*   As such multiple trees are actually stored in the object
+*   The Trees are a kind of  2D adaptive KD-trees where levels can be split at any axis
+*   The difference with a regular KD-tree true is that we now care about the boxes, not about the points
+*   As Multiple trees are actually stored in the object
 *   An iterator for a specific tree can be obtained via the begin method
 */
 class SubFaceTree
 {
-private:
-    
 public:
+    void updateParent(const halfFace node, halfFace new_parent) {if(!node.isSubdivided()) return; nodes[toNodeIndex(node)].parent = new_parent;}
     std::vector<Node> nodes; 
     SubFaceTree(/* args */) = default;
     SubFaceTree(const SubFaceTree&) = delete; // prevent expensive accidental copies
     static uint32_t toNodeIndex(halfFace from) {return from.id >> 3;}
-    SubFaceIterator find(halfFace start_node, const halfFace toFind, const Vertex toFindmiddle);
-    halfFace splitHalfFace(const halfFace start_node, const halfFace twin, const Axis split_axis ,const Vertex split_point,const halfFace lower,const halfFace higher);
+    SubFaceIterator find(halfFace start_node, const halfFace toFind, const Vertex& toFindmiddle);
+    halfFace splitHalfFace(const halfFace start_node, const halfFace twin, const Axis split_axis, const Vertex& split_point,const halfFace lower,const halfFace higher);
+    // Split a SubFaceTree in two along a split, returns the two start nodes
+    std::pair<halfFace, halfFace> splitTree(const halfFace tree_head, const Axis split_axis, const float split_point, std::vector<halfFace>& F2f);
     void removeNode(uint32_t node_index, std::vector<halfFace>& F2f);
     // Obtain an iterator to iterate through the subHalfFace tree starting at the start node
     SubFaceIterator begin(halfFace start_node);
