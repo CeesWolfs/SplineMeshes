@@ -31,6 +31,7 @@ private:
 public:
     std::vector<Node> nodes; 
     SubFaceTree(/* args */) = default;
+    SubFaceTree(const SubFaceTree&) = delete; // prevent expensive accidental copies
     static uint32_t toNodeIndex(halfFace from) {return from.id >> 3;}
     SubFaceIterator find(halfFace start_node, const halfFace toFind, const Vertex toFindmiddle);
     halfFace splitHalfFace(const halfFace start_node, const halfFace twin, const Axis split_axis ,const Vertex split_point,const halfFace lower,const halfFace higher);

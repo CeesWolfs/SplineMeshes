@@ -46,7 +46,7 @@ public:
     * Better merging function. Assign vref to merged vertex.
     * //TODO: implement more complicated but much faster function, returns true if merged
     */
-    bool Mesh::mergeVertexIfExistsNew(
+    bool mergeVertexIfExistsNew(
         const Vertex& v,
         uint32_t& vref, 
         const uint32_t cuboid_id,
