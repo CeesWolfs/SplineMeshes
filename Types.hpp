@@ -14,9 +14,9 @@ typedef struct _vertex
 {
 	float x, y, z;
 	bool operator==(const _vertex& other) const {
-		const bool same_x = std::abs(this->x - other.x) < eps;
-		const bool same_y = std::abs(this->y - other.y) < eps;
-		const bool same_z = std::abs(this->z - other.z) < eps;
+		const bool same_x = floatSame(this->x, other.x);
+		const bool same_y = floatSame(this->y, other.y);
+		const bool same_z = floatSame(this->z, other.z);
 		return (same_x && same_y && same_z);
 	}
 } Vertex;
