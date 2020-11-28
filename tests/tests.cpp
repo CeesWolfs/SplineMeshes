@@ -51,7 +51,8 @@ TEST_CASE("A subface can be split a few times", "[SubFaceTree]")
 TEST_CASE("A subface can be changed", "[SubFaceTree]")
 {
 	SubFaceTree subfaces;
-	std::vector<halfFace> F2f{ (uint32_t)-1,{0,1},(uint32_t)-1,(uint32_t)-1,(uint32_t)-1,(uint32_t)-1 };
+	std::vector<halfFace> F2f{ 6 * 10 };
+	std::fill_n(std::back_inserter(F2f), 60, halfFace(-1));
 	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.5, 0.5 }, { 1,0 }, { 5,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.25, 0.5, 0.5 }, { 1,0 }, { 6,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.75, 0.5, 0.5 }, { 5,0 }, { 7,0 });
@@ -70,13 +71,14 @@ TEST_CASE("A subface can be changed", "[SubFaceTree]")
 TEST_CASE("A subface tree can be split in two", "[SubFaceTree]")
 {
 	SubFaceTree subfaces;
-	std::vector<halfFace> F2f{ (uint32_t)-1,{0,1},(uint32_t)-1,(uint32_t)-1,(uint32_t)-1,(uint32_t)-1 };
+	std::vector<halfFace> F2f{ 6 * 10 };
+	std::fill_n(std::back_inserter(F2f), 60, halfFace(1,0));
 	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.5, 0.5 }, { 1,0 }, { 5,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.25, 0.5, 0.5 }, { 1,0 }, { 6,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.75, 0.5, 0.5 }, { 5,0 }, { 7,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::x, { 0.75, 0.25, 0.5 }, { 5,0 }, { 8,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.75, 0.75, 0.5 }, { 7,0 }, { 9,0 });
-	auto split_res = subfaces.splitTree(F2f[1], Axis::x, 0.6, F2f);
+	auto split_res = subfaces.splitTree(F2f[1], Axis::x, { 0.6, 0.5, 0.5 }, { 1,0 }, { 2,0 }, F2f);
 	subfaces.updateParent(split_res.first, { 1,0 });
 	subfaces.updateParent(split_res.second, { 2,0 });
 	std::vector<halfFace> subFaces;

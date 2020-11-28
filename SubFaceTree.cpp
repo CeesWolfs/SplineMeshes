@@ -53,7 +53,7 @@ SubFaceIterator SubFaceTree::find(halfFace start_node, const halfFace toFind, co
 */
 halfFace SubFaceTree::splitHalfFace(const halfFace start_node, const halfFace twin, const Axis split_axis ,const Vertex& split_point,const halfFace lower,const halfFace higher)
 {
-    float split;
+    float split{};
     switch (split_axis)
     {
     case Axis::x:
@@ -88,15 +88,33 @@ halfFace SubFaceTree::splitHalfFace(const halfFace start_node, const halfFace tw
     }
 }
 
-std::pair<halfFace, halfFace> SubFaceTree::splitTree(const halfFace tree_head, const Axis split_axis, const float split_point, std::vector<halfFace>& F2f)
+std::pair<halfFace, halfFace> SubFaceTree::splitTree(const halfFace tree_head, const Axis split_axis, const Vertex& split_point, const halfFace lower, const halfFace higher, std::vector<halfFace>& F2f)
 {
-    if (!tree_head.isSubdivided()) return { tree_head, tree_head };
+    float split{};
+    switch (split_axis)
+    {
+    case Axis::x:
+        split = split_point.x;
+        break;
+    case Axis::y:
+        split = split_point.y;
+        break;
+    case Axis::z:
+        split = split_point.z;
+        break;
+    }
+    if (!tree_head.isSubdivided()) {
+        assert(!tree_head.isBorder());
+        // We need to split this halfFace
+        F2f[tree_head.getCuboid() * 6 + tree_head.getLocalId()] = splitHalfFace(F2f[tree_head.getCuboid() * 6 + tree_head.getLocalId()], tree_head, split_axis, split_point, lower, higher);
+        return { tree_head, tree_head };
+    }
     halfFace lower_head{(uint32_t)-1}, top_head{(uint32_t)-1};
     auto node_idx = toNodeIndex(tree_head);
     const Node node = nodes[node_idx];
     if (node.split_axis == split_axis)
     {
-        if (floatSame(split_point, node.split_coord))
+        if (floatSame(split, node.split_coord))
         {
             // Split point is exactly on this nodes[node_idx]
             // It is no longer needed so remove it
@@ -105,13 +123,13 @@ std::pair<halfFace, halfFace> SubFaceTree::splitTree(const halfFace tree_head, c
             removeNode(toNodeIndex(tree_head), F2f);
             return {lower_head, top_head};
         }
-        if (split_point < nodes[node_idx].split_coord)
+        if (split < nodes[node_idx].split_coord)
         {
             // Split point is on the lower side
             // The current node can be shifted to the top side
             top_head = tree_head;
             // Split the lower side
-            auto ret = splitTree(node.lower_child, split_axis, split_point, F2f);
+            auto ret = splitTree(node.lower_child, split_axis, split_point, lower, higher, F2f);
             updateParent(ret.second, halfFace(toNodeIndex(tree_head), 6));
             nodes[node_idx].lower_child = ret.second;
             return {ret.first, top_head};
@@ -122,7 +140,7 @@ std::pair<halfFace, halfFace> SubFaceTree::splitTree(const halfFace tree_head, c
             // The current node can be shifted to the lower
             lower_head = tree_head;
             // Split the top side
-            auto ret = splitTree(node.top_child, split_axis, split_point, F2f);
+            auto ret = splitTree(node.top_child, split_axis, split_point, lower, higher, F2f);
             updateParent(ret.first, halfFace(toNodeIndex(tree_head), 7));
             nodes[node_idx].top_child = ret.first;
             return {lower_head, ret.second};
@@ -135,12 +153,12 @@ std::pair<halfFace, halfFace> SubFaceTree::splitTree(const halfFace tree_head, c
         nodes.push_back(node);
         lower_head = tree_head;
         // Split the lower child further
-        auto ret = splitTree(node.lower_child, split_axis, split_point, F2f);
+        auto ret = splitTree(node.lower_child, split_axis, split_point, lower, higher, F2f);
         nodes[node_idx].lower_child = ret.first;
         nodes.back().lower_child = ret.second;
         updateParent(ret.second, halfFace(toNodeIndex(top_head), 6));
         // Split the higher child further 
-        ret = splitTree(node.top_child, split_axis, split_point, F2f);
+        ret = splitTree(node.top_child, split_axis, split_point, lower, higher, F2f);
         nodes[node_idx].top_child = ret.first;
         nodes.back().top_child = ret.second;
         updateParent(ret.second, halfFace(toNodeIndex(top_head), 7));

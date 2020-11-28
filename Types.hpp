@@ -19,6 +19,18 @@ typedef struct _vertex
 		const bool same_z = floatSame(this->z, other.z);
 		return (same_x && same_y && same_z);
 	}
+	_vertex operator+(const _vertex& other) const {
+		return { x + other.x, y + other.y, z + other.z };
+	}
+	_vertex& operator+=(const _vertex& other) {
+		x += other.x;
+		y += other.y;
+		z += other.z;
+		return *this;
+	}
+	_vertex operator/(float div) const {
+		return { x / div, y / div, z / div };
+	}
 } Vertex;
 
 typedef union _cuboid {

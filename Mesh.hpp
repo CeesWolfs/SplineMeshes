@@ -10,16 +10,40 @@
 #include "Types.hpp"
 #include "SubFaceTree.hpp"
 
+/*
+* local Half face id to vertex id
+*/
+static constexpr uint32_t Hf2Ve[6][4] = {
+    {1,2,3,4},
+    {5,6,7,8},
+    {4,3,7,8},
+    {2,3,7,6},
+    {1,2,6,5},
+    {1,4,8,5}
+};
+
 class Mesh
 {
 private:
     /* data */
     std::vector<Vertex> vertices;
     std::vector<Cuboid> cuboids;
-
+    SubFaceTree sft;
     // Stores a mapping of Half faces to twin half faces
     std::vector<halfFace> F2f;
     std::vector<halfFace> V2f;
+    /*
+    * Split a halfFace in two, divide subhalfFaces and update all twins
+    */
+    void splitHalfFace(const halfFace toSplit, const halfFace lower, const halfFace higher, const Axis split_axis, const Vertex& split_point);
+    /*
+    * Updates a halfFace to a new halfFace, auto update all twins
+    */
+    void updateHalfFace(const halfFace hf, const halfFace new_hf, const Vertex& middle);
+    /*
+    * Update the twin to point to a new halfFace
+    */
+    void updateTwin(const halfFace twin, const halfFace old_hf, const halfFace new_hf, const Vertex& middle);
 
 public:
     /**
@@ -43,6 +67,7 @@ public:
     bool findVertexAxisZ(const halfFace& hf1, const halfFace& hf2, const halfFace& hf3, const halfFace& hf4);
 
     /*
+    * 
     * Better merging function. Assign vref to merged vertex.
     * //TODO: implement more complicated but much faster function, returns true if merged
     */
@@ -50,8 +75,7 @@ public:
         const Vertex& v,
         uint32_t& vref, 
         const uint32_t cuboid_id,
-        Axis split_axis,
-        SubFaceTree& sft
+        Axis split_axis
     );
 
     /**
