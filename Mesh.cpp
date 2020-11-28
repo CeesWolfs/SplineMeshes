@@ -90,7 +90,65 @@ bool Mesh::mergeVertexIfExists(const Vertex& v, uint32_t& vref) {
     }
 }
 
-bool Mesh::findVertexAxisX(const halfFace& hf1, const halfFace& hf2, const halfFace& hf3, const halfFace& hf4) {
+// TODO: this function is supposed to refactor the code of helper functions for searching vertex in one function, avoiding duplicate code
+//bool Mesh::seachVertexByAxis(const std::vector<halfFace>& hfts, const Axis splitAxis, const Vertex& toFind) const {
+//    const halfFace hft1 = hfts.at(0);
+//    const halfFace hft2 = hfts.at(1);
+//    const halfFace hft3 = hfts.at(2);
+//    const halfFace hft4 = hfts.at(3);
+// 
+//    halfFace hft_req1(-1, -1);
+//    halfFace hft_req2(-1, -1);
+//    halfFace hft_req1_twin(-1, -1);
+//    halfFace hft_req2_twin(-1, -1);
+// 
+//    if (splitAxis == Axis::x) {
+//        // getting the requried half faces in the bottom cuboid
+//        const halfFace hft_req1 = Twin(Twin(halfFace(hft1.getCuboid(), 4))); // front twin face
+//        const halfFace hft_req2 = Twin(Twin(halfFace(hft1.getCuboid(), 2))); // back twin face
+// 
+//        // also checking twin half faces of the half faces in the bottom cuboid
+//        const halfFace hft_req1_twin = Twin(hft_req1); // twin face of the twin face req1
+//        const halfFace hft_req2_twin = Twin(hft_req2); // twin face of the twin face req2
+//    }
+//    else if (splitAxis == Axis::y) {
+//        // getting the requried half faces in the bottom cuboid
+//        const halfFace hf1_right = ;
+//        const halfFace hf1_left = ;
+// 
+//        // also checking twin half faces of the half faces in the bottom cuboid
+//        const halfFace hf1_right_twin = Twin(hf1_right);
+//        const halfFace hf1_left_twin = Twin(hf1_left);
+// 
+//        // getting the requried half faces in the bottom cuboid
+//        const halfFace hft_req1 = Twin(Twin(halfFace(hf1.getCuboid(), 3))); // right twin face
+//        const halfFace hft_req2 = Twin(Twin(halfFace(hf1.getCuboid(), 5))); // left twin face
+// 
+//        // also checking twin half faces of the half faces in the bottom cuboid
+//        const halfFace hft_req1_twin = Twin(hft_req1); // twin face of the twin face req
+//        const halfFace hft_req2_twin = Twin(hft_req2); // twin face of the twin face req2
+//    }
+//    else if (splitAxis == Axis::z) {
+// 
+//    }
+//    
+//    if (splitAxis == Axis::x || splitAxis == Axis::y) {
+//        // TODO:
+//    }
+//    else if (splitAxis == Axis::z) {
+//        // TODO:
+//    }
+// 
+//    return false;
+//}
+
+bool Mesh::findVertexAxisX(
+    const halfFace& hf1, // bottom half face 
+    const halfFace& hf2, // upper half face
+    const halfFace& hf3, // back half face
+    const halfFace& hf4, // front half face
+    const Vertex& vToFind
+) const {
     
     // check twin hf1
     if (!hf1.isBorder()) {
@@ -99,8 +157,8 @@ bool Mesh::findVertexAxisX(const halfFace& hf1, const halfFace& hf2, const halfF
         }
 
         // getting the requried half faces in the bottom cuboid
-        const halfFace hf1_front = halfFace(hf1.getCuboid(), 2);
-        const halfFace hf1_back = halfFace(hf1.getCuboid(), 4);
+        const halfFace hf1_front = Twin(Twin(halfFace(hf1.getCuboid(), 4)));
+        const halfFace hf1_back = Twin(Twin(halfFace(hf1.getCuboid(), 2)));
 
         // also checking twin half faces of the half faces in the bottom cuboid
         const halfFace hf1_front_twin = Twin(hf1_front);
@@ -109,12 +167,10 @@ bool Mesh::findVertexAxisX(const halfFace& hf1, const halfFace& hf2, const halfF
         if (hf1_front.isSubdivided()) {
             // TODO: check whether this half face has a split that contains vertex vref.
             //       if so then return true
-            // TODO: SubFaceIterator iter = sft.find();
         }
         if (hf1_back.isSubdivided()) {
             // TODO: check whether this half face has a split that contains vertex vref.
             //       if so then return true
-            // TODO: SubFaceIterator iter = sft.find();
         }
         // check borders for the twins only as there are only cases where the twins can be borders
         // check twins only if they are not part of the border
@@ -122,14 +178,12 @@ bool Mesh::findVertexAxisX(const halfFace& hf1, const halfFace& hf2, const halfF
             if (hf1_front_twin.isSubdivided()) {
                 // TODO: check whether this half face has a split that contains vertex vref.
                 //       if so then return true
-                // TODO: SubFaceIterator iter = sft.find();
             }
         }
         if (!hf1_back_twin.isBorder()) {
             if (hf1_back_twin.isSubdivided()) {
                 // TODO: check whether this half face has a split that contains vertex vref.
                 //       if so then return true
-                // TODO: SubFaceIterator iter = sft.find();
             }
         }
     } // checks hf1 ends here
@@ -141,8 +195,8 @@ bool Mesh::findVertexAxisX(const halfFace& hf1, const halfFace& hf2, const halfF
         }
 
         // getting the requried half faces in the top cuboid
-        const halfFace hf2_back = halfFace(hf2.getCuboid(), 2);
-        const halfFace hf2_front = halfFace(hf2.getCuboid(), 4);
+        const halfFace hf2_back = Twin(Twin(halfFace(hf2.getCuboid(), 2)));
+        const halfFace hf2_front = Twin(Twin(halfFace(hf2.getCuboid(), 4)));
 
         // also checking twin half faces of the half faces in the top cuboid
         const halfFace hf2_back_twin = Twin(hf2_back);
@@ -151,12 +205,10 @@ bool Mesh::findVertexAxisX(const halfFace& hf1, const halfFace& hf2, const halfF
         if (hf2_back.isSubdivided()) {
             // TODO: check whether this half face has a split that contains vertex vref.
             //       if so then return true
-            // TODO: SubFaceIterator iter = sft.find();
         }
         if (hf2_front.isSubdivided()) {
             // TODO: check whether this half face has a split that contains vertex vref.
             //       if so then return true
-            // TODO: SubFaceIterator iter = sft.find();
         }
         // check borders for the twins only as there are only cases where the twins can be borders
         // check twins only if they are not part of the border
@@ -164,14 +216,12 @@ bool Mesh::findVertexAxisX(const halfFace& hf1, const halfFace& hf2, const halfF
             if (hf2_back_twin.isSubdivided()) {
                 // TODO: check whether this half face has a split that contains vertex vref.
                 //       if so then return true
-                // TODO: SubFaceIterator iter = sft.find();
             }
         }
         if (!hf2_front_twin.isBorder()) {
             if (hf2_front_twin.isSubdivided()) {
                 // TODO: check whether this half face has a split that contains vertex vref.
                 //       if so then return true
-                // TODO: SubFaceIterator iter = sft.find();
             }
         }
     } // twin hf2 checks ends here
@@ -193,16 +243,22 @@ bool Mesh::findVertexAxisX(const halfFace& hf1, const halfFace& hf2, const halfF
     return false;
 }
 
-bool Mesh::findVertexAxisY(const halfFace& hf1, const halfFace& hf2, const halfFace& hf3, const halfFace& hf4) {
+bool Mesh::findVertexAxisY(
+    const halfFace& hf1, // bottom half face
+    const halfFace& hf2, // upper half face
+    const halfFace& hf3, // right half face
+    const halfFace& hf4, // left half face
+    const Vertex& vToFind
+) const {
 
     // check twin hf1
     if (!hf1.isBorder()) {
         if (hf1.isSubdivided()) {
-            // TODO: traverse tree and get the half faces that are required
+            // TODO: traverse tree and get the correct half faces in which to search for the vertex
         }
         // getting the requried half faces in the bottom cuboid
-        const halfFace hf1_right = halfFace(hf1.getCuboid(), 3);
-        const halfFace hf1_left = halfFace(hf1.getCuboid(), 5);
+        const halfFace hf1_right = Twin(Twin(halfFace(hf1.getCuboid(), 3)));
+        const halfFace hf1_left = Twin(Twin(halfFace(hf1.getCuboid(), 5)));
 
         // also checking twin half faces of the half faces in the bottom cuboid
         const halfFace hf1_right_twin = Twin(hf1_right);
@@ -211,12 +267,10 @@ bool Mesh::findVertexAxisY(const halfFace& hf1, const halfFace& hf2, const halfF
         if (hf1_right.isSubdivided()) {
             // TODO: check whether hf1_front has a split that contains vertex vref.
             //       if so then return true
-            // TODO: SubFaceIterator iter = sft.find();
         }
         if (hf1_left.isSubdivided()) {
             // TODO: check whether hf1_back has a split that contains vertex vref.
             //       if so then return true
-            // TODO: SubFaceIterator iter = sft.find();
         }
         // check borders for the twins only as there are only cases where the twins can be borders
         // check twins only if they are not part of the border
@@ -224,14 +278,12 @@ bool Mesh::findVertexAxisY(const halfFace& hf1, const halfFace& hf2, const halfF
             if (hf1_right_twin.isSubdivided()) {
                 // TODO: check whether hf1_front has a split that contains vertex vref.
                 //       if so then return true
-                // TODO: SubFaceIterator iter = sft.find();
             }
         }
         if (!hf1_left_twin.isBorder()) {
             if (hf1_left_twin.isSubdivided()) {
                 // TODO: check whether hf1_back has a split that contains vertex vref.
                 //       if so then return true
-                // TODO: SubFaceIterator iter = sft.find();
             }
         }
     } // checks hf1 ends here
@@ -239,12 +291,12 @@ bool Mesh::findVertexAxisY(const halfFace& hf1, const halfFace& hf2, const halfF
     // check twin hf2
     if (!hf2.isBorder()) {
         if (hf2.isSubdivided()) {
-            // TODO: traverse tree and get the half faces that are required
+            // TODO: traverse tree and get the correct half faces in which to search for the vertex
         }
 
-        // getting the requried half faces in the top cuboid
-        const halfFace hf2_left = halfFace(hf2.getCuboid(), 5);
-        const halfFace hf2_right = halfFace(hf2.getCuboid(), 3);
+        // getting the requried original half faces in the top cuboid
+        const halfFace hf2_left = Twin(Twin(halfFace(hf2.getCuboid(), 5)));
+        const halfFace hf2_right = Twin(Twin(halfFace(hf2.getCuboid(), 3)));
 
         // also checking twin half faces of the half faces in the top cuboid
         const halfFace hf2_left_twin = Twin(hf2_left);
@@ -253,12 +305,10 @@ bool Mesh::findVertexAxisY(const halfFace& hf1, const halfFace& hf2, const halfF
         if (hf2_left.isSubdivided()) {
             // TODO: check whether this half face has a split that contains vertex vref.
             //       if so then return true
-            // TODO: SubFaceIterator iter = sft.find();
         }
         if (hf2_right.isSubdivided()) {
             // TODO: check whether this half face has a split that contains vertex vref.
             //       if so then return true
-            // TODO: SubFaceIterator iter = sft.find();
         }
         // check borders for the twins only as there are only cases where the twins can be borders
         // check twins only if they are not part of the border
@@ -266,14 +316,12 @@ bool Mesh::findVertexAxisY(const halfFace& hf1, const halfFace& hf2, const halfF
             if (hf2_left_twin.isSubdivided()) {
                 // TODO: check whether this half face has a split that contains vertex vref.
                 //       if so then return true
-                // TODO: SubFaceIterator iter = sft.find();
             }
         }
         if (!hf2_right_twin.isBorder()) {
             if (hf2_right_twin.isSubdivided()) {
                 // TODO: check whether this half face has a split that contains vertex vref.
                 //       if so then return true
-                // TODO: SubFaceIterator iter = sft.find();
             }
         }
     } // twin hf2 checks ends here
@@ -295,13 +343,48 @@ bool Mesh::findVertexAxisY(const halfFace& hf1, const halfFace& hf2, const halfF
     return false;
 }
 
-bool Mesh::findVertexAxisZ(const halfFace& hf1, const halfFace& hf2, const halfFace& hf3, const halfFace& hf4) {
-    // TODO: check whether to check more half faces in all sides, or are the checks below enough?
+bool Mesh::findVertexAxisZ(
+    const halfFace& hf1, // back half face
+    const halfFace& hf2, // right half face
+    const halfFace& hf3, // front half face
+    const halfFace& hf4, // left half face 
+    const Vertex& vToFind
+) const {
 
     // check twin hf1
     if (!hf1.isBorder()) {
         if (hf1.isSubdivided()) {
             // TODO: search for the vertex in this half face. If vertex is found return true.
+        }
+        // getting the requried half faces in the bottom cuboid
+        const halfFace hf1_right = Twin(Twin(halfFace(hf1.getCuboid(), 3)));
+        const halfFace hf1_left = Twin(Twin(halfFace(hf1.getCuboid(), 5)));
+
+        // also checking twin half faces of the half faces in the bottom cuboid
+        const halfFace hf1_right_twin = Twin(hf1_right);
+        const halfFace hf1_left_twin = Twin(hf1_left);
+
+        if (hf1_right.isSubdivided()) {
+            // TODO: check whether hf1_front has a split that contains vertex vref.
+            //       if so then return true
+        }
+        if (hf1_left.isSubdivided()) {
+            // TODO: check whether hf1_back has a split that contains vertex vref.
+            //       if so then return true
+        }
+        // check borders for the twins only as there are only cases where the twins can be borders
+        // check twins only if they are not part of the border
+        if (!hf1_right_twin.isBorder()) {
+            if (hf1_right_twin.isSubdivided()) {
+                // TODO: check whether hf1_front has a split that contains vertex vref.
+                //       if so then return true
+            }
+        }
+        if (!hf1_left_twin.isBorder()) {
+            if (hf1_left_twin.isSubdivided()) {
+                // TODO: check whether hf1_back has a split that contains vertex vref.
+                //       if so then return true
+            }
         }
     } // checks for hf1 ends here
 
@@ -316,6 +399,36 @@ bool Mesh::findVertexAxisZ(const halfFace& hf1, const halfFace& hf2, const halfF
     if (!hf3.isBorder()) {
         if (hf3.isSubdivided()) {
             // TODO: search for the vertex in this half face. If vertex is found return true.
+        }
+        // getting the requried half faces in the bottom cuboid
+        const halfFace hf3_right = Twin(Twin(halfFace(hf3.getCuboid(), 3)));
+        const halfFace hf3_left = Twin(Twin(halfFace(hf3.getCuboid(), 5)));
+
+        // also checking twin half faces of the half faces in the bottom cuboid
+        const halfFace hf3_right_twin = Twin(hf3_right);
+        const halfFace hf3_left_twin = Twin(hf3_left);
+
+        if (hf3_right.isSubdivided()) {
+            // TODO: check whether hf3_right has a split that contains vertex vref.
+            //       if so then return true
+        }
+        if (hf3_left.isSubdivided()) {
+            // TODO: check whether hf3_left has a split that contains vertex vref.
+            //       if so then return true
+        }
+        // check borders for the twins only as there are only cases where the twins can be borders
+        // check twins only if they are not part of the border
+        if (!hf3_right_twin.isBorder()) {
+            if (hf3_right_twin.isSubdivided()) {
+                // TODO: check whether hf3_right_twin has a split that contains vertex vref.
+                //       if so then return true
+            }
+        }
+        if (!hf3_left_twin.isBorder()) {
+            if (hf3_left_twin.isSubdivided()) {
+                // TODO: check whether hf3_left_twin has a split that contains vertex vref.
+                //       if so then return true
+            }
         }
     } // checks for hf3 ends here
 
@@ -336,7 +449,7 @@ bool Mesh::mergeVertexIfExistsNew(
     const Axis split_axis
 ) {
 
-    // TODO: check whether border checks are necessary (except for twins because that is necessary)
+    // TODO: check whether border checks are necessary
     // TODO: make this function shorter by adding helper functions and re-organize the code to make it more readable 
     // TODO: check whether there are half faces that cannot exist yet. So then maybe we should check whether they exist before doing the isBorder or isSubdivided checks?
 
@@ -355,7 +468,7 @@ bool Mesh::mergeVertexIfExistsNew(
         hf3 = Twin(halfFace(cuboid_id, 2)); // back half face
         hf4 = Twin(halfFace(cuboid_id, 4)); // front half face
 
-        const bool vertexOnXAxisFound = findVertexAxisX(hf1, hf2, hf3, hf4);
+        const bool vertexOnXAxisFound = findVertexAxisX(hf1, hf2, hf3, hf4, v);
         if (vertexOnXAxisFound) {
             return true;
         }
@@ -370,7 +483,7 @@ bool Mesh::mergeVertexIfExistsNew(
         hf3 = Twin(halfFace(cuboid_id, 3)); // right half face
         hf4 = Twin(halfFace(cuboid_id, 5)); // left half face
         
-        const bool vertexOnYAxisFound = findVertexAxisY(hf1, hf2, hf3, hf4);
+        const bool vertexOnYAxisFound = findVertexAxisY(hf1, hf2, hf3, hf4, v);
         if (vertexOnYAxisFound) {
             return true;
         }
@@ -385,7 +498,7 @@ bool Mesh::mergeVertexIfExistsNew(
         hf3 = Twin(halfFace(cuboid_id, 4)); // front half face
         hf4 = Twin(halfFace(cuboid_id, 5)); // left half face 
 
-        const bool vertexOnZAxisFound = findVertexAxisZ(hf1, hf2, hf3, hf4);
+        const bool vertexOnZAxisFound = findVertexAxisZ(hf1, hf2, hf3, hf4, v);
         if (vertexOnZAxisFound) {
             return true;
         }

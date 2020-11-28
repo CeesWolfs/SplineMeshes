@@ -62,9 +62,28 @@ public:
     /*
      * Helper functions for checks that are needed to find vertex of split on x, y and z axises
      */
-    bool findVertexAxisX(const halfFace& hf1, const halfFace& hf2, const halfFace& hf3, const halfFace& hf4);
-    bool findVertexAxisY(const halfFace& hf1, const halfFace& hf2, const halfFace& hf3, const halfFace& hf4);
-    bool findVertexAxisZ(const halfFace& hf1, const halfFace& hf2, const halfFace& hf3, const halfFace& hf4);
+    // bool seachVertexByAxis(const std::vector<halfFace>& hfts, const Axis splitAxis, const Vertex& toFind) const;
+    bool findVertexAxisX(
+        const halfFace& hf1,
+        const halfFace& hf2,
+        const halfFace& hf3,
+        const halfFace& hf4, 
+        const Vertex& vToFind
+    ) const;
+    bool findVertexAxisY(
+        const halfFace& hf1, 
+        const halfFace& hf2,
+        const halfFace& hf3,
+        const halfFace& hf4, 
+        const Vertex& vToFind
+    ) const;
+    bool findVertexAxisZ(
+        const halfFace& hf1,
+        const halfFace& hf2,
+        const halfFace& hf3,
+        const halfFace& hf4,
+        const Vertex& vToFind
+    ) const;
 
     /*
     * 
