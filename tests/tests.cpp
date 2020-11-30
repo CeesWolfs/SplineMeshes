@@ -99,7 +99,7 @@ TEST_CASE("A subface tree can be split in two", "[SubFaceTree]")
 
 TEST_CASE("A test for the mesh constructor which should initialize the cuboid with the initial vertices and faces.", "[Mesh]")
 {
-	Mesh mesh = Mesh();
+	Mesh mesh;
 	CHECK(mesh.getCuboids().size() == 1);
 	CHECK(mesh.getCuboids()[0].v1 == 0);
 	CHECK(mesh.getCuboids()[0].v2 == 1);
@@ -109,8 +109,7 @@ TEST_CASE("A test for the mesh constructor which should initialize the cuboid wi
 	CHECK(mesh.getCuboids()[0].v6 == 5);
 	CHECK(mesh.getCuboids()[0].v7 == 6);
 	CHECK(mesh.getCuboids()[0].v8 == 7);
-
-	CHECK(mesh.getVertices().size() == 6);
+	CHECK(mesh.getVertices().size() == 8);
 	const Vertex a = { 0.0, 0.0, 0.0 };
 	const Vertex getA = mesh.getVertices()[0];
 	REQUIRE(getA == a);
