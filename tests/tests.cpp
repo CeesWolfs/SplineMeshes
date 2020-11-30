@@ -144,3 +144,30 @@ TEST_CASE("A test for the mesh constructor which should initialize the cuboid wi
 		REQUIRE(mesh.getV2f()[i] == curr);
 	}
 }
+
+TEST_CASE("Bad behaviour splits on different axis.", "[Mesh]")
+{
+	Mesh mesh1;
+	//bad behaviours on XY plane
+	CHECK(mesh1.SplitAlongXY(0, 1.6) == -1);
+	CHECK(mesh1.SplitAlongXY(0, -1.4) == -1);
+
+	//bad behaviours on XZ plane
+	CHECK(mesh1.SplitAlongXZ(0, 1.8) == -1);
+	CHECK(mesh1.SplitAlongXZ(0, -0.5) == -1);
+	
+	//bad behaviours on YZ plane
+	CHECK(mesh1.SplitAlongYZ(0, 1.7) == -1);
+	CHECK(mesh1.SplitAlongYZ(0, -1.2) == -1);
+}
+
+
+//TODO: This should pass but it throws a vector subscript out of range message when updating the twin or parent.
+/**
+TEST_CASE("Good behaviour on split along XY plane.", "[Mesh]") 
+{
+	Mesh mesh;
+	CHECK(mesh.SplitAlongXY(0, 0.5) == 1);
+	CHECK(mesh.getCuboids().size() == 2);
+}
+*/
