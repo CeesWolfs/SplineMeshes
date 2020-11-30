@@ -1,5 +1,9 @@
 #include <catch2/catch.hpp>
 #include "../SubFaceTree.hpp"
+#include "../Mesh.hpp"
+#include "../Types.hpp"
+
+
 
 TEST_CASE("A single subface split works as expected", "[SubFaceTree]")
 {
@@ -91,4 +95,53 @@ TEST_CASE("A subface tree can be split in two", "[SubFaceTree]")
 		subFaces.push_back(*it);
 	}
 	CHECK(subFaces.size() == 4);
+}
+
+TEST_CASE("A test for the mesh constructor which should initialize the cuboid with the initial vertices and faces.", "[Mesh]")
+{
+	Mesh mesh = Mesh();
+	CHECK(mesh.getCuboids().size() == 1);
+	CHECK(mesh.getCuboids()[0].v1 == 0);
+	CHECK(mesh.getCuboids()[0].v2 == 1);
+	CHECK(mesh.getCuboids()[0].v3 == 2);
+	CHECK(mesh.getCuboids()[0].v4 == 3);
+	CHECK(mesh.getCuboids()[0].v5 == 4);
+	CHECK(mesh.getCuboids()[0].v6 == 5);
+	CHECK(mesh.getCuboids()[0].v7 == 6);
+	CHECK(mesh.getCuboids()[0].v8 == 7);
+
+	CHECK(mesh.getVertices().size() == 6);
+	const Vertex a = { 0.0, 0.0, 0.0 };
+	const Vertex getA = mesh.getVertices()[0];
+	REQUIRE(getA == a);
+	const Vertex b = { 1.0, 0.0, 0.0 };
+	const Vertex getB = mesh.getVertices()[1];
+	REQUIRE(getB == b);
+	const Vertex c = { 1.0, 1.0, 0.0 };
+	const Vertex getC = mesh.getVertices()[2];
+	REQUIRE(getC == c); 
+	const Vertex d = { 0.0, 1.0, 0.0 };
+	const Vertex getD = mesh.getVertices()[3];
+	REQUIRE(getD == d);
+	const Vertex e = { 0.0, 0.0, 1.0 };
+	const Vertex getE = mesh.getVertices()[4];
+	REQUIRE(getE == e);
+	const Vertex f = { 1.0, 0.0, 1.0 };
+	const Vertex getF = mesh.getVertices()[5];
+	REQUIRE(getF == f);
+	const Vertex g = { 1.0, 1.0, 1.0 };
+	const Vertex getG = mesh.getVertices()[6];
+	REQUIRE(getG == g);
+	const Vertex h = { 0.0, 1.0, 1.0 };
+	const Vertex getH = mesh.getVertices()[7];
+	REQUIRE(getH == h);
+
+	CHECK(mesh.getF2f().size() == 6);
+	CHECK(mesh.getV2f().size() == 6);
+
+	for (int i = 0; i < 6; i++) {
+		CHECK(mesh.getF2f()[i].id == -1);
+		halfFace curr = { 0, (uint8_t)i };
+		REQUIRE(mesh.getV2f()[i] == curr);
+	}
 }

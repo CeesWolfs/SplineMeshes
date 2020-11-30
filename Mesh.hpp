@@ -32,6 +32,7 @@ private:
     // Stores a mapping of Half faces to twin half faces
     std::vector<halfFace> F2f;
     std::vector<halfFace> V2f;
+
     /*
     * Split a halfFace in two, divide subhalfFaces and update all twins
     */
@@ -46,6 +47,15 @@ private:
     void updateTwin(const halfFace twin, const halfFace old_hf, const halfFace new_hf, const Vertex& middle);
 
 public:
+
+    /**
+    * Getters for the private vectors to access them publicly via the Mesh class.
+    */
+    std::vector<Vertex> getVertices();
+    std::vector<Cuboid> getCuboids();
+    std::vector<halfFace> getF2f();
+    std::vector<halfFace> getV2f();
+
     /**
      * Returns the twin half face of the given half face "hf"
     */

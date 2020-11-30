@@ -24,6 +24,23 @@ Mesh::Mesh(/* args */) {
     }
 }
 
+std::vector<Vertex> Mesh::getVertices() {
+    return vertices;
+}
+
+std::vector<Cuboid> Mesh::getCuboids() {
+    return cuboids;
+}
+
+std::vector<halfFace> Mesh::getF2f() {
+    return F2f;
+}
+
+std::vector<halfFace> Mesh::getV2f() {
+    return V2f;
+}
+
+
 void Mesh::splitHalfFace(const halfFace toSplit, const halfFace lower, const halfFace higher, const Axis split_axis, const Vertex& split_point)
 {
     auto twin = Twin(toSplit);
