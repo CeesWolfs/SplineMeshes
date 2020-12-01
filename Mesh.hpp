@@ -31,7 +31,8 @@ private:
     SubFaceTree sft;
     // Stores a mapping of Half faces to twin half faces
     std::vector<halfFace> F2f;
-    std::vector<halfFace> V2f;
+    // Map vertex IDs to a local vertex within an element that contains the vertex
+    std::vector<localVertex> V2lV;
 
     /*
     * Split a halfFace in two, divide subhalfFaces and update all twins
@@ -51,20 +52,24 @@ public:
     /**
     * Getters for the private vectors to access them publicly via the Mesh class.
     */
-    std::vector<Vertex> getVertices();
-    std::vector<Cuboid> getCuboids();
-    std::vector<halfFace> getF2f();
-    std::vector<halfFace> getV2f();
+    std::vector<Vertex>& getVertices();
+    std::vector<Cuboid>& getCuboids();
+    std::vector<halfFace>& getF2f();
+    std::vector<localVertex>& getV2lV();
 
     /**
-     * Returns the twin half face of the given half face "hf"
+     * Returns a reference to the twin half face of the given half face "hf"
     */
-    halfFace Twin(const halfFace& hf) const;
+    halfFace& Twin(const halfFace& hf);
+    /**
+     * Returns a constant reference to the twin half face of the given half face "hf"
+    */
+    const halfFace& Twin(const halfFace& hf) const;
 
     /**
      * Gets vertex index of a vertex in the vertices vector if it exists.
      * Otherwise -1 is returned which means that vertex is not in the vertices vector.
-     * 
+     *
      * Wordt case time complexity = O(n) = bad and inefficient
     */
     bool mergeVertexIfExists(const Vertex& v, uint32_t& vref);
@@ -77,14 +82,14 @@ public:
         const halfFace& hf1,
         const halfFace& hf2,
         const halfFace& hf3,
-        const halfFace& hf4, 
+        const halfFace& hf4,
         const Vertex& vToFind
     ) const;
     bool findVertexAxisY(
-        const halfFace& hf1, 
+        const halfFace& hf1,
         const halfFace& hf2,
         const halfFace& hf3,
-        const halfFace& hf4, 
+        const halfFace& hf4,
         const Vertex& vToFind
     ) const;
     bool findVertexAxisZ(
@@ -96,13 +101,13 @@ public:
     ) const;
 
     /*
-    * 
+    *
     * Better merging function. Assign vref to merged vertex.
     * //TODO: implement more complicated but much faster function, returns true if merged
     */
     bool mergeVertexIfExistsNew(
         const Vertex& v,
-        uint32_t& vref, 
+        uint32_t& vref,
         const uint32_t cuboid_id,
         Axis split_axis
     );
@@ -110,6 +115,7 @@ public:
     /**
      * Add function which pushes the new half and twin half faces of the new cuboid in vector F2F
      * This method adds 6 half faces to the new cuboid.
+     *
     */
     void addHalfFaces(const uint32_t cuboid_id, const Axis split_axis);
 
