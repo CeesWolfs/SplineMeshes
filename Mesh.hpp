@@ -48,7 +48,6 @@ private:
     void updateTwin(const halfFace twin, const halfFace old_hf, const halfFace new_hf, const Vertex& middle);
 
 public:
-    SubFaceTree sft;
     /**
     * Getters for the private vectors to access them publicly via the Mesh class.
     */

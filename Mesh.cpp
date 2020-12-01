@@ -91,6 +91,12 @@ void Mesh::updateTwin(const halfFace twin, const halfFace old_hf, const halfFace
 
 }
 
+
+halfFace& Mesh::Twin(const halfFace& hf) {
+    // TODO: check whether an overflow can occur (as uint32_t calculations are converted to uint8_t)!
+    return F2f[hf.getCuboid() * 6 + hf.getLocalId()];
+}
+
 const halfFace& Mesh::Twin(const halfFace& hf) const
 {
     // TODO: check whether an overflow can occur (as uint32_t calculations are converted to uint8_t)!
