@@ -43,7 +43,7 @@ public:
         [description] searches the tree for the vertex that we need to find starting from start_node half face.
         [returns] true if vertex is found, otherwise false.
     */
-    bool findVertex(halfFace start_node, const Vertex& vertexToFind) const;
+    bool findVertex(halfFace start_node, const Vertex& vertexToFind, const Axis splitAxis) const;
 
     halfFace splitHalfFace(const halfFace start_node, const halfFace twin, const Axis split_axis, const Vertex& split_point,const halfFace lower,const halfFace higher);
     // Split a SubFaceTree in two along a split, returns the two start nodes, also splits twin faces automatically if necassary

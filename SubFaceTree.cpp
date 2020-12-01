@@ -44,10 +44,12 @@ SubFaceIterator SubFaceTree::find(halfFace start_node, const halfFace toFind, co
     return SubFaceIterator(*this, toNodeIndex(start_node), lower);
 }
 
-bool SubFaceTree::findVertex(halfFace start_node, const Vertex& vertexToFind) const
+bool SubFaceTree::findVertex(halfFace start_node, const Vertex& vertexToFind, const Axis splitAxis) const
 {
-    // TODO: check whether this function does what needs to be done
-    assert(start_node.isSubdivided());
+    if (!start_node.isSubdivided()) {
+        throw "ERROR[SubFaceTree::findVertex]: start node is not subdivided!";
+    };
+
     bool lower = false;
     auto child = start_node;
 
@@ -56,26 +58,31 @@ bool SubFaceTree::findVertex(halfFace start_node, const Vertex& vertexToFind) co
         bool vertexFound = false;
         const Node nodeToCheck = nodes[toNodeIndex(child)];
         const float split = nodeToCheck.split_coord;
-        switch (nodeToCheck.split_axis)
-        {
-            case Axis::x :
+
+        if (nodeToCheck.split_axis == splitAxis) {
+            switch (nodeToCheck.split_axis)
+            {
+            case Axis::x:
                 lower = (eps + vertexToFind.x <= split);
                 vertexFound = std::abs(vertexToFind.x - split) < eps;
                 break;
-            case Axis::y :
+            case Axis::y:
                 lower = (eps + vertexToFind.y <= split);
                 vertexFound = std::abs(vertexToFind.y - split) < eps;
                 break;
-            case Axis::z :
+            case Axis::z:
                 lower = (eps + vertexToFind.z <= split);
                 vertexFound = std::abs(vertexToFind.z - split) < eps;
                 break;
+            }
+
+            if (vertexFound) {
+                return true;
+            }
+
+            start_node = child;
+            child = lower ? nodes[toNodeIndex(start_node)].lower_child : nodes[toNodeIndex(start_node)].top_child;
         }
-        if (vertexFound) {
-            return true;
-        }
-        start_node = child;
-        child = lower ? nodes[toNodeIndex(start_node)].lower_child : nodes[toNodeIndex(start_node)].top_child;
     }
 
     return false;
