@@ -27,21 +27,58 @@ SubFaceIterator SubFaceTree::find(halfFace start_node, const halfFace toFind, co
         float split = nodes[toNodeIndex(child)].split_coord;
         switch (nodes[toNodeIndex(child)].split_axis)
         {
-        case Axis::x:
-            lower = (eps + toFindmiddle.x <= split);
-            break;
-        case Axis::y:
-            lower = (eps + toFindmiddle.y <= split);
-            break;
-        case Axis::z:
-            lower = (eps + toFindmiddle.z <= split);
-            break;
+            case Axis::x :
+                lower = (eps + toFindmiddle.x <= split);
+                break;
+            case Axis::y :
+                lower = (eps + toFindmiddle.y <= split);
+                break;
+            case Axis::z :
+                lower = (eps + toFindmiddle.z <= split);
+                break;
         }
         start_node = child;
         child = lower ? nodes[toNodeIndex(start_node)].lower_child : nodes[toNodeIndex(start_node)].top_child;
     }
     assert(child == toFind);
     return SubFaceIterator(*this, toNodeIndex(start_node), lower);
+}
+
+bool SubFaceTree::findVertex(halfFace start_node, const Vertex& vertexToFind) const
+{
+    // TODO: check whether this function does what needs to be done
+    assert(start_node.isSubdivided());
+    bool lower = false;
+    auto child = start_node;
+
+    while (child.isSubdivided())
+    {
+        bool vertexFound = false;
+        const Node nodeToCheck = nodes[toNodeIndex(child)];
+        const float split = nodeToCheck.split_coord;
+        switch (nodeToCheck.split_axis)
+        {
+            case Axis::x :
+                lower = (eps + vertexToFind.x <= split);
+                vertexFound = std::abs(vertexToFind.x - split) < eps;
+                break;
+            case Axis::y :
+                lower = (eps + vertexToFind.y <= split);
+                vertexFound = std::abs(vertexToFind.y - split) < eps;
+                break;
+            case Axis::z :
+                lower = (eps + vertexToFind.z <= split);
+                vertexFound = std::abs(vertexToFind.z - split) < eps;
+                break;
+        }
+        if (vertexFound) {
+            return true;
+        }
+        start_node = child;
+        child = lower ? nodes[toNodeIndex(start_node)].lower_child : nodes[toNodeIndex(start_node)].top_child;
+    }
+
+    return false;
 }
 
 /*
@@ -88,7 +125,7 @@ halfFace SubFaceTree::splitHalfFace(const halfFace start_node, const halfFace tw
     }
 }
 
-std::pair<halfFace, halfFace> SubFaceTree::splitTree(const halfFace tree_head, const Axis split_axis, const Vertex& split_point, const halfFace lower, const halfFace higher, std::vector<halfFace>& F2f)
+HalfFacePair SubFaceTree::splitTree(const halfFace tree_head, const Axis split_axis, const Vertex& split_point, const halfFace lower, const halfFace higher, std::vector<halfFace>& F2f)
 {
     float split{};
     switch (split_axis)

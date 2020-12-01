@@ -1,5 +1,4 @@
 #include "Mesh.hpp"
-#include "SubFaceTree.hpp"
 
 /*
 * Default construct the mesh the a unit cube
@@ -89,7 +88,8 @@ void Mesh::updateTwin(const halfFace twin, const halfFace old_hf, const halfFace
 }
 
 halfFace Mesh::Twin(const halfFace& hf) const {
-    return F2f[hf.getCuboid() * 6 + hf.getLocalId()];
+    // TODO: check whether an overflow can occur (as uint32_t calculations are converted to uint8_t)!
+    return F2f[(uint8_t)(hf.getCuboid() * 6) + hf.getLocalId()];
 }
 
 
@@ -347,6 +347,9 @@ bool Mesh::findVertexAxisY(
     if (!hf3.isBorder()) {
         if (hf3.isSubdivided()) {
             // TODO: search for the vertex in this half face. If vertex is found return true.
+            if (sft.findVertex(hf3, vToFind)) {
+                return true;
+            }
         }
     } // checks for hf3 ends here
 
@@ -526,9 +529,7 @@ bool Mesh::mergeVertexIfExistsNew(
     return false;
 }
 
-/**
-* This method adds 6 half faces to the new cuboid. 
-*/
+
 void Mesh::addHalfFaces(const uint32_t cuboid_id, const Axis split_axis) {
     // For now just push back the twins of the original element
     (split_axis == Axis::z) ? F2f.push_back(halfFace(cuboid_id, 1)) : F2f.push_back(Twin(halfFace(cuboid_id, 0)));
