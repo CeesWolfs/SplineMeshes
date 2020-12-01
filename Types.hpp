@@ -41,6 +41,23 @@ typedef union _cuboid {
 	std::array<uint32_t, 8> vertices;
 } Cuboid;
 
+/*
+* Local vertex 
+*/
+struct localVertex {
+	uint32_t id;
+	bool operator==(const localVertex& other) const {
+		return id == other.id;
+	}
+	uint8_t getLocalId() const {
+		return id & 0x7;
+	}
+	uint32_t getCuboid() const {
+		return id >> 3;
+	}
+	localVertex(uint32_t cuboid_id, uint8_t local_id) { id = (cuboid_id << 3) + local_id; };
+};
+
 /**
  * half face stores both its parent cuboid, and its local id
  * like <cuboid, local_id> e.g. <1,4>. Six faces per cuboid so, local

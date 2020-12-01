@@ -136,13 +136,16 @@ TEST_CASE("A test for the mesh constructor which should initialize the cuboid wi
 	REQUIRE(getH == h);
 
 	CHECK(mesh.getF2f().size() == 6);
-	CHECK(mesh.getV2f().size() == 6);
+	CHECK(mesh.getV2lV().size() == 8);
 
 	for (int i = 0; i < 6; i++) {
 		CHECK(mesh.getF2f()[i].id == -1);
-		halfFace curr = { 0, (uint8_t)i };
-		REQUIRE(mesh.getV2f()[i] == curr);
 	}
+	for (uint8_t i = 0; i < 8; i++)
+	{
+		CHECK(mesh.getV2lV()[i] == localVertex(0, i));
+	}
+
 }
 
 TEST_CASE("Bad behaviour splits on different axis.", "[Mesh]")
@@ -163,11 +166,15 @@ TEST_CASE("Bad behaviour splits on different axis.", "[Mesh]")
 
 
 //TODO: This should pass but it throws a vector subscript out of range message when updating the twin or parent.
-/**
-TEST_CASE("Good behaviour on split along XY plane.", "[Mesh]") 
+TEST_CASE("Good behaviour on a single split along XY plane.", "[Mesh]") 
 {
 	Mesh mesh;
 	CHECK(mesh.SplitAlongXY(0, 0.5) == 1);
 	CHECK(mesh.getCuboids().size() == 2);
+	SECTION("Number of vertices is correct") {
+		CHECK(mesh.getVertices().size() == 12);
+	}
+	SECTION("The two elements touch eachother") {
+		CHECK(mesh.Twin({ 0,1 }) == halfFace(1,0));
+	}
 }
-*/
