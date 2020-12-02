@@ -501,11 +501,9 @@ bool Mesh::findVertexAxisZ(
     // check twin hf3
     if (!hf3.isBorder()) {
         if (hf3.isSubdivided()) {
-            //  search for the vertex in this half face. If vertex is found return true.
-            if (sft.findVertex(hf3, vToFind, Axis::z)) {
-                return true;
-            }
+            // TODO: search for the vertex in this half face. If vertex is found return true.
         }
+
         // getting the requried half faces in the bottom cuboid
         const halfFace hf3_right = Twin(Twin(halfFace(hf3.getCuboid(), 3)));
         const halfFace hf3_left = Twin(Twin(halfFace(hf3.getCuboid(), 5)));
