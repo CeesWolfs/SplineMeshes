@@ -11,4 +11,5 @@ p.add_mesh(mesh.extract_cells(0),
            line_width=5, show_edges=True)
 p.add_mesh(pv.PolyData(mesh.points), color='red',
        point_size=10, render_points_as_spheres=True)
+p.show_axes()
 p.show()
