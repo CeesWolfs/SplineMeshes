@@ -52,6 +52,16 @@ TEST_CASE("A subface can be split a few times", "[SubFaceTree]")
 	CHECK(subFaces.size() == 6);
 }
 
+TEST_CASE("Vertices can be found in a subface tree", "[SubFaceTree]") {
+	SubFaceTree subfaces;
+	std::vector<halfFace> F2f;
+	std::fill_n(std::back_inserter(F2f), 5*6, halfFace(-1));
+	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::y, { 0.5, 0.5, 0.5 }, { 1,0 }, { 2,0 });
+	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.25, 0.5 }, { 1,0 }, { 3,0 });
+	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.75, 0.5 }, { 2,0 }, { 4,0 });
+	CHECK(subfaces.findVertex(F2f[1], { 0,0.5,0.5 }, Axis::y));
+}
+
 TEST_CASE("A subface can be changed", "[SubFaceTree]")
 {
 	SubFaceTree subfaces;
@@ -173,7 +183,49 @@ TEST_CASE("Good behaviour on a single split along XY plane.", "[Mesh]")
 		CHECK(mesh.getVertices().size() == 12);
 	}
 	SECTION("The two elements touch eachother") {
-		CHECK(mesh.Twin({ 0,1 }) == halfFace(1,0));
+		CHECK(mesh.Twin({ 0,1 }) == halfFace(1, 0));
 	}
-	mesh.Save("1split");
+}
+
+TEST_CASE("Good behaviour on a single split along YZ plane.", "[Mesh]")
+{
+	Mesh mesh;
+	CHECK(mesh.SplitAlongYZ(0, 0.5) == 1);
+	CHECK(mesh.getCuboids().size() == 2);
+	SECTION("Number of vertices is correct") {
+		CHECK(mesh.getVertices().size() == 12);
+	}
+	SECTION("The two elements touch eachother") {
+		CHECK(mesh.Twin({ 0,3 }) == halfFace(1, 5));
+	}
+}
+
+TEST_CASE("Good behaviour on a single split along XZ plane.", "[Mesh]")
+{
+	Mesh mesh;
+	CHECK(mesh.SplitAlongXZ(0, 0.5) == 1);
+	CHECK(mesh.getCuboids().size() == 2);
+	SECTION("Number of vertices is correct") {
+		CHECK(mesh.getVertices().size() == 12);
+	}
+	SECTION("The two elements touch eachother") {
+		CHECK(mesh.Twin({ 0,2 }) == halfFace(1, 4));
+	}
+}
+TEST_CASE("Split a cube equally into fourths") {
+	Mesh mesh;
+	CHECK(mesh.SplitAlongXZ(0, 0.5) == 1);
+	CHECK(mesh.SplitAlongXY(1, 0.5) == 2);
+	CHECK(mesh.SplitAlongXY(0, 0.5) == 3);
+	SECTION("Number of vertices is correct") {
+		CHECK(mesh.getVertices().size() == 18);
+	}
+	mesh.Save("Fourths");
+}
+
+
+TEST_CASE("Bad behaviour for 2 splits at the same split point on the split axis along the XY plane.") {
+	Mesh mesh;
+	CHECK(mesh.SplitAlongXY(0, 0.5) == 1);
+	CHECK(mesh.SplitAlongXY(1, 0.5) == -1);
 }
