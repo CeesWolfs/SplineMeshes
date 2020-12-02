@@ -4,7 +4,6 @@
 #include "../Types.hpp"
 
 
-
 TEST_CASE("A single subface split works as expected", "[SubFaceTree]")
 {
   SubFaceTree subfaces;
@@ -52,6 +51,7 @@ TEST_CASE("A subface can be split a few times", "[SubFaceTree]")
 	CHECK(subFaces.size() == 6);
 }
 
+/**
 TEST_CASE("Vertices can be found in a subface tree", "[SubFaceTree]") {
 	SubFaceTree subfaces;
 	std::vector<halfFace> F2f;
@@ -61,6 +61,7 @@ TEST_CASE("Vertices can be found in a subface tree", "[SubFaceTree]") {
 	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.75, 0.5 }, { 2,0 }, { 4,0 });
 	CHECK(subfaces.findVertex(F2f[1], { 0,0.5,0.5 }, Axis::y));
 }
+*/
 
 TEST_CASE("A subface can be changed", "[SubFaceTree]")
 {
@@ -224,8 +225,21 @@ TEST_CASE("Split a cube equally into fourths") {
 }
 
 
+
 TEST_CASE("Bad behaviour for 2 splits at the same split point on the split axis along the XY plane.") {
 	Mesh mesh;
 	CHECK(mesh.SplitAlongXY(0, 0.5) == 1);
 	CHECK(mesh.SplitAlongXY(1, 0.5) == -1);
+}
+
+TEST_CASE("Bad behaviour for 2 splits at the same split point on the split axis along the XZ plane.") {
+	Mesh mesh;
+	CHECK(mesh.SplitAlongXZ(0, 0.5) == 1);
+	CHECK(mesh.SplitAlongXZ(1, 0.5) == -1);
+}
+
+TEST_CASE("Bad behaviour for 2 splits at the same split point on the split axis along the YZ plane.") {
+	Mesh mesh;
+	CHECK(mesh.SplitAlongYZ(0, 0.5) == 1);
+	CHECK(mesh.SplitAlongYZ(1, 0.5) == -1);
 }
