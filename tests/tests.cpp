@@ -243,3 +243,31 @@ TEST_CASE("Bad behaviour for 2 splits at the same split point on the split axis 
 	CHECK(mesh.SplitAlongYZ(0, 0.5) == 1);
 	CHECK(mesh.SplitAlongYZ(1, 0.5) == -1);
 }
+
+TEST_CASE("Multiple splits on different axis (simultanuously) combined (16 cuboids in total)") {
+	Mesh mesh;
+	double step = 0.06;
+	for (int i = 0; i < 15; i += 3) {
+		CHECK(mesh.SplitAlongXY(i, (i+1) * step) == i + 1);
+		CHECK(mesh.SplitAlongXZ(i+1, (i+1) * step) == i + 2);
+		CHECK(mesh.SplitAlongYZ(i+2, (i+1) * step) == i + 3);
+	}
+	CHECK(mesh.getCuboids().size() == 16);
+	mesh.Save("sixteen_cuboids");
+}
+
+TEST_CASE("Multiple splits on different axis with splitting for each axis done separately (again, 16 cuboids in total)") {
+	Mesh mesh;
+	double step = 0.06;
+	for (int i = 0; i < 5; i++) {
+		CHECK(mesh.SplitAlongXY(i, (i + 1) * step) == i + 1);
+	}
+	for (int i = 5; i < 10; i++) {
+		CHECK(mesh.SplitAlongXZ(i, (i + 1) * step) == i + 1);
+	}
+	for (int i = 10; i < 15; i++) {
+		CHECK(mesh.SplitAlongYZ(i, (i + 1) * step) == i + 1);
+	}
+	CHECK(mesh.getCuboids().size() == 16);
+	mesh.Save("separate_axis_splitted_cuboids");
+}
