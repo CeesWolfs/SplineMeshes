@@ -717,7 +717,6 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     }
 
     // Update old cuboid vertices
-    // Cuboid old_cuboid = cuboids[cuboid_id];
     cuboids.push_back(cuboids[cuboid_id]);
     cuboids[cuboid_id].v5 = v1_idx;
     cuboids[cuboid_id].v6 = v2_idx;
@@ -732,8 +731,6 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     new_cuboid.v4 = v4_idx;
 
     addHalfFaces(cuboid_id, Axis::z);
-
-    // TODO: Update V2f half faces 
 
     // Update the twin faces (mark them as subdivided).
     splitHalfFace(halfFace(cuboid_id, 2), halfFace(cuboid_id, 2), halfFace(new_cuboid_id, 2), Axis::z, middle);
@@ -798,26 +795,23 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
     }
 
      // Update old cuboid vertices
-    // Cuboid& old_cuboid = cuboids[cuboid_id];
     cuboids.push_back(cuboids[cuboid_id]);
 
-    cuboids[cuboid_id].v1 = v1_idx;
-    cuboids[cuboid_id].v4 = v2_idx;
-    cuboids[cuboid_id].v8 = v3_idx;
-    cuboids[cuboid_id].v5 = v4_idx;
+    cuboids[cuboid_id].v2 = v1_idx;
+    cuboids[cuboid_id].v3 = v2_idx;
+    cuboids[cuboid_id].v7 = v3_idx;
+    cuboids[cuboid_id].v6 = v4_idx;
 
     // Update new cuboid vertices
     Cuboid &new_cuboid = cuboids[new_cuboid_id];
-    new_cuboid.v2 = v1_idx;
-    new_cuboid.v3 = v2_idx;
-    new_cuboid.v7 = v3_idx;
-    new_cuboid.v6 = v4_idx;
+    new_cuboid.v1 = v1_idx;
+    new_cuboid.v4 = v2_idx;
+    new_cuboid.v8 = v3_idx;
+    new_cuboid.v5 = v4_idx;
 
     addHalfFaces(cuboid_id, Axis::x);
 
-    // TODO: Update V2f half faces 
-
-     // Update the twin faces (mark them as subdivided).
+    // Update the twin faces (mark them as subdivided).
     splitHalfFace(halfFace(cuboid_id, 0), halfFace(cuboid_id, 0), halfFace(new_cuboid_id, 0), Axis::x, middle);
     splitHalfFace(halfFace(cuboid_id, 1), halfFace(cuboid_id, 1), halfFace(new_cuboid_id, 1), Axis::x, middle);
     splitHalfFace(halfFace(cuboid_id, 2), halfFace(cuboid_id, 2), halfFace(new_cuboid_id, 2), Axis::x, middle);
@@ -878,24 +872,21 @@ uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
         V2lV.push_back({ new_cuboid_id, 5 });
     }
 
-     // Update old cuboid vertices
-    // Cuboid old_cuboid = cuboids[cuboid_id];
+    // Update old cuboid vertices
     cuboids.push_back(cuboids[cuboid_id]);
-    cuboids[cuboid_id].v1 = v1_idx;
-    cuboids[cuboid_id].v2 = v2_idx;
-    cuboids[cuboid_id].v6 = v3_idx;
-    cuboids[cuboid_id].v5 = v4_idx;
+    cuboids[cuboid_id].v4 = v1_idx;
+    cuboids[cuboid_id].v3 = v2_idx;
+    cuboids[cuboid_id].v7 = v3_idx;
+    cuboids[cuboid_id].v8 = v4_idx;
 
     // Update new cuboid vertices
-    Cuboid new_cuboid = cuboids[new_cuboid_id];
-    new_cuboid.v4 = v1_idx;
-    new_cuboid.v3 = v2_idx;
-    new_cuboid.v7 = v3_idx;
-    new_cuboid.v8 = v4_idx;
+    Cuboid& new_cuboid = cuboids[new_cuboid_id];
+    new_cuboid.v1 = v1_idx;
+    new_cuboid.v2 = v2_idx;
+    new_cuboid.v6 = v3_idx;
+    new_cuboid.v5 = v4_idx;
 
     addHalfFaces(cuboid_id, Axis::y);
-
-    // TODO: Update V2f half faces 
 
     // Update the twin faces (mark them as subdivided).
     splitHalfFace(halfFace(cuboid_id, 0), halfFace(cuboid_id, 0), halfFace(new_cuboid_id, 0), Axis::y, middle);
