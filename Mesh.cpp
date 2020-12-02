@@ -121,13 +121,11 @@ void Mesh::updateTwin(const halfFace twin, const halfFace old_hf, const halfFace
 
 
 halfFace& Mesh::Twin(const halfFace& hf) {
-    // TODO: check whether an overflow can occur (as uint32_t calculations are converted to uint8_t)!
     return F2f[hf.getCuboid() * 6 + hf.getLocalId()];
 }
 
 const halfFace& Mesh::Twin(const halfFace& hf) const
 {
-    // TODO: check whether an overflow can occur (as uint32_t calculations are converted to uint8_t)!
     return F2f[hf.getCuboid() * 6 + hf.getLocalId()];
 }
 
@@ -223,14 +221,14 @@ bool Mesh::findVertexAxisX(
         if (hf1_front.isSubdivided()) {
             //       check whether this half face has a split that contains vertex.
             //       if so then return true
-            if (sft.findVertex(hf1_front, vToFind, Axis::x)) {
+            if (sft.findVertex(hf1_front, vToFind)) {
                 return true;
             }
         }
         if (hf1_back.isSubdivided()) {
             //       check whether this half face has a split that contains vertex.
             //       if so then return true
-            if (sft.findVertex(hf1_back, vToFind, Axis::x)) {
+            if (sft.findVertex(hf1_back, vToFind)) {
                 return true;
             }
         }
@@ -240,7 +238,7 @@ bool Mesh::findVertexAxisX(
             if (hf1_front_twin.isSubdivided()) {
                 //       check whether this half face has a split that contains vertex.
                 //       if so then return true
-                if (sft.findVertex(hf1_front_twin, vToFind, Axis::x)) {
+                if (sft.findVertex(hf1_front_twin, vToFind)) {
                     return true;
                 }
             }
@@ -249,7 +247,7 @@ bool Mesh::findVertexAxisX(
             if (hf1_back_twin.isSubdivided()) {
                 //       check whether this half face has a split that contains vertex.
                 //       if so then return true
-                if (sft.findVertex(hf1_back_twin, vToFind, Axis::x)) {
+                if (sft.findVertex(hf1_back_twin, vToFind)) {
                     return true;
                 }
             }
@@ -273,14 +271,14 @@ bool Mesh::findVertexAxisX(
         if (hf2_back.isSubdivided()) {
             //       check whether this half face has a split that contains vertex.
             //       if so then return true
-            if (sft.findVertex(hf2_back, vToFind, Axis::x)) {
+            if (sft.findVertex(hf2_back, vToFind)) {
                 return true;
             }
         }
         if (hf2_front.isSubdivided()) {
             //       check whether this half face has a split that contains vertex.
             //       if so then return true
-            if (sft.findVertex(hf2_front, vToFind, Axis::x)) {
+            if (sft.findVertex(hf2_front, vToFind)) {
                 return true;
             }
         }
@@ -290,7 +288,7 @@ bool Mesh::findVertexAxisX(
             if (hf2_back_twin.isSubdivided()) {
                 //       check whether this half face has a split that contains vertex.
                 //       if so then return true
-                if (sft.findVertex(hf2_back_twin, vToFind, Axis::x)) {
+                if (sft.findVertex(hf2_back_twin, vToFind)) {
                     return true;
                 }
             }
@@ -299,7 +297,7 @@ bool Mesh::findVertexAxisX(
             if (hf2_front_twin.isSubdivided()) {
                 //       check whether this half face has a split that contains vertex.
                 //       if so then return true
-                if (sft.findVertex(hf2_front_twin, vToFind, Axis::x)) {
+                if (sft.findVertex(hf2_front_twin, vToFind)) {
                     return true;
                 }
             }
@@ -310,7 +308,7 @@ bool Mesh::findVertexAxisX(
     if (!hf3.isBorder()) {
         if (hf3.isSubdivided()) {
             //  search for the vertex in this half face. If vertex is found return true.
-            if (sft.findVertex(hf3, vToFind, Axis::x)) {
+            if (sft.findVertex(hf3, vToFind)) {
                 return true;
             }
         }
@@ -320,7 +318,7 @@ bool Mesh::findVertexAxisX(
     if (!hf4.isBorder()) {
         if (hf4.isSubdivided()) {
             //  search for the vertex in this half face. If vertex is found return true.
-            if (sft.findVertex(hf4, vToFind, Axis::x)) {
+            if (sft.findVertex(hf4, vToFind)) {
                 return true;
             }
         }
@@ -353,14 +351,14 @@ bool Mesh::findVertexAxisY(
         if (hf1_right.isSubdivided()) {
             //       check whether hf1_front has a split that contains vertex.
             //       if so then return true
-            if (sft.findVertex(hf1_right, vToFind, Axis::y)) {
+            if (sft.findVertex(hf1_right, vToFind)) {
                 return true;
             }
         }
         if (hf1_left.isSubdivided()) {
             //       check whether hf1_back has a split that contains vertex.
             //       if so then return true
-            if (sft.findVertex(hf1_left, vToFind, Axis::y)) {
+            if (sft.findVertex(hf1_left, vToFind)) {
                 return true;
             }
         }
@@ -370,7 +368,7 @@ bool Mesh::findVertexAxisY(
             if (hf1_right_twin.isSubdivided()) {
                 //       check whether hf1_front has a split that contains vertex.
                 //       if so then return true
-                if (sft.findVertex(hf1_right_twin, vToFind, Axis::y)) {
+                if (sft.findVertex(hf1_right_twin, vToFind)) {
                     return true;
                 }
             }
@@ -379,7 +377,7 @@ bool Mesh::findVertexAxisY(
             if (hf1_left_twin.isSubdivided()) {
                 //       check whether hf1_back has a split that contains vertex.
                 //       if so then return true
-                if (sft.findVertex(hf1_left_twin, vToFind, Axis::y)) {
+                if (sft.findVertex(hf1_left_twin, vToFind)) {
                     return true;
                 }
             }
@@ -403,14 +401,14 @@ bool Mesh::findVertexAxisY(
         if (hf2_left.isSubdivided()) {
             //       check whether this half face has a split that contains vertex.
             //       if so then return true
-            if (sft.findVertex(hf2_left, vToFind, Axis::y)) {
+            if (sft.findVertex(hf2_left, vToFind)) {
                 return true;
             }
         }
         if (hf2_right.isSubdivided()) {
             //       check whether this half face has a split that contains vertex.
             //       if so then return true
-            if (sft.findVertex(hf2_right, vToFind, Axis::y)) {
+            if (sft.findVertex(hf2_right, vToFind)) {
                 return true;
             }
         }
@@ -420,7 +418,7 @@ bool Mesh::findVertexAxisY(
             if (hf2_left_twin.isSubdivided()) {
                 //       check whether this half face has a split that contains vertex.
                 //       if so then return true
-                if (sft.findVertex(hf2_left_twin, vToFind, Axis::y)) {
+                if (sft.findVertex(hf2_left_twin, vToFind)) {
                     return true;
                 }
             }
@@ -429,7 +427,7 @@ bool Mesh::findVertexAxisY(
             if (hf2_right_twin.isSubdivided()) {
                 //       check whether this half face has a split that contains vertex.
                 //       if so then return true
-                if (sft.findVertex(hf2_right_twin, vToFind, Axis::y)) {
+                if (sft.findVertex(hf2_right_twin, vToFind)) {
                     return true;
                 }
             }
@@ -440,7 +438,7 @@ bool Mesh::findVertexAxisY(
     if (!hf3.isBorder()) {
         if (hf3.isSubdivided()) {
             //  search for the vertex in this half face. If vertex is found return true.
-            if (sft.findVertex(hf3, vToFind, Axis::y)) {
+            if (sft.findVertex(hf3, vToFind)) {
                 return true;
             }
         }
@@ -450,7 +448,7 @@ bool Mesh::findVertexAxisY(
     if (!hf4.isBorder()) {
         if (hf4.isSubdivided()) {
             //  search for the vertex in this half face. If vertex is found return true.
-            if (sft.findVertex(hf4, vToFind, Axis::y)) {
+            if (sft.findVertex(hf4, vToFind)) {
                 return true;
             }
         }
@@ -483,14 +481,14 @@ bool Mesh::findVertexAxisZ(
         if (hf1_right.isSubdivided()) {
             //       check whether hf1_front has a split that contains vertex.
             //       if so then return true
-            if (sft.findVertex(hf1_right, vToFind, Axis::z)) {
+            if (sft.findVertex(hf1_right, vToFind)) {
                 return true;
             }
         }
         if (hf1_left.isSubdivided()) {
             //       check whether hf1_back has a split that contains vertex.
             //       if so then return true
-            if (sft.findVertex(hf1_left, vToFind, Axis::z)) {
+            if (sft.findVertex(hf1_left, vToFind)) {
                 return true;
             }
         }
@@ -500,7 +498,7 @@ bool Mesh::findVertexAxisZ(
             if (hf1_right_twin.isSubdivided()) {
                 //       check whether hf1_front has a split that contains vertex.
                 //       if so then return true
-                if (sft.findVertex(hf1_right_twin, vToFind, Axis::z)) {
+                if (sft.findVertex(hf1_right_twin, vToFind)) {
                     return true;
                 }
             }
@@ -509,7 +507,7 @@ bool Mesh::findVertexAxisZ(
             if (hf1_left_twin.isSubdivided()) {
                 //       check whether hf1_back has a split that contains vertex.
                 //       if so then return true
-                if (sft.findVertex(hf1_left_twin, vToFind, Axis::z)) {
+                if (sft.findVertex(hf1_left_twin, vToFind)) {
                     return true;
                 }
             }
@@ -520,7 +518,7 @@ bool Mesh::findVertexAxisZ(
     if (!hf2.isBorder()) {
         if (hf2.isSubdivided()) {
             //  search for the vertex in this half face. If vertex is found return true.
-            if (sft.findVertex(hf2, vToFind, Axis::z)) {
+            if (sft.findVertex(hf2, vToFind)) {
                 return true;
             }
         }
@@ -543,14 +541,14 @@ bool Mesh::findVertexAxisZ(
         if (hf3_right.isSubdivided()) {
             //       check whether hf3_right has a split that contains vertex.
             //       if so then return true
-            if (sft.findVertex(hf3_right, vToFind, Axis::z)) {
+            if (sft.findVertex(hf3_right, vToFind)) {
                 return true;
             }
         }
         if (hf3_left.isSubdivided()) {
             //       check whether hf3_left has a split that contains vertex.
             //       if so then return true
-            if (sft.findVertex(hf3_left, vToFind, Axis::z)) {
+            if (sft.findVertex(hf3_left, vToFind)) {
                 return true;
             }
         }
@@ -560,7 +558,7 @@ bool Mesh::findVertexAxisZ(
             if (hf3_right_twin.isSubdivided()) {
                 //       check whether hf3_right_twin has a split that contains vertex.
                 //       if so then return true
-                if (sft.findVertex(hf3_right_twin, vToFind, Axis::z)) {
+                if (sft.findVertex(hf3_right_twin, vToFind)) {
                     return true;
                 }
             }
@@ -569,7 +567,7 @@ bool Mesh::findVertexAxisZ(
             if (hf3_left_twin.isSubdivided()) {
                 //       check whether hf3_left_twin has a split that contains vertex.
                 //       if so then return true
-                if (sft.findVertex(hf3_left_twin, vToFind, Axis::z)) {
+                if (sft.findVertex(hf3_left_twin, vToFind)) {
                     return true;
                 }
             }
@@ -580,7 +578,7 @@ bool Mesh::findVertexAxisZ(
     if (!hf4.isBorder()) {
         if (hf4.isSubdivided()) {
             //  search for the vertex in this half face. If vertex is found return true.
-            if (sft.findVertex(hf4, vToFind, Axis::z)) {
+            if (sft.findVertex(hf4, vToFind)) {
                 return true;
             }
         }
