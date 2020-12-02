@@ -1,6 +1,9 @@
 #include "Mesh.hpp"
 #include "SubFaceTree.hpp"
 
+#define TINYPLY_IMPLEMENTATION
+#include "tinyply.h"
+
 /*
 * Default construct the mesh the a unit cube
 */
@@ -27,22 +30,47 @@ Mesh::Mesh(/* args */) {
     }
 }
 
-std::vector<Vertex>& Mesh::getVertices() {
+const std::vector<Vertex>& Mesh::getVertices() const {
     return vertices;
 }
-
-std::vector<Cuboid>& Mesh::getCuboids() {
+const std::vector<Cuboid>& Mesh::getCuboids() const {
     return cuboids;
 }
 
-std::vector<halfFace>& Mesh::getF2f() {
+const std::vector<halfFace>& Mesh::getF2f() const {
     return F2f;
 }
 
-std::vector<localVertex>& Mesh::getV2lV() {
+const std::vector<localVertex>& Mesh::getV2lV() const {
     return V2lV;
 }
 
+void Mesh::Save(const std::string& filename)
+{
+    std::filebuf fb_binary;
+    fb_binary.open(filename + ".ply", std::ios::out);
+    std::ostream outstream_binary(&fb_binary);
+    if (outstream_binary.fail()) throw std::runtime_error("failed to open " + filename);
+    tinyply::PlyFile file;
+    file.add_properties_to_element("vertex", { "x", "y", "z" },
+        tinyply::Type::FLOAT32, vertices.size(), reinterpret_cast<uint8_t*>(vertices.data()), tinyply::Type::INVALID, 0);
+    std::vector<uint32_t> face_vert_ids;
+    face_vert_ids.reserve(6 * cuboids.size());
+    for(const auto& cub : cuboids)
+    {
+        for (size_t i = 0; i < 6; i++)
+        {
+            face_vert_ids.push_back(cub.vertices[Hf2Ve[i][0]]);
+            face_vert_ids.push_back(cub.vertices[Hf2Ve[i][1]]);
+            face_vert_ids.push_back(cub.vertices[Hf2Ve[i][2]]);
+            face_vert_ids.push_back(cub.vertices[Hf2Ve[i][3]]);
+        }
+    }
+    file.add_properties_to_element("face", { "vertex_indices" },
+        tinyply::Type::UINT32, cuboids.size() * 6, reinterpret_cast<uint8_t*>(face_vert_ids.data()), tinyply::Type::UINT8, 4);
+    // Write a text file
+    file.write(outstream_binary, false);
+}
 
 void Mesh::splitHalfFace(const halfFace toSplit, const halfFace lower, const halfFace higher, const Axis split_axis, const Vertex& split_point)
 {
@@ -572,46 +600,43 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     const auto middle = (v1_new + v3_new) / 2;
 
     // Check whether the new vertices already exist in the vectors array.
-    uint32_t v1_idx = vertices.size();
-    uint32_t v2_idx = v1_idx + 1;
-    uint32_t v3_idx = v2_idx + 2;
-    uint32_t v4_idx = v3_idx + 3;
+    uint32_t v1_idx = 0;
+    uint32_t v2_idx = 0;
+    uint32_t v3_idx = 0;
+    uint32_t v4_idx = 0;
 
     if (!mergeVertexIfExists(v1_new, v1_idx)) {
         // New vertex push it back, and push back V2lV
+        v1_idx = vertices.size();
         vertices.push_back(v1_new);
         V2lV.push_back({new_cuboid_id, 1});
-        v2_idx--;
-        v3_idx--;
-        v4_idx--;
     }
     if (!mergeVertexIfExists(v2_new, v2_idx)) {
+        v2_idx = vertices.size();
         vertices.push_back(v2_new);
         V2lV.push_back({ new_cuboid_id, 2 });
-        v3_idx--;
-        v4_idx--;
     }
     if (!mergeVertexIfExists(v3_new, v3_idx)) {
+        v3_idx = vertices.size();
         vertices.push_back(v3_new);
         V2lV.push_back({ new_cuboid_id, 3 });
-        v4_idx--;
     }
     if (!mergeVertexIfExists(v4_new, v4_idx)) {
+        v4_idx = vertices.size();
         V2lV.push_back({ new_cuboid_id, 4 });
         vertices.push_back(v4_new);
     }
 
     // Update old cuboid vertices
-    Cuboid old_cuboid = cuboids[cuboid_id];
-    cuboids.push_back(old_cuboid);
-
-    old_cuboid.v5 = v1_idx;
-    old_cuboid.v6 = v2_idx;
-    old_cuboid.v7 = v3_idx;
-    old_cuboid.v8 = v4_idx;
+    // Cuboid old_cuboid = cuboids[cuboid_id];
+    cuboids.push_back(cuboids[cuboid_id]);
+    cuboids[cuboid_id].v5 = v1_idx;
+    cuboids[cuboid_id].v6 = v2_idx;
+    cuboids[cuboid_id].v7 = v3_idx;
+    cuboids[cuboid_id].v8 = v4_idx;
 
     // Update new cuboid vertices
-    Cuboid new_cuboid = cuboids[new_cuboid_id];
+    Cuboid& new_cuboid = cuboids[new_cuboid_id];
     new_cuboid.v1 = v1_idx;
     new_cuboid.v2 = v2_idx;
     new_cuboid.v3 = v3_idx;
@@ -657,42 +682,40 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
 
     const uint32_t new_cuboid_id = cuboids.size();
 
-    uint32_t v1_idx = vertices.size();
-    uint32_t v2_idx = v1_idx + 1;
-    uint32_t v3_idx = v2_idx + 2;
-    uint32_t v4_idx = v3_idx + 3;
+    uint32_t v1_idx = 0;
+    uint32_t v2_idx = 0;
+    uint32_t v3_idx = 0;
+    uint32_t v4_idx = 0;
 
     if (!mergeVertexIfExists(v1_new, v1_idx)) {
+        v1_idx = vertices.size();
         V2lV.push_back({ new_cuboid_id, 1 });
         vertices.push_back(v1_new);
-        v2_idx--;
-        v3_idx--;
-        v4_idx--;
     }
     if (!mergeVertexIfExists(v2_new, v2_idx)) {
+        v2_idx = vertices.size();
         vertices.push_back(v2_new);
         V2lV.push_back({ new_cuboid_id, 4 });
-        v3_idx--;
-        v4_idx--;
     }
     if (!mergeVertexIfExists(v3_new, v3_idx)) {
+        v3_idx = vertices.size();
         V2lV.push_back({ new_cuboid_id, 8 });
         vertices.push_back(v3_new);
-        v4_idx--;
     }
     if (!mergeVertexIfExists(v4_new, v4_idx)) {
+        v4_idx = vertices.size();
         vertices.push_back(v4_new);
         V2lV.push_back({ new_cuboid_id, 5 });
     }
 
      // Update old cuboid vertices
-    Cuboid& old_cuboid = cuboids[cuboid_id];
-    cuboids.push_back(old_cuboid);
+    // Cuboid& old_cuboid = cuboids[cuboid_id];
+    cuboids.push_back(cuboids[cuboid_id]);
 
-    old_cuboid.v1 = v1_idx;
-    old_cuboid.v4 = v2_idx;
-    old_cuboid.v8 = v3_idx;
-    old_cuboid.v5 = v4_idx;
+    cuboids[cuboid_id].v1 = v1_idx;
+    cuboids[cuboid_id].v4 = v2_idx;
+    cuboids[cuboid_id].v8 = v3_idx;
+    cuboids[cuboid_id].v5 = v4_idx;
 
     // Update new cuboid vertices
     Cuboid &new_cuboid = cuboids[new_cuboid_id];
@@ -740,41 +763,39 @@ uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
 
     const uint32_t new_cuboid_id = cuboids.size();
 
-    uint32_t v1_idx = vertices.size();
-    uint32_t v2_idx = v1_idx + 1;
-    uint32_t v3_idx = v2_idx + 2;
-    uint32_t v4_idx = v3_idx + 3;
+    uint32_t v1_idx = 0;
+    uint32_t v2_idx = 0;
+    uint32_t v3_idx = 0;
+    uint32_t v4_idx = 0;
 
     if (!mergeVertexIfExists(v1_new, v1_idx)) {
+        v1_idx = vertices.size();
         V2lV.push_back({ new_cuboid_id, 1 });
         vertices.push_back(v1_new);
-        v2_idx--;
-        v3_idx--;
-        v4_idx--;
     }
     if (!mergeVertexIfExists(v2_new, v2_idx)) {
+        v2_idx = vertices.size();
         vertices.push_back(v2_new);
         V2lV.push_back({ new_cuboid_id, 2 });
-        v3_idx--;
-        v4_idx--;
     }
     if (!mergeVertexIfExists(v3_new, v3_idx)) {
+        v3_idx = vertices.size();
         V2lV.push_back({ new_cuboid_id, 6 });
         vertices.push_back(v3_new);
-        v4_idx--;
     }
     if (!mergeVertexIfExists(v4_new, v4_idx)) {
+        v4_idx = vertices.size();
         vertices.push_back(v4_new);
         V2lV.push_back({ new_cuboid_id, 5 });
     }
 
      // Update old cuboid vertices
-    Cuboid old_cuboid = cuboids[cuboid_id];
-    cuboids.push_back(old_cuboid);
-    old_cuboid.v1 = v1_idx;
-    old_cuboid.v2 = v2_idx;
-    old_cuboid.v6 = v3_idx;
-    old_cuboid.v5 = v4_idx;
+    // Cuboid old_cuboid = cuboids[cuboid_id];
+    cuboids.push_back(cuboids[cuboid_id]);
+    cuboids[cuboid_id].v1 = v1_idx;
+    cuboids[cuboid_id].v2 = v2_idx;
+    cuboids[cuboid_id].v6 = v3_idx;
+    cuboids[cuboid_id].v5 = v4_idx;
 
     // Update new cuboid vertices
     Cuboid new_cuboid = cuboids[new_cuboid_id];

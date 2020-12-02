@@ -164,8 +164,6 @@ TEST_CASE("Bad behaviour splits on different axis.", "[Mesh]")
 	CHECK(mesh1.SplitAlongYZ(0, -1.2) == -1);
 }
 
-
-//TODO: This should pass but it throws a vector subscript out of range message when updating the twin or parent.
 TEST_CASE("Good behaviour on a single split along XY plane.", "[Mesh]") 
 {
 	Mesh mesh;
@@ -177,4 +175,5 @@ TEST_CASE("Good behaviour on a single split along XY plane.", "[Mesh]")
 	SECTION("The two elements touch eachother") {
 		CHECK(mesh.Twin({ 0,1 }) == halfFace(1,0));
 	}
+	mesh.Save("1split");
 }

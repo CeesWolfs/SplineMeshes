@@ -14,12 +14,12 @@
 * local Half face id to vertex id
 */
 static constexpr uint32_t Hf2Ve[6][4] = {
-    {1,2,3,4},
-    {5,6,7,8},
-    {4,3,7,8},
-    {2,3,7,6},
+    {0,1,2,3},
+    {4,5,6,7},
+    {3,2,6,7},
     {1,2,6,5},
-    {1,4,8,5}
+    {0,1,5,4},
+    {0,3,7,4}
 };
 
 class Mesh
@@ -52,10 +52,12 @@ public:
     /**
     * Getters for the private vectors to access them publicly via the Mesh class.
     */
-    std::vector<Vertex>& getVertices();
-    std::vector<Cuboid>& getCuboids();
-    std::vector<halfFace>& getF2f();
-    std::vector<localVertex>& getV2lV();
+    const std::vector<Vertex>& getVertices() const;
+    const std::vector<Cuboid>& getCuboids() const;
+    const std::vector<halfFace>& getF2f() const;
+    const std::vector<localVertex>& getV2lV() const;
+
+    void Save(const std::string& filename);
 
     /**
      * Returns a reference to the twin half face of the given half face "hf"

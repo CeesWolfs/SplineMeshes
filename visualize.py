@@ -5,7 +5,7 @@ if len(sys.argv) < 2:
 	sys.exit(1)
 mesh = pv.read(sys.argv[1])
 p = pv.Plotter()
-p.add_mesh(mesh, show_edges=True, color='white')
+p.add_mesh(mesh, show_edges=True, color=None, opacity=0.85)
 p.add_mesh(mesh.extract_cells(0),
            color='pink', edge_color='blue',
            line_width=5, show_edges=True)
