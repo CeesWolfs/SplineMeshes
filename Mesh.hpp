@@ -48,7 +48,6 @@ private:
     void updateTwin(const halfFace twin, const halfFace old_hf, const halfFace new_hf, const Vertex& middle);
 
 public:
-
     /**
     * Getters for the private vectors to access them publicly via the Mesh class.
     */
@@ -116,6 +115,7 @@ public:
 
     /**
      * Add function which pushes the new half and twin half faces of the new cuboid in vector F2F
+     * This method adds 6 half faces to the new cuboid.
      *
     */
     void addHalfFaces(const uint32_t cuboid_id, const Axis split_axis);

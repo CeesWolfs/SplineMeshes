@@ -18,6 +18,9 @@ typedef struct _node
     halfFace lower_child;
     halfFace top_child;
 } Node;
+
+typedef std::pair<halfFace, halfFace> HalfFacePair;
+
 class SubFaceIterator;
 
 /*  SubFaceTree class, stores all subfaces in the mesh
@@ -35,9 +38,16 @@ public:
     SubFaceTree(const SubFaceTree&) = delete; // prevent expensive accidental copies
     static uint32_t toNodeIndex(halfFace from) {return from.id >> 3;}
     SubFaceIterator find(halfFace start_node, const halfFace toFind, const Vertex& toFindmiddle);
+
+    /* 
+        [description] searches the tree for the vertex that we need to find starting from start_node half face.
+        [returns] true if vertex is found, otherwise false.
+    */
+    bool findVertex(halfFace start_node, const Vertex& vertexToFind, const Axis splitAxis) const;
+
     halfFace splitHalfFace(const halfFace start_node, const halfFace twin, const Axis split_axis, const Vertex& split_point,const halfFace lower,const halfFace higher);
     // Split a SubFaceTree in two along a split, returns the two start nodes, also splits twin faces automatically if necassary
-    std::pair<halfFace, halfFace> splitTree(const halfFace tree_head, const Axis split_axis, const Vertex& split_point, const halfFace lower, const halfFace higher, std::vector<halfFace>& F2f);
+    HalfFacePair splitTree(const halfFace tree_head, const Axis split_axis, const Vertex& split_point, const halfFace lower, const halfFace higher, std::vector<halfFace>& F2f);
     void removeNode(uint32_t node_index, std::vector<halfFace>& F2f);
     // Obtain an iterator to iterate through the subHalfFace tree starting at the start node
     SubFaceIterator begin(halfFace start_node);
