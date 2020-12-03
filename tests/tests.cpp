@@ -59,7 +59,7 @@ TEST_CASE("Vertices can be found in a subface tree", "[SubFaceTree]") {
 	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::y, { 0.5, 0.5, 0.5 }, { 1,0 }, { 2,0 });
 	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.25, 0.5 }, { 1,0 }, { 3,0 });
 	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.75, 0.5 }, { 2,0 }, { 4,0 });
-	CHECK(subfaces.findVertex(F2f[1], { 0,0.5,0.5 }, Axis::y));
+	CHECK(subfaces.findVertex(F2f[1], { 0,0.5,0.5 }));
 }
 */
 
