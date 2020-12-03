@@ -8,7 +8,7 @@ endif()
 add_library(catch_main STATIC catch_main.cpp)
 target_link_libraries(catch_main ${CONAN_LIBS})
 
-add_executable(tests tests.cpp ../SubFaceTree.cpp ../SubFaceTree.hpp ../Mesh.cpp ../Mesh.hpp)
+add_executable(tests tests.cpp ../SubFaceTree.cpp ../SubFaceTree.hpp ../Mesh.cpp ../Mesh.hpp ../QuantitiesOfInterest.cpp ../QuantitiesOfInterest.hpp)
 target_link_libraries(tests PRIVATE project_warnings catch_main)
 
 # automatically discover tests that are defined in catch based test files you can modify the unittests.
