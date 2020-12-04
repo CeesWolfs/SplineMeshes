@@ -2,6 +2,23 @@
 #include "../SubFaceTree.hpp"
 #include "../Mesh.hpp"
 #include "../Types.hpp"
+#include "../QuantitiesOfInterest.hpp"
+
+
+
+TEST_CASE("Test for basic quantities of interest constructor") {
+	Mesh mesh;
+	mesh.SplitAlongXY(0, 0.5);
+	QuantitiesOfInterest q(mesh);
+	const bool checkVertices = q.getMesh().getVertices().size() == mesh.getVertices().size();
+	const bool checkCuboids = q.getMesh().getCuboids().size() == mesh.getCuboids().size();
+	const bool checkF2f = q.getMesh().getF2f().size() == mesh.getF2f().size();
+	const bool checkV2lV = q.getMesh().getV2lV().size() == mesh.getV2lV().size();
+	CHECK(checkVertices);
+	CHECK(checkCuboids);
+	CHECK(checkF2f);
+	CHECK(checkV2lV);
+}
 
 
 TEST_CASE("A single subface split works as expected", "[SubFaceTree]")
@@ -271,3 +288,20 @@ TEST_CASE("Multiple splits on different axis with splitting for each axis done s
 	CHECK(mesh.getCuboids().size() == 16);
 	mesh.Save("separate_axis_splitted_cuboids");
 }
+
+//TODO: subfacetree findVertex method's 'assert(child == toFind)' fails on this test case, while this case should work fine: first divide the cuboid along the y-axis in fourths, then divide the first of the four in fourths along the z-axis, lastly divide the third of the four in fourths along the x-axis.
+/** Test case seems to be working fine until splits with cuboid id 2 start to take place.
+TEST_CASE("4 by 4 split on the left half") {
+	Mesh mesh;
+	CHECK(mesh.SplitAlongXZ(0, 0.25) == 1);
+	CHECK(mesh.SplitAlongXZ(1, 0.5) == 2);
+	CHECK(mesh.SplitAlongXZ(2, 0.75) == 3);
+	CHECK(mesh.SplitAlongXY(0, 0.75) == 4);
+	CHECK(mesh.SplitAlongXY(0, 0.5) == 5);
+	CHECK(mesh.SplitAlongXY(0, 0.25) == 6);
+	CHECK(mesh.SplitAlongYZ(2, 0.75) == 7);
+	CHECK(mesh.SplitAlongYZ(2, 0.5) == 8);
+	CHECK(mesh.SplitAlongYZ(2, 0.25) == 9);
+	mesh.Save("eq_cuboids");
+}
+*/

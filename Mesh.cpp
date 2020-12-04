@@ -44,6 +44,11 @@ const std::vector<localVertex>& Mesh::getV2lV() const {
     return V2lV;
 }
 
+const SubFaceTree& Mesh::getSft() const
+{
+    return sft;
+}
+
 void Mesh::Save(const std::string& filename)
 {
     std::filebuf fb_binary;

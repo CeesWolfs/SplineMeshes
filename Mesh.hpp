@@ -55,6 +55,8 @@ public:
     const std::vector<Cuboid>& getCuboids() const;
     const std::vector<halfFace>& getF2f() const;
     const std::vector<localVertex>& getV2lV() const;
+    const SubFaceTree& getSft() const;
+
 
     void Save(const std::string& filename);
 
