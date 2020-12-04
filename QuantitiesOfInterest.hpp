@@ -14,6 +14,7 @@ class QuantitiesOfInterest {
 
     private:
         Mesh mesh;
+        std::vector<std::vector<int>> incidence;
 
     public:
         //Default constructor
@@ -21,6 +22,9 @@ class QuantitiesOfInterest {
 
         //Constructor with mesh
         QuantitiesOfInterest(const Mesh& mesh);
+
+        //getter for mesh
+        const Mesh& getMesh() const;
 
         //The amount of faces connected to the given vertex.
         int vertexConnectivity(const Vertex& vertex);

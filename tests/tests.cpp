@@ -2,6 +2,23 @@
 #include "../SubFaceTree.hpp"
 #include "../Mesh.hpp"
 #include "../Types.hpp"
+#include "../QuantitiesOfInterest.hpp"
+
+
+
+TEST_CASE("Test for basic quantities of interest constructor") {
+	Mesh mesh;
+	mesh.SplitAlongXY(0, 0.5);
+	QuantitiesOfInterest q(mesh);
+	const bool checkVertices = q.getMesh().getVertices().size() == mesh.getVertices().size();
+	const bool checkCuboids = q.getMesh().getCuboids().size() == mesh.getCuboids().size();
+	const bool checkF2f = q.getMesh().getF2f().size() == mesh.getF2f().size();
+	const bool checkV2lV = q.getMesh().getV2lV().size() == mesh.getV2lV().size();
+	CHECK(checkVertices);
+	CHECK(checkCuboids);
+	CHECK(checkF2f);
+	CHECK(checkV2lV);
+}
 
 
 TEST_CASE("A single subface split works as expected", "[SubFaceTree]")
