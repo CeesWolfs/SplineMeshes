@@ -226,7 +226,7 @@ HalfFacePair SubFaceTree::splitTree(const halfFace tree_head, const Axis split_a
     if (!tree_head.isSubdivided()) {
         assert(!tree_head.isBorder());
         // We need to split this halfFace
-        F2f[tree_head.getCuboid() * 6 + tree_head.getLocalId()] = splitHalfFace(F2f[tree_head.getCuboid() * 6 + tree_head.getLocalId()], tree_head, split_axis, split_point, lower, higher);
+        F2f[static_cast<size_t>(tree_head.getCuboid()) * 6 + tree_head.getLocalId()] = splitHalfFace(F2f[static_cast<size_t>(tree_head.getCuboid()) * 6 + tree_head.getLocalId()], tree_head, split_axis, split_point, lower, higher);
         return { tree_head, tree_head };
     }
     halfFace lower_head{(uint32_t)-1}, top_head{(uint32_t)-1};

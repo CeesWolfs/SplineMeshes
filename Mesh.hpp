@@ -161,7 +161,7 @@ public:
     Mesh();
 
     /* Destructor of mesh object */
-    ~Mesh();
+    ~Mesh() = default;
 };
 
 #endif
