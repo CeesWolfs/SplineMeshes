@@ -26,7 +26,7 @@ class QuantitiesOfInterest {
         //getter for mesh
         const Mesh& getMesh() const;
 
-        //The amount of faces connected to the given vertex.
+        //The amount of elements connected to the given vertex.
         int vertexConnectivity(const Vertex& vertex);
 
         //All maximal segments of the given axis.

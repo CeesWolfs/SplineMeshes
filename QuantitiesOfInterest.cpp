@@ -38,16 +38,24 @@ const Mesh& QuantitiesOfInterest::getMesh() const {
 }
 
 /**
- * Returns the amount of half-faces which are connected to/ linked with the given vertex.
+ * Returns the amount of elements which are connected to/ linked with the given vertex.
  */
 int QuantitiesOfInterest::vertexConnectivity(const Vertex& vertex) {
-    //TODO: This doesn't seem to work as expected, needs a different approach.
-    assert(std::find(this->mesh.getVertices().begin(), this->mesh.getVertices().end(), vertex) != this->mesh.getVertices().end());
+    //find index of given vertex in vertices vector
+    int idx = -1;
+    for (int i = 0; i < mesh.getVertices().size(); i++) {
+        if (mesh.getVertices()[i] == vertex) {
+            idx = i;
+            break;
+        }
+    }
     int x = 0;
-    //check how many half faces are reachable to the given vertex.
-    for (int i = 0; i < mesh.getF2f().size(); i++) {
-        if (mesh.getSft().findVertex(mesh.getF2f()[i], vertex)) {
-            x++;
+    //check how many elements are reachable to the given vertex.
+    for (int j = 0; j < mesh.getCuboids().size(); j++) {
+        for (int k : mesh.getCuboids()[j].vertices) {
+            if (idx == k) {
+                x++;
+            }
         }
     }
     return x;

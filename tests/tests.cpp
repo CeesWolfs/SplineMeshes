@@ -49,6 +49,25 @@ TEST_CASE("Test for basic quantities of interest constructor") {
 	CHECK(checkV2lV);
 }
 
+TEST_CASE("Test for basic quantities of interest vertex connectivity") {
+	Mesh mesh;
+	QuantitiesOfInterest q(mesh);
+	//Check that border vertices are connected to 1 cuboid only.
+	for (int i = 0; i < 8; i++) {
+		const Vertex vertex = mesh.getVertices()[i];
+		CHECK(q.vertexConnectivity(vertex) == 1);
+	}
+}
+
+TEST_CASE("Test for divided quantities of interest vertex connectivity") {
+	Mesh mesh;
+	mesh.SplitAlongXY(0, 0.5);
+	QuantitiesOfInterest q(mesh);
+	//Check that split vertex is connected to 2 cuboids.
+	const Vertex vertex = mesh.getVertices()[10];
+	CHECK(q.vertexConnectivity(vertex) == 2);
+}
+
 TEST_CASE("A single subface split works as expected", "[SubFaceTree]")
 {
   SubFaceTree subfaces;
