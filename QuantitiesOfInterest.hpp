@@ -7,14 +7,16 @@
 #include <string>
 #include <fstream>
 #include <algorithm>
+#include <Eigen/Dense>
 #include "Mesh.hpp"
 #include "Types.hpp"
+using Eigen::MatrixXf;
 
 class QuantitiesOfInterest {
 
     private:
         Mesh mesh;
-        std::vector<std::vector<int>> incidence;
+        MatrixXf incidence;
 
     public:
         //Default constructor
@@ -33,7 +35,7 @@ class QuantitiesOfInterest {
         const std::vector<std::vector<halfFace>> maximalSegments(const Axis axis);
 
         //Indicence matrix which shows connectivity between the half faces and their vertices.
-        const std::vector<std::vector<int>> incidenceMatrix();
+        const MatrixXf& incidenceMatrix();
 
         //Destructor
         ~QuantitiesOfInterest();

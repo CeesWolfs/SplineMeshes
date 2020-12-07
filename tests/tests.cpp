@@ -288,6 +288,10 @@ TEST_CASE("Split a cube equally into fourths") {
 	SECTION("Sanity check, touching faces is commutative") {
 		CHECK(SanityChecks::AllAdjacent(mesh));
 	}
+	QuantitiesOfInterest q(mesh);
+	CHECK(q.vertexConnectivity(mesh.getVertices()[12]) == 4);
+	CHECK(q.vertexConnectivity(mesh.getVertices()[13]) == 4);
+	std::cout << q.incidenceMatrix() << std::endl;
 	mesh.Save("Fourths");
 }
 
@@ -366,5 +370,21 @@ TEST_CASE("4 by 4 split on the left half") {
 	CHECK(mesh.SplitAlongYZ(2, 0.25) == 9);
 	CHECK(mesh.SplitAlongXY(1, 0.35) == 10);
 	CHECK(SanityChecks::AllAdjacent(mesh));
+
+	//check some complex vertex connectivities.
+	QuantitiesOfInterest q(mesh);
+	//Check that split vertex is connected to 3 cuboids.
+	const Vertex vertex = mesh.getVertices()[30];
+	//TODO: Another bug: mesh vertex with id 30 is connected to 3 cuboids in the visualization, but only connects to 2 of them.
+	//CHECK(q.vertexConnectivity(vertex) == 3);
 	mesh.Save("eq_cuboids");
+}
+
+TEST_CASE("Check incidence matrix of initial cuboid") {
+	//initial cuboid: 1 cuboid and 8 vertices, so a 8 x 1 matrix, all with ones, since all vertices are connected to the cuboid.
+	Mesh mesh;
+	QuantitiesOfInterest q(mesh);
+	for (int i = 0; i < 8; i++) {
+		CHECK(q.incidenceMatrix()(i, 0) == 1);
+	}
 }

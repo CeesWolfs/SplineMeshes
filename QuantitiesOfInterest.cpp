@@ -1,17 +1,12 @@
 #include "QuantitiesOfInterest.hpp"
-
 /**
  * To check properties of initial mesh.
  */
-QuantitiesOfInterest::QuantitiesOfInterest(): mesh() {
-
+QuantitiesOfInterest::QuantitiesOfInterest(): mesh(), incidence(mesh.getVertices().size(), mesh.getCuboids().size()) {
     //initialize (n x m) incidence matrix with zeros.
-    for (int i = 0; i < mesh.getVertices().size(); i++) {
-        incidence.push_back({});
-    }
     for (int j = 0; j < mesh.getVertices().size(); j++) {
-        for (int i = 0; i < mesh.getF2f().size(); i++) {
-            incidence[j].push_back(0);
+        for (int i = 0; i < mesh.getCuboids().size(); i++) {
+            incidence(j, i) = 0;
         }
     }
 }
@@ -19,16 +14,13 @@ QuantitiesOfInterest::QuantitiesOfInterest(): mesh() {
 /**
  * To check properties of already existing mesh.
  */
-QuantitiesOfInterest::QuantitiesOfInterest(const Mesh& m) {
+QuantitiesOfInterest::QuantitiesOfInterest(const Mesh& m): incidence(m.getVertices().size(), m.getCuboids().size()) {
     this->mesh = m;
 
     //initialize (n x m) incidence matrix with zeros.
-    for (int i = 0; i < m.getV2lV().size(); i++) {
-        incidence.push_back({});
-    }
     for (int j = 0; j < m.getV2lV().size(); j++) {
-        for (int i = 0; i < m.getF2f().size(); i++) {
-            incidence[j].push_back(0);
+        for (int i = 0; i < m.getCuboids().size(); i++) {
+            incidence(j, i) = 0;
         }
     }
 }
@@ -42,8 +34,8 @@ const Mesh& QuantitiesOfInterest::getMesh() const {
  */
 int QuantitiesOfInterest::vertexConnectivity(const Vertex& vertex) {
     //find index of given vertex in vertices vector
-    int idx = -1;
-    for (int i = 0; i < mesh.getVertices().size(); i++) {
+    uint32_t idx = -1;
+    for (auto i = 0; i < mesh.getVertices().size(); i++) {
         if (mesh.getVertices()[i] == vertex) {
             idx = i;
             break;
@@ -52,7 +44,7 @@ int QuantitiesOfInterest::vertexConnectivity(const Vertex& vertex) {
     int x = 0;
     //check how many elements are reachable to the given vertex.
     for (int j = 0; j < mesh.getCuboids().size(); j++) {
-        for (int k : mesh.getCuboids()[j].vertices) {
+        for (auto k : mesh.getCuboids()[j].vertices) {
             if (idx == k) {
                 x++;
             }
@@ -71,17 +63,27 @@ const std::vector<std::vector<halfFace>> QuantitiesOfInterest::maximalSegments(c
     return res;
 }
 
+
 /**
- * Indicence matrix which shows connectivity between the half faces and their vertices.
- * Insert for each half face a 1 if it is connected with a vertex. Same holds for twin faces.
+ * Indicence matrix which shows connectivity between the elements and their vertices.
+ * Insert for each element a 1 if it is connected with a vertex.
  * Row indices (outer vector ids) should represent vertex ids and column indices (inner vector ids) 
- * should represent half-face ids to which the (row) vertex is connected to. 
- * If there is no connection between the half-face and vertex, then a 0 is inserted at that position.
+ * should represent cuboid ids to which the (row) vertex is connected to. 
+ * If there is no connection between the cuboid and vertex, then a 0 is inserted at that position.
  */
-const std::vector<std::vector<int>> QuantitiesOfInterest::incidenceMatrix() {
-    //TODO:
-    const std::vector<std::vector<int>> res;
-    return res;
+const MatrixXf& QuantitiesOfInterest::incidenceMatrix() {
+    for (int j = 0; j < mesh.getV2lV().size(); j++) {
+        for (int i = 0; i < mesh.getCuboids().size(); i++) {
+            if (mesh.getV2lV()[j].getCuboid() == i) {
+                for (auto k : mesh.getCuboids()[i].vertices) {
+                    if (k == j) {
+                        incidence(j, i) = 1;
+                    }
+                }
+            }
+        }
+    }
+    return incidence;
 }
 
 
