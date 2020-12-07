@@ -55,8 +55,8 @@ public:
     const std::vector<Cuboid>& getCuboids() const;
     const std::vector<halfFace>& getF2f() const;
     const std::vector<localVertex>& getV2lV() const;
-    const SubFaceTree& getSft() const;
 
+    const SubFaceTree& getSft() const;
 
     void Save(const std::string& filename);
 
@@ -102,6 +102,18 @@ public:
         const halfFace& hf4,
         const Vertex& vToFind
     ) const;
+
+    /* 
+     * Note not an efficient function, used only for testing purposes
+     * Tests wether two elements are directly adjacent, that is touch at a face
+     */
+    bool Adjacent(uint32_t elem1, uint32_t elem2) const;
+
+    /*
+    * A simpler generalized find vertex method, finds a vertex on the border of a face, checks all three required elements for the vertex
+    */
+    bool mergeVertexIfExistsRewrite(const Vertex& v, uint32_t& vref, HalfFacePair hftoCheck, uint8_t local_id, Axis split_axis);
+
 
     /*
     *

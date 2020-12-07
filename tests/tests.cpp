@@ -4,6 +4,35 @@
 #include "../Types.hpp"
 #include "../QuantitiesOfInterest.hpp"
 
+namespace SanityChecks {
+	/*
+	* Check if element A touches B, that B touches A 
+	*/
+	bool AllAdjacent(const Mesh& mesh) {
+		for (size_t cub = 0; cub < mesh.getCuboids().size(); ++cub)
+		{
+			for (size_t i = 0; i < 6; i++)
+			{
+				auto twin = mesh.Twin(halfFace(cub, i));
+				if (twin.isBorder()) continue;
+				if (twin.isSubdivided()) {
+					for (auto it = mesh.getSft().cbegin(twin); it != mesh.getSft().cend(); ++it)
+					{
+						if (!mesh.Adjacent((*it).getCuboid(), cub)) {
+							return false;
+						}
+					}
+				}
+				else {
+					if (!mesh.Adjacent(twin.getCuboid(), cub)) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+}
 
 
 TEST_CASE("Test for basic quantities of interest constructor") {
@@ -19,7 +48,6 @@ TEST_CASE("Test for basic quantities of interest constructor") {
 	CHECK(checkF2f);
 	CHECK(checkV2lV);
 }
-
 
 TEST_CASE("A single subface split works as expected", "[SubFaceTree]")
 {
@@ -68,17 +96,17 @@ TEST_CASE("A subface can be split a few times", "[SubFaceTree]")
 	CHECK(subFaces.size() == 6);
 }
 
-/**
-TEST_CASE("Vertices can be found in a subface tree", "[SubFaceTree]") {
+TEST_CASE("Vertices can be found on the border of a subface tree", "[SubFaceTree]") {
 	SubFaceTree subfaces;
 	std::vector<halfFace> F2f;
 	std::fill_n(std::back_inserter(F2f), 5*6, halfFace(-1));
 	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::y, { 0.5, 0.5, 0.5 }, { 1,0 }, { 2,0 });
-	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.25, 0.5 }, { 1,0 }, { 3,0 });
-	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.75, 0.5 }, { 2,0 }, { 4,0 });
-	CHECK(subfaces.findVertex(F2f[1], { 0,0.5,0.5 }));
+	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::x, { 0.5, 0.25, 0.5 }, { 1,0 }, { 3,0 });
+	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::x, { 0.5, 0.75, 0.5 }, { 2,0 }, { 4,0 });
+	halfFace face{(uint32_t)-1};
+	CHECK(subfaces.findVertexBorder(F2f[1], { 1.0, 0.5, .5 }, Axis::y, face));
+	CHECK(face == halfFace(3, 0));
 }
-*/
 
 TEST_CASE("A subface can be changed", "[SubFaceTree]")
 {
@@ -238,6 +266,9 @@ TEST_CASE("Split a cube equally into fourths") {
 	SECTION("Number of vertices is correct") {
 		CHECK(mesh.getVertices().size() == 18);
 	}
+	SECTION("Sanity check, touching faces is commutative") {
+		CHECK(SanityChecks::AllAdjacent(mesh));
+	}
 	mesh.Save("Fourths");
 }
 
@@ -270,6 +301,7 @@ TEST_CASE("Multiple splits on different axis (simultanuously) combined (16 cuboi
 		CHECK(mesh.SplitAlongYZ(i+2, (i+1) * step) == i + 3);
 	}
 	CHECK(mesh.getCuboids().size() == 16);
+	CHECK(SanityChecks::AllAdjacent(mesh));
 	mesh.Save("sixteen_cuboids");
 }
 
@@ -286,11 +318,22 @@ TEST_CASE("Multiple splits on different axis with splitting for each axis done s
 		CHECK(mesh.SplitAlongYZ(i, (i + 1) * step) == i + 1);
 	}
 	CHECK(mesh.getCuboids().size() == 16);
+	CHECK(SanityChecks::AllAdjacent(mesh));
 	mesh.Save("separate_axis_splitted_cuboids");
 }
 
-//TODO: subfacetree findVertex method's 'assert(child == toFind)' fails on this test case, while this case should work fine: first divide the cuboid along the y-axis in fourths, then divide the first of the four in fourths along the z-axis, lastly divide the third of the four in fourths along the x-axis.
-/** Test case seems to be working fine until splits with cuboid id 2 start to take place.
+
+TEST_CASE("Simplest case for findVertexRewrite") {
+	Mesh mesh;
+	mesh.SplitAlongXY(0, 0.5); // Split cube in two
+	mesh.SplitAlongYZ(0, 0.5); // Spit the botomm again in two
+	// See if we can find a vertex
+	uint32_t vref;
+	CHECK(mesh.mergeVertexIfExistsRewrite({ 0.5, 0 ,0.5 }, vref, { halfFace(1, 0), halfFace(1, 4) }, 1, Axis::x));
+	CHECK(mesh.getVertices()[vref] == Vertex({ 0.5, 0, 0.5 }));
+}
+
+// Test splitting a bigface
 TEST_CASE("4 by 4 split on the left half") {
 	Mesh mesh;
 	CHECK(mesh.SplitAlongXZ(0, 0.25) == 1);
@@ -302,6 +345,7 @@ TEST_CASE("4 by 4 split on the left half") {
 	CHECK(mesh.SplitAlongYZ(2, 0.75) == 7);
 	CHECK(mesh.SplitAlongYZ(2, 0.5) == 8);
 	CHECK(mesh.SplitAlongYZ(2, 0.25) == 9);
+	CHECK(mesh.SplitAlongXY(1, 0.35) == 10);
+	CHECK(SanityChecks::AllAdjacent(mesh));
 	mesh.Save("eq_cuboids");
 }
-*/
