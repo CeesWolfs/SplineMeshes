@@ -158,12 +158,12 @@ constexpr int localIndexinFace(uint8_t face_ind, uint8_t local_vertex_idx) {
 std::pair<bool, uint32_t> Mesh::mergeVertexIfExistsRewrite(const Vertex& v, HalfFacePair toCheck, uint8_t local_id, Axis split_axis)
 {
     // HalfFace in which the vertex to be found lays
-    halfFace face{static_cast<uint32_t>(-1)};
-    uint32_t vref{static_cast<uint32_t>(-1)};
+    halfFace face{border_id};
+    uint32_t vref{border_id};
     auto const checkHf = [&, split_axis](halfFace hf) {
         if (hf.isBorder()) return false;
         const auto twin = Twin(hf);
-        if (twin.isSubdivided() && !twin.isBorder()) {
+        if (twin.isSubdivided()) {
             if (sft.findVertexBorder(twin, v, split_axis, face)) {
                 // Find the local id of the vertex in the touching element
                 const auto local_vertex_in_opposite = Hf2Ve[opposite_face(hf.getLocalId())][localIndexinFace(hf.getLocalId(), local_id)];

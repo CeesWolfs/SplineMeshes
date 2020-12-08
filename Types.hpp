@@ -64,7 +64,7 @@ struct localVertex {
  * id 0-5 -> stored in lowest three bits. Local id 6 means the half face is
  * a reference to the subhalfface data structure. Local id 7 denotes a border half
 */
-constexpr uint32_t border_id = -1;
+constexpr uint32_t border_id = static_cast<uint32_t>(-1 & ~0x7);
 
 typedef struct _halfFace
 {
@@ -84,10 +84,10 @@ typedef struct _halfFace
 	}
     // Check if it is a pointer to a node in the subfacetree. Id 6 incidates that the node is left, id 7 -> right.
 	bool isSubdivided() const {
-		return getLocalId() == 6 || getLocalId() == 7;
+		return getLocalId() >= 6;
 	}
 	bool isBorder() const {
-		return id == -1;
+		return id == border_id;
 	}
 	_halfFace(uint32_t cuboid_id, uint8_t local_id) {
 		id = (cuboid_id << 3) + local_id;

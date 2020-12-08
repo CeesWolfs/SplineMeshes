@@ -71,7 +71,7 @@ TEST_CASE("Test for divided quantities of interest vertex connectivity") {
 TEST_CASE("A single subface split works as expected", "[SubFaceTree]")
 {
   SubFaceTree subfaces;
-  std::vector<halfFace> F2f{ (uint32_t)-1,{0,1},(uint32_t)-1,(uint32_t)-1,(uint32_t)-1,(uint32_t)-1 };
+  std::vector<halfFace> F2f{ border_id,{0,1},border_id,border_id,border_id,border_id };
   F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.5, 0.5 }, { 1,0 }, { 5,0 });
   std::vector<halfFace> subFaces;
   for (auto it = subfaces.begin(F2f[1]); it != subfaces.end(); ++it) {
@@ -85,7 +85,7 @@ TEST_CASE("A single subface split works as expected", "[SubFaceTree]")
 TEST_CASE("A subface can be split twice", "[SubFaceTree]")
 {
   SubFaceTree subfaces;
-  std::vector<halfFace> F2f{ (uint32_t)-1,{0,1},(uint32_t)-1,(uint32_t)-1,(uint32_t)-1,(uint32_t)-1 };
+  std::vector<halfFace> F2f{ border_id,{0,1},border_id,border_id,border_id,border_id };
   F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.5, 0.5 }, { 1,0 }, { 5,0 });
   F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.25, 0.5, 0.5 }, { 1,0 }, { 6,0 });
   std::vector<halfFace> subFaces;
@@ -101,7 +101,7 @@ TEST_CASE("A subface can be split twice", "[SubFaceTree]")
 TEST_CASE("A subface can be split a few times", "[SubFaceTree]")
 {
 	SubFaceTree subfaces;
-	std::vector<halfFace> F2f{ (uint32_t)-1,{0,1},(uint32_t)-1,(uint32_t)-1,(uint32_t)-1,(uint32_t)-1 };
+	std::vector<halfFace> F2f{ border_id,{0,1},border_id,border_id,border_id,border_id };
 	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.5, 0.5 }, { 1,0 }, { 5,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.25, 0.5, 0.5 }, { 1,0 }, { 6,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.75, 0.5, 0.5 }, { 5,0 }, { 7,0 });
@@ -118,11 +118,11 @@ TEST_CASE("A subface can be split a few times", "[SubFaceTree]")
 TEST_CASE("Vertices can be found on the border of a subface tree", "[SubFaceTree]") {
 	SubFaceTree subfaces;
 	std::vector<halfFace> F2f;
-	std::fill_n(std::back_inserter(F2f), 5*6, halfFace(-1));
+	std::fill_n(std::back_inserter(F2f), 5*6, halfFace(border_id));
 	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::y, { 0.5, 0.5, 0.5 }, { 1,0 }, { 2,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::x, { 0.5, 0.25, 0.5 }, { 1,0 }, { 3,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::x, { 0.5, 0.75, 0.5 }, { 2,0 }, { 4,0 });
-	halfFace face{(uint32_t)-1};
+	halfFace face{border_id};
 	CHECK(subfaces.findVertexBorder(F2f[1], { 1.0, 0.5, .5 }, Axis::y, face));
 	CHECK(face == halfFace(3, 0));
 }
@@ -131,7 +131,7 @@ TEST_CASE("A subface can be changed", "[SubFaceTree]")
 {
 	SubFaceTree subfaces;
 	std::vector<halfFace> F2f{ 6 * 10 };
-	std::fill_n(std::back_inserter(F2f), 60, halfFace(-1));
+	std::fill_n(std::back_inserter(F2f), 60, halfFace(border_id));
 	F2f[1] = subfaces.splitHalfFace({ 1,0 }, { 0,1 }, Axis::x, { 0.5, 0.5, 0.5 }, { 1,0 }, { 5,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.25, 0.5, 0.5 }, { 1,0 }, { 6,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.75, 0.5, 0.5 }, { 5,0 }, { 7,0 });
@@ -214,7 +214,7 @@ TEST_CASE("A test for the mesh constructor which should initialize the cuboid wi
 	CHECK(mesh.getV2lV().size() == 8);
 
 	for (int i = 0; i < 6; i++) {
-		CHECK(mesh.getF2f()[i].id == -1);
+		CHECK(mesh.getF2f()[i].id == border_id);
 	}
 	for (uint8_t i = 0; i < 8; i++)
 	{

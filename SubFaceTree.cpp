@@ -10,7 +10,7 @@ SubFaceIterator<SubFaceTree> SubFaceTree::begin(halfFace start_node) {
 }
 
 SubFaceIterator<SubFaceTree> SubFaceTree::end() {
-    return {this, (uint32_t)-1, false};
+    return {this, static_cast<uint32_t>(-1), false};
 }
 
 SubFaceIterator<const SubFaceTree> SubFaceTree::cbegin(halfFace start_node) const {
@@ -23,7 +23,7 @@ SubFaceIterator<const SubFaceTree> SubFaceTree::cbegin(halfFace start_node) cons
 }
 
 SubFaceIterator<const SubFaceTree>SubFaceTree::cend() const {
-    return { this, (uint32_t)-1, false };
+    return { this, static_cast<uint32_t>(-1), false };
 }
 
 void SubFaceTree::updateSubTreeTwins(const halfFace head, const halfFace old_hf, const halfFace new_hf, const Vertex& split_point, std::vector<halfFace>& F2f)
@@ -34,7 +34,7 @@ void SubFaceTree::updateSubTreeTwins(const halfFace head, const halfFace old_hf,
             *it = new_hf;
         }
         else {
-            F2f[twin.getCuboid() * 6 + twin.getLocalId()] = new_hf;
+            F2f[static_cast<size_t>(twin.getCuboid()) * 6 + twin.getLocalId()] = new_hf;
         }
     };
     if (!head.isSubdivided()) {
@@ -229,7 +229,7 @@ HalfFacePair SubFaceTree::splitTree(const halfFace tree_head, const Axis split_a
         F2f[static_cast<size_t>(tree_head.getCuboid()) * 6 + tree_head.getLocalId()] = splitHalfFace(F2f[static_cast<size_t>(tree_head.getCuboid()) * 6 + tree_head.getLocalId()], tree_head, split_axis, split_point, lower, higher);
         return { tree_head, tree_head };
     }
-    halfFace lower_head{(uint32_t)-1}, top_head{(uint32_t)-1};
+    halfFace lower_head{border_id}, top_head{border_id};
     auto node_idx = toNodeIndex(tree_head);
     const Node node = nodes[node_idx];
     if (node.split_axis == split_axis)
