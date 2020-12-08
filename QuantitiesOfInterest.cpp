@@ -2,27 +2,13 @@
 /**
  * To check properties of initial mesh.
  */
-QuantitiesOfInterest::QuantitiesOfInterest(): mesh(), incidence(mesh.getVertices().size(), mesh.getCuboids().size()) {
-    //initialize (n x m) incidence matrix with zeros.
-    for (int j = 0; j < mesh.getVertices().size(); j++) {
-        for (int i = 0; i < mesh.getCuboids().size(); i++) {
-            incidence(j, i) = 0;
-        }
-    }
-}
+QuantitiesOfInterest::QuantitiesOfInterest(): mesh(), incidence(mesh.getVertices().size(), mesh.getCuboids().size()) {}
 
 /**
  * To check properties of already existing mesh.
  */
 QuantitiesOfInterest::QuantitiesOfInterest(const Mesh& m): incidence(m.getVertices().size(), m.getCuboids().size()) {
     this->mesh = m;
-
-    //initialize (n x m) incidence matrix with zeros.
-    for (int j = 0; j < m.getV2lV().size(); j++) {
-        for (int i = 0; i < m.getCuboids().size(); i++) {
-            incidence(j, i) = 0;
-        }
-    }
 }
 
 const Mesh& QuantitiesOfInterest::getMesh() const {
@@ -43,6 +29,7 @@ int QuantitiesOfInterest::vertexConnectivity(const Vertex& vertex) {
     }
     int x = 0;
     //check how many elements are reachable to the given vertex.
+    // TODO implement non O(n) algo
     for (int j = 0; j < mesh.getCuboids().size(); j++) {
         for (auto k : mesh.getCuboids()[j].vertices) {
             if (idx == k) {
@@ -70,19 +57,23 @@ const std::vector<std::vector<halfFace>> QuantitiesOfInterest::maximalSegments(c
  * Row indices (outer vector ids) should represent vertex ids and column indices (inner vector ids) 
  * should represent cuboid ids to which the (row) vertex is connected to. 
  * If there is no connection between the cuboid and vertex, then a 0 is inserted at that position.
+ * Todo check if needed, and implement faster algorithm
  */
-const MatrixXf& QuantitiesOfInterest::incidenceMatrix() {
+const Eigen::SparseMatrix<bool>& QuantitiesOfInterest::incidenceMatrix() {
+    std::vector<Triplet> tripletList;
+    tripletList.reserve(mesh.getV2lV().size() * 3);
     for (int j = 0; j < mesh.getV2lV().size(); j++) {
         for (int i = 0; i < mesh.getCuboids().size(); i++) {
             if (mesh.getV2lV()[j].getCuboid() == i) {
                 for (auto k : mesh.getCuboids()[i].vertices) {
                     if (k == j) {
-                        incidence(j, i) = 1;
+                        tripletList.push_back({ j,i,true });
                     }
                 }
             }
         }
     }
+    incidence.setFromTriplets(tripletList.cbegin(), tripletList.cend());
     return incidence;
 }
 

@@ -13,14 +13,14 @@
 /*
 * local Half face id to vertex id
 */
-static constexpr uint32_t Hf2Ve[6][4] = {
+static constexpr std::array<std::array<uint8_t, 4>, 6> Hf2Ve = { {
     {0,1,2,3},
     {4,5,6,7},
     {3,2,6,7},
     {1,2,6,5},
     {0,1,5,4},
     {0,3,7,4}
-};
+}};
 
 class Mesh
 {
@@ -112,7 +112,7 @@ public:
     /*
     * A simpler generalized find vertex method, finds a vertex on the border of a face, checks all three required elements for the vertex
     */
-    bool mergeVertexIfExistsRewrite(const Vertex& v, uint32_t& vref, HalfFacePair hftoCheck, uint8_t local_id, Axis split_axis);
+    std::pair<bool, uint32_t> mergeVertexIfExistsRewrite(const Vertex& v, HalfFacePair hftoCheck, uint8_t local_id, Axis split_axis);
 
 
     /*

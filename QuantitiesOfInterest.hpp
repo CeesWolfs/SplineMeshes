@@ -8,15 +8,18 @@
 #include <fstream>
 #include <algorithm>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include "Mesh.hpp"
 #include "Types.hpp"
+
 using Eigen::MatrixXf;
+typedef Eigen::Triplet<double> Triplet;
 
 class QuantitiesOfInterest {
 
     private:
         Mesh mesh;
-        MatrixXf incidence;
+        Eigen::SparseMatrix<bool>  incidence;
 
     public:
         //Default constructor
@@ -35,7 +38,7 @@ class QuantitiesOfInterest {
         const std::vector<std::vector<halfFace>> maximalSegments(const Axis axis);
 
         //Indicence matrix which shows connectivity between the half faces and their vertices.
-        const MatrixXf& incidenceMatrix();
+        const Eigen::SparseMatrix<bool>& incidenceMatrix();
 
         //Destructor
         ~QuantitiesOfInterest();

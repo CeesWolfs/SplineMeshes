@@ -16,7 +16,16 @@ option(ENABLE_TESTING "Enable Test Builds" ON)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-add_executable(CuboidalSplines main.cpp Mesh.cpp QuantitiesOfInterest.cpp subFaceTree.cpp Types.hpp QuantitiesOfInterest.hpp SubFaceTree.hpp Mesh.hpp)
+include(CheckIPOSupported)
+check_ipo_supported(RESULT supported OUTPUT error)
+if( supported )
+    message(STATUS "IPO / LTO enabled")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+else()
+    message(STATUS "IPO / LTO not supported: <${error}>")
+endif()
+
+add_executable(CuboidalSplines main.cpp Mesh.cpp QuantitiesOfInterest.cpp SubFaceTree.cpp Types.hpp QuantitiesOfInterest.hpp SubFaceTree.hpp Mesh.hpp)
 target_link_libraries(CuboidalSplines ${CONAN_LIBS})
 
 if(ENABLE_TESTING)

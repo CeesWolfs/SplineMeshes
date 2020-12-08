@@ -155,56 +155,39 @@ constexpr int localIndexinFace(uint8_t face_ind, uint8_t local_vertex_idx) {
     return std::distance(std::cbegin(Hf2Ve[face_ind]), res);
 }
 
-bool Mesh::mergeVertexIfExistsRewrite(const Vertex& v, uint32_t& vref, HalfFacePair toCheck, uint8_t local_id, Axis split_axis)
+std::pair<bool, uint32_t> Mesh::mergeVertexIfExistsRewrite(const Vertex& v, HalfFacePair toCheck, uint8_t local_id, Axis split_axis)
 {
-    bool vertexFound = false;
-    auto hftoCheck = toCheck.first;
-    auto hftoCheck2 = toCheck.second;
-    const auto twinCheck = Twin(hftoCheck);
     // HalfFace in which the vertex to be found lays
-    halfFace face{ (uint32_t)-1 };
-    halfFace hftoCheck3{ (uint32_t)-1 };
-    // First check the first necassary halfFace
-    if(twinCheck.isBorder()) {}
-    else if (twinCheck.isSubdivided())
-    {
-        vertexFound = sft.findVertexBorder(twinCheck, v, split_axis, face);
-        if (vertexFound) {
-            // Find the local id of the vertex in the touching element
-            const auto local_vertex_in_opposite = Hf2Ve[opposite_face(hftoCheck.getLocalId())][localIndexinFace(hftoCheck.getLocalId(), local_id)];
-            vref = cuboids[face.getCuboid()].vertices[local_vertex_in_opposite];
-            return true;
-        }
-        if(!face.isBorder())
-            hftoCheck3 = halfFace(face.getCuboid(), hftoCheck2.getLocalId());
-    }
-    else {
-        hftoCheck3 = halfFace(twinCheck.getCuboid(), hftoCheck2.getLocalId());
-    }
-    if (!hftoCheck3.isBorder()) {
-        const auto twinCheck3 = Twin(hftoCheck3);
-        // Not found yet, check the diagonal element from the main element
-        if (twinCheck3.isSubdivided() && !twinCheck3.isBorder()) {
-            vertexFound = sft.findVertexBorder(twinCheck3, v, split_axis, face);
-            if (vertexFound) {
+    halfFace face{static_cast<uint32_t>(-1)};
+    uint32_t vref{static_cast<uint32_t>(-1)};
+    auto const checkHf = [&, split_axis](halfFace hf) {
+        if (hf.isBorder()) return false;
+        const auto twin = Twin(hf);
+        if (twin.isSubdivided() && !twin.isBorder()) {
+            if (sft.findVertexBorder(twin, v, split_axis, face)) {
                 // Find the local id of the vertex in the touching element
-                const auto local_vertex_in = Hf2Ve[opposite_face(hftoCheck3.getLocalId())][localIndexinFace(hftoCheck3.getLocalId(), local_id)];
-                vref = cuboids[face.getCuboid()].vertices[local_vertex_in];
+                const auto local_vertex_in_opposite = Hf2Ve[opposite_face(hf.getLocalId())][localIndexinFace(hf.getLocalId(), local_id)];
+                vref = cuboids[face.getCuboid()].vertices[local_vertex_in_opposite];
                 return true;
             }
         }
+        return false;
+    };
+    // Check the first halfFace
+    if (checkHf(toCheck.first)) {
+        return { true, vref };
     }
-    const auto twinCheck2 = Twin(hftoCheck2);
-    if (twinCheck2.isSubdivided() && !twinCheck2.isBorder()) {
-        vertexFound = sft.findVertexBorder(twinCheck2, v, split_axis, face);
-        if (vertexFound) {
-            // Find the local id of the vertex in the touching element
-            const auto local_vertex_in_opposite = Hf2Ve[opposite_face(hftoCheck2.getLocalId())][localIndexinFace(hftoCheck2.getLocalId(), local_id)];
-            vref = cuboids[face.getCuboid()].vertices[local_vertex_in_opposite];
-            return true;
-        }
+    // Check the right diagonal face
+    halfFace front_elem = face.isBorder() ? toCheck.first : face;
+    halfFace diagonalHf = front_elem.isBorder() ? border_id: halfFace(front_elem.getCuboid(), toCheck.second.getLocalId());
+    if (checkHf(diagonalHf)) {
+        return { true, vref };
     }
-    return false;
+    // Finally check the second face
+    if (checkHf(toCheck.second)) {
+        return { true, vref };
+    }
+    return { false, vref };
 }
 
 bool Mesh::Adjacent(uint32_t elem1, uint32_t elem2) const
@@ -239,235 +222,161 @@ void Mesh::addHalfFaces(const uint32_t cuboid_id, const Axis split_axis) {
 
 
 uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
+    constexpr uint8_t face_to_split = 1;
     // border checks
     if ((z_split <= vertices[cuboids[cuboid_id].v1].z) || z_split >= vertices[cuboids[cuboid_id].v5].z) {
         return -1; // Splitpoint not in cuboid
     }
-    const uint32_t new_cuboid_id = cuboids.size();
-
     // All the old vertices
-    const Vertex v1_old = vertices[cuboids[cuboid_id].v1];
-    const Vertex v2_old = vertices[cuboids[cuboid_id].v2];
-    const Vertex v3_old = vertices[cuboids[cuboid_id].v3];
-    const Vertex v4_old = vertices[cuboids[cuboid_id].v4];
-
+    std::array<Vertex, 4> v_old;
+    std::generate(v_old.begin(), v_old.end(), [&, idx = 0]() mutable {
+        return vertices[cuboids[cuboid_id].vertices[idx++]];
+    });
     // All the new vertices
-    const Vertex v1_new = { v1_old.x, v1_old.y, z_split };
-    const Vertex v2_new = { v2_old.x, v2_old.y, z_split };
-    const Vertex v3_new = { v3_old.x, v3_old.y, z_split };
-    const Vertex v4_new = { v4_old.x, v4_old.y, z_split };
-
-    const auto middle = (v1_new + v3_new) / 2;
-
-    // Check whether the new vertices already exist in the vectors array.
-    uint32_t v1_idx = 0;
-    uint32_t v2_idx = 0;
-    uint32_t v3_idx = 0;
-    uint32_t v4_idx = 0;
-
-    if (!mergeVertexIfExistsRewrite(v1_new, v1_idx, {halfFace(cuboid_id, 5), halfFace(cuboid_id, 4)}, 4, Axis::z)) {
-        // New vertex push it back, and push back V2lV
-        v1_idx = vertices.size();
-        vertices.push_back(v1_new);
-        V2lV.push_back({new_cuboid_id, 0});
+    std::array<Vertex, 4> v_new;
+    std::generate(v_new.begin(), v_new.end(), [&, idx = 0]() mutable {
+        return Vertex{ v_old[idx].x, v_old[idx++].y, z_split };
+    });
+    const auto middle = (v_new[0] + v_new[2]) / 2;
+    const uint32_t new_cuboid_id = cuboids.size();
+    std::array<uint32_t, 4> vertex_inds;
+    constexpr uint8_t hfsCheck[4][2] = { {5,4}, {4,3}, {3,2}, {2,5} };
+    for (size_t i = 0; i < vertex_inds.size(); i++)
+    {
+        auto [found, vertex] = mergeVertexIfExistsRewrite(v_new[i], { {cuboid_id, hfsCheck[i][0]}, {cuboid_id, hfsCheck[i][1]} }, Hf2Ve[face_to_split][i], Axis::z);
+        if (found) {
+            vertex_inds[i] = vertex;
+        }
+        else {
+            vertex_inds[i] = vertices.size();
+            V2lV.push_back({ new_cuboid_id, Hf2Ve[opposite_face(face_to_split)][i] });
+            vertices.push_back(v_new[i]);
+        }
     }
-    if (!mergeVertexIfExistsRewrite(v2_new, v2_idx, { halfFace(cuboid_id, 4), halfFace(cuboid_id, 3) }, 5, Axis::z)) {
-        v2_idx = vertices.size();
-        vertices.push_back(v2_new);
-        V2lV.push_back({ new_cuboid_id, 1 });
-    }
-    if (!mergeVertexIfExistsRewrite(v3_new, v3_idx, { halfFace(cuboid_id, 3), halfFace(cuboid_id, 2) }, 6, Axis::z)) {
-        v3_idx = vertices.size();
-        vertices.push_back(v3_new);
-        V2lV.push_back({ new_cuboid_id, 2 });
-    }
-    if (!mergeVertexIfExistsRewrite(v4_new, v4_idx, { halfFace(cuboid_id, 2), halfFace(cuboid_id, 5) }, 7, Axis::z)) {
-        v4_idx = vertices.size();
-        V2lV.push_back({ new_cuboid_id, 3 });
-        vertices.push_back(v4_new);
-    }
-
-    // Update old cuboid vertices
+    // Update all the vertices for the new and old element
     cuboids.push_back(cuboids[cuboid_id]);
-    cuboids[cuboid_id].v5 = v1_idx;
-    cuboids[cuboid_id].v6 = v2_idx;
-    cuboids[cuboid_id].v7 = v3_idx;
-    cuboids[cuboid_id].v8 = v4_idx;
-
-    // Update new cuboid vertices
-    Cuboid& new_cuboid = cuboids[new_cuboid_id];
-    new_cuboid.v1 = v1_idx;
-    new_cuboid.v2 = v2_idx;
-    new_cuboid.v3 = v3_idx;
-    new_cuboid.v4 = v4_idx;
-
+    for (size_t i = 0; i < vertex_inds.size(); i++)
+    {
+        cuboids[cuboid_id].vertices[Hf2Ve[face_to_split][i]] = vertex_inds[i];
+        cuboids[new_cuboid_id].vertices[Hf2Ve[opposite_face(face_to_split)][i]] = vertex_inds[i];
+    }
     addHalfFaces(cuboid_id, Axis::z);
-
     // Update the twin faces (mark them as subdivided).
-    splitHalfFace(halfFace(cuboid_id, 2), halfFace(cuboid_id, 2), halfFace(new_cuboid_id, 2), Axis::z, middle);
-    splitHalfFace(halfFace(cuboid_id, 3), halfFace(cuboid_id, 3), halfFace(new_cuboid_id, 3), Axis::z, middle);
-    splitHalfFace(halfFace(cuboid_id, 4), halfFace(cuboid_id, 4), halfFace(new_cuboid_id, 4), Axis::z, middle);
-    splitHalfFace(halfFace(cuboid_id, 5), halfFace(cuboid_id, 5), halfFace(new_cuboid_id, 5), Axis::z, middle);
+    for (size_t hf = 0; hf < 6; hf++)
+    {
+        if (hf == face_to_split || hf == opposite_face(face_to_split)) continue;
+        splitHalfFace(halfFace(cuboid_id, hf), halfFace(cuboid_id, hf), halfFace(new_cuboid_id, hf), Axis::z, middle);
+    }
     // Update the top halfFace
-    updateHalfFace(halfFace(cuboid_id, 1), halfFace(new_cuboid_id, 1), middle);
+    updateHalfFace(halfFace(cuboid_id, face_to_split), halfFace(new_cuboid_id, face_to_split), middle);
     // Point the top of the old cuboid to the new cuboid
-    Twin(halfFace(cuboid_id, 1)) = halfFace(new_cuboid_id, 0);
-    
+    Twin(halfFace(cuboid_id, face_to_split)) = halfFace(new_cuboid_id, opposite_face(face_to_split));
     return new_cuboid_id;
 }
 
 
 uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
+    constexpr uint8_t face_to_split = 3;
     // border checks
     if ((x_split <= vertices[cuboids[cuboid_id].v1].x) || x_split >= vertices[cuboids[cuboid_id].v2].x) {
         return -1; // Splitpoint not in cuboid
     }
-
     // All the old vertices
-    const Vertex v1_old = vertices[cuboids[cuboid_id].v1];
-    const Vertex v2_old = vertices[cuboids[cuboid_id].v4];
-    const Vertex v3_old = vertices[cuboids[cuboid_id].v8];
-    const Vertex v4_old = vertices[cuboids[cuboid_id].v5];
-
+    std::array<Vertex, 4> v_old;
+    std::generate(v_old.begin(), v_old.end(), [&, idx = 0]() mutable {
+        return vertices[cuboids[cuboid_id].vertices[Hf2Ve[face_to_split][idx++]]];
+    });
     // All the new vertices
-    const Vertex v1_new = { x_split, v1_old.y, v1_old.z };
-    const Vertex v2_new = { x_split, v2_old.y, v2_old.z };
-    const Vertex v3_new = { x_split, v3_old.y, v3_old.z };
-    const Vertex v4_new = { x_split, v4_old.y, v4_old.z };
-
-    const auto middle = (v1_new + v3_new) / 2;
-
+    std::array<Vertex, 4> v_new;
+    std::generate(v_new.begin(), v_new.end(), [&, idx = 0]() mutable {
+        return Vertex{ x_split, v_old[idx].y, v_old[idx++].z };
+    });
+    const auto middle = (v_new[0] + v_new[2]) / 2;
     const uint32_t new_cuboid_id = cuboids.size();
-
-    uint32_t v1_idx = 0;
-    uint32_t v2_idx = 0;
-    uint32_t v3_idx = 0;
-    uint32_t v4_idx = 0;
-
-    if (!mergeVertexIfExistsRewrite(v1_new, v1_idx, { halfFace(cuboid_id, 4), halfFace(cuboid_id, 0) }, 1, Axis::x)) {
-        v1_idx = vertices.size();
-        V2lV.push_back({ new_cuboid_id, 0 });
-        vertices.push_back(v1_new);
+    std::array<uint32_t, 4> vertex_inds;
+    constexpr uint8_t hfsCheck[4][2] = { {0,4}, {0,2}, {1,2}, {1,4} };
+    for (size_t i = 0; i < vertex_inds.size(); i++)
+    {
+        auto [found, vertex] = mergeVertexIfExistsRewrite(v_new[i], { {cuboid_id, hfsCheck[i][0]}, {cuboid_id, hfsCheck[i][1]} }, Hf2Ve[face_to_split][i], Axis::x);
+        if (found) {
+            vertex_inds[i] = vertex;
+        }
+        else {
+            vertex_inds[i] = vertices.size();
+            V2lV.push_back({ new_cuboid_id, Hf2Ve[opposite_face(face_to_split)][i] });
+            vertices.push_back(v_new[i]);
+        }
     }
-    if (!mergeVertexIfExistsRewrite(v2_new, v2_idx, { halfFace(cuboid_id, 2), halfFace(cuboid_id, 0) }, 2, Axis::x)) {
-        v2_idx = vertices.size();
-        vertices.push_back(v2_new);
-        V2lV.push_back({ new_cuboid_id, 3 });
-    }
-    if (!mergeVertexIfExistsRewrite(v3_new, v3_idx, { halfFace(cuboid_id, 2), halfFace(cuboid_id, 1) }, 6, Axis::x)) {
-        v3_idx = vertices.size();
-        V2lV.push_back({ new_cuboid_id, 7 });
-        vertices.push_back(v3_new);
-    }
-    if (!mergeVertexIfExistsRewrite(v4_new, v4_idx, { halfFace(cuboid_id, 4), halfFace(cuboid_id, 1) }, 5, Axis::x)) {
-        v4_idx = vertices.size();
-        vertices.push_back(v4_new);
-        V2lV.push_back({ new_cuboid_id, 4 });
-    }
-
-     // Update old cuboid vertices
+    // Update all the vertices for the new and old element
     cuboids.push_back(cuboids[cuboid_id]);
-
-    cuboids[cuboid_id].v2 = v1_idx;
-    cuboids[cuboid_id].v3 = v2_idx;
-    cuboids[cuboid_id].v7 = v3_idx;
-    cuboids[cuboid_id].v6 = v4_idx;
-
-    // Update new cuboid vertices
-    Cuboid &new_cuboid = cuboids[new_cuboid_id];
-    new_cuboid.v1 = v1_idx;
-    new_cuboid.v4 = v2_idx;
-    new_cuboid.v8 = v3_idx;
-    new_cuboid.v5 = v4_idx;
-
+    for (size_t i = 0; i < vertex_inds.size(); i++)
+    {
+        cuboids[cuboid_id].vertices[Hf2Ve[face_to_split][i]] = vertex_inds[i];
+        cuboids[new_cuboid_id].vertices[Hf2Ve[opposite_face(face_to_split)][i]] = vertex_inds[i];
+    }
     addHalfFaces(cuboid_id, Axis::x);
-
     // Update the twin faces (mark them as subdivided).
-    splitHalfFace(halfFace(cuboid_id, 0), halfFace(cuboid_id, 0), halfFace(new_cuboid_id, 0), Axis::x, middle);
-    splitHalfFace(halfFace(cuboid_id, 1), halfFace(cuboid_id, 1), halfFace(new_cuboid_id, 1), Axis::x, middle);
-    splitHalfFace(halfFace(cuboid_id, 2), halfFace(cuboid_id, 2), halfFace(new_cuboid_id, 2), Axis::x, middle);
-    splitHalfFace(halfFace(cuboid_id, 4), halfFace(cuboid_id, 4), halfFace(new_cuboid_id, 4), Axis::x, middle);
+    for (size_t hf = 0; hf < 6; hf++)
+    {
+        if (hf == face_to_split || hf == opposite_face(face_to_split)) continue;
+        splitHalfFace(halfFace(cuboid_id, hf), halfFace(cuboid_id, hf), halfFace(new_cuboid_id, hf), Axis::x, middle);
+    }
     // Update the top halfFace
-    updateHalfFace(halfFace(cuboid_id, 3), halfFace(new_cuboid_id, 3), middle);
+    updateHalfFace(halfFace(cuboid_id, face_to_split), halfFace(new_cuboid_id, face_to_split), middle);
     // Point the top of the old cuboid to the new cuboid
-    Twin(halfFace(cuboid_id, 3)) = halfFace(new_cuboid_id, 5);
-    
+    Twin(halfFace(cuboid_id, face_to_split)) = halfFace(new_cuboid_id, opposite_face(face_to_split));
     return new_cuboid_id;
 }
 
 uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
+    constexpr uint8_t face_to_split = 2;
     // border checks
     if ((y_split <= vertices[cuboids[cuboid_id].v2].y) || y_split >= vertices[cuboids[cuboid_id].v3].y) {
         return -1; // Splitpoint not in cuboid
     }
-
     // All the old vertices
-    const Vertex v1_old = vertices[cuboids[cuboid_id].v1];
-    const Vertex v2_old = vertices[cuboids[cuboid_id].v2];
-    const Vertex v3_old = vertices[cuboids[cuboid_id].v6];
-    const Vertex v4_old = vertices[cuboids[cuboid_id].v5];
-
+    std::array<Vertex, 4> v_old;
+    std::generate(v_old.begin(), v_old.end(), [&, idx = 0]() mutable {
+        return vertices[cuboids[cuboid_id].vertices[Hf2Ve[face_to_split][idx++]]];
+    });
     // All the new vertices
-    const Vertex v1_new = { v1_old.x, y_split, v1_old.z };
-    const Vertex v2_new = { v2_old.x, y_split, v2_old.z };
-    const Vertex v3_new = { v3_old.x, y_split, v3_old.z };
-    const Vertex v4_new = { v4_old.x, y_split, v4_old.z };
-
-    const auto middle = (v1_new + v3_new) / 2;
-
+    std::array<Vertex, 4> v_new;
+    std::generate(v_new.begin(), v_new.end(), [&, idx = 0]() mutable {
+        return Vertex{ v_old[idx].x, y_split, v_old[idx++].z };
+    });
+    const auto middle = (v_new[0] + v_new[2]) / 2;
     const uint32_t new_cuboid_id = cuboids.size();
-
-    uint32_t v1_idx = 0;
-    uint32_t v2_idx = 0;
-    uint32_t v3_idx = 0;
-    uint32_t v4_idx = 0;
-
-    if (!mergeVertexIfExistsRewrite(v1_new, v1_idx, { halfFace(cuboid_id, 5), halfFace(cuboid_id, 0) }, 3, Axis::y)) {
-        v1_idx = vertices.size();
-        V2lV.push_back({ new_cuboid_id, 0 });
-        vertices.push_back(v1_new);
+    std::array<uint32_t, 4> vertex_inds;
+    constexpr uint8_t hfsCheck[4][2] = { {0,5}, {0,3}, {1,3}, {1,5} };
+    for (size_t i = 0; i < vertex_inds.size(); i++)
+    {
+        auto [found, vertex] = mergeVertexIfExistsRewrite(v_new[i], { {cuboid_id,  hfsCheck[i][0]}, {cuboid_id, hfsCheck[i][0]} }, Hf2Ve[face_to_split][i], Axis::y);
+        if (found) {
+            vertex_inds[i] = vertex;
+        }
+        else {
+            vertex_inds[i] = vertices.size();
+            V2lV.push_back({ new_cuboid_id, Hf2Ve[opposite_face(face_to_split)][i] });
+            vertices.push_back(v_new[i]);
+        }
     }
-    if (!mergeVertexIfExistsRewrite(v2_new, v2_idx, { halfFace(cuboid_id, 3), halfFace(cuboid_id, 0) }, 2, Axis::y)) {
-        v2_idx = vertices.size();
-        vertices.push_back(v2_new);
-        V2lV.push_back({ new_cuboid_id, 1 });
-    }
-    if (!mergeVertexIfExistsRewrite(v3_new, v3_idx, { halfFace(cuboid_id, 3), halfFace(cuboid_id, 1) }, 6, Axis::y)) {
-        v3_idx = vertices.size();
-        V2lV.push_back({ new_cuboid_id, 5 });
-        vertices.push_back(v3_new);
-    }
-    if (!mergeVertexIfExistsRewrite(v4_new, v4_idx, { halfFace(cuboid_id, 5), halfFace(cuboid_id, 1) }, 7, Axis::y)) {
-        v4_idx = vertices.size();
-        vertices.push_back(v4_new);
-        V2lV.push_back({ new_cuboid_id, 4 });
-    }
-
-    // Update old cuboid vertices
+    // Update all the vertices for the new and old element
     cuboids.push_back(cuboids[cuboid_id]);
-    cuboids[cuboid_id].v4 = v1_idx;
-    cuboids[cuboid_id].v3 = v2_idx;
-    cuboids[cuboid_id].v7 = v3_idx;
-    cuboids[cuboid_id].v8 = v4_idx;
-
-    // Update new cuboid vertices
-    Cuboid& new_cuboid = cuboids[new_cuboid_id];
-    new_cuboid.v1 = v1_idx;
-    new_cuboid.v2 = v2_idx;
-    new_cuboid.v6 = v3_idx;
-    new_cuboid.v5 = v4_idx;
-
+    for (size_t i = 0; i < vertex_inds.size(); i++)
+    {
+        cuboids[cuboid_id].vertices[Hf2Ve[face_to_split][i]] = vertex_inds[i];
+        cuboids[new_cuboid_id].vertices[Hf2Ve[opposite_face(face_to_split)][i]] = vertex_inds[i];
+    }
     addHalfFaces(cuboid_id, Axis::y);
-
     // Update the twin faces (mark them as subdivided).
-    splitHalfFace(halfFace(cuboid_id, 0), halfFace(cuboid_id, 0), halfFace(new_cuboid_id, 0), Axis::y, middle);
-    splitHalfFace(halfFace(cuboid_id, 1), halfFace(cuboid_id, 1), halfFace(new_cuboid_id, 1), Axis::y, middle);
-    splitHalfFace(halfFace(cuboid_id, 3), halfFace(cuboid_id, 3), halfFace(new_cuboid_id, 3), Axis::y, middle);
-    splitHalfFace(halfFace(cuboid_id, 5), halfFace(cuboid_id, 5), halfFace(new_cuboid_id, 5), Axis::y, middle);
+    for (size_t hf = 0; hf < 6; hf++)
+    {
+        if (hf == face_to_split || hf == opposite_face(face_to_split)) continue;
+        splitHalfFace(halfFace(cuboid_id, hf), halfFace(cuboid_id, hf), halfFace(new_cuboid_id, hf), Axis::y, middle);
+    }
     // Update the top halfFace
-    updateHalfFace(halfFace(cuboid_id, 2), halfFace(new_cuboid_id, 2), middle);
+    updateHalfFace(halfFace(cuboid_id, face_to_split), halfFace(new_cuboid_id, face_to_split), middle);
     // Point the top of the old cuboid to the new cuboid
-    Twin(halfFace(cuboid_id, 2)) = halfFace(new_cuboid_id, 4);
-
+    Twin(halfFace(cuboid_id, face_to_split)) = halfFace(new_cuboid_id, opposite_face(face_to_split));
     return new_cuboid_id;
 }

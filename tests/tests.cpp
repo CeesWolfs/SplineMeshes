@@ -250,6 +250,7 @@ TEST_CASE("Good behaviour on a single split along XY plane.", "[Mesh]")
 	SECTION("The two elements touch eachother") {
 		CHECK(mesh.Twin({ 0,1 }) == halfFace(1, 0));
 	}
+	mesh.Save("OneSplitXY");
 }
 
 TEST_CASE("Good behaviour on a single split along YZ plane.", "[Mesh]")
@@ -263,6 +264,7 @@ TEST_CASE("Good behaviour on a single split along YZ plane.", "[Mesh]")
 	SECTION("The two elements touch eachother") {
 		CHECK(mesh.Twin({ 0,3 }) == halfFace(1, 5));
 	}
+	mesh.Save("OneSplitYZ");
 }
 
 TEST_CASE("Good behaviour on a single split along XZ plane.", "[Mesh]")
@@ -276,6 +278,7 @@ TEST_CASE("Good behaviour on a single split along XZ plane.", "[Mesh]")
 	SECTION("The two elements touch eachother") {
 		CHECK(mesh.Twin({ 0,2 }) == halfFace(1, 4));
 	}
+	mesh.Save("OneSplitXZ");
 }
 TEST_CASE("Split a cube equally into fourths") {
 	Mesh mesh;
@@ -351,9 +354,9 @@ TEST_CASE("Simplest case for findVertexRewrite") {
 	mesh.SplitAlongXY(0, 0.5); // Split cube in two
 	mesh.SplitAlongYZ(0, 0.5); // Spit the botomm again in two
 	// See if we can find a vertex
-	uint32_t vref;
-	CHECK(mesh.mergeVertexIfExistsRewrite({ 0.5, 0 ,0.5 }, vref, { halfFace(1, 0), halfFace(1, 4) }, 1, Axis::x));
-	CHECK(mesh.getVertices()[vref] == Vertex({ 0.5, 0, 0.5 }));
+	auto [found, id] = mesh.mergeVertexIfExistsRewrite({ 0.5, 0 ,0.5 }, { halfFace(1, 0), halfFace(1, 4) }, 1, Axis::x);
+	CHECK(found);
+	CHECK(mesh.getVertices()[id] == Vertex({ 0.5, 0, 0.5 }));
 }
 
 // Test splitting a bigface
@@ -385,6 +388,6 @@ TEST_CASE("Check incidence matrix of initial cuboid") {
 	Mesh mesh;
 	QuantitiesOfInterest q(mesh);
 	for (int i = 0; i < 8; i++) {
-		CHECK(q.incidenceMatrix()(i, 0) == 1);
+		CHECK(q.incidenceMatrix().coeff(i,0) == true);
 	}
 }
