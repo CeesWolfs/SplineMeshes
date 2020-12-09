@@ -48,6 +48,21 @@ private:
     void updateTwin(const halfFace twin, const halfFace old_hf, const halfFace new_hf, const Vertex& middle);
 
 public:
+    /* Static helper functions */
+    constexpr uint8_t opposite_face(uint8_t local_id) {
+        switch (local_id & 0x7)
+        {
+        case 0: return 1;
+        case 1: return 0;
+        case 2: return 4;
+        case 4: return 2;
+        case 3: return 5;
+        case 5: return 3;
+        default:
+            return 255;
+        }
+    }
+
     /**
     * Getters for the private vectors to access them publicly via the Mesh class.
     */

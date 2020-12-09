@@ -35,7 +35,7 @@ class QuantitiesOfInterest {
         int vertexConnectivity(const Vertex& vertex);
 
         //maximal segments of the given start face.
-        const std::vector<uint32_t> getMaximalSegmentOf(const uint32_t startFaceId);
+        const std::vector<halfFace> getMaximalSegmentOf(halfFace currFace);
 
         //Indicence matrix which shows connectivity between the half faces and their vertices.
         const Eigen::SparseMatrix<bool>& incidenceMatrix();

@@ -134,20 +134,8 @@ const halfFace& Mesh::Twin(const halfFace& hf) const
     return F2f[static_cast<size_t>(hf.getCuboid())*6  + hf.getLocalId()];
 }
 
-/* Static helper functions */
-constexpr uint8_t opposite_face(uint8_t local_id) {
-    switch (local_id & 0x7)
-    {
-    case 0: return 1;
-    case 1: return 0;
-    case 2: return 4;
-    case 4: return 2;
-    case 3: return 5;
-    case 5: return 3;
-    default:
-        return 255;
-    }
-}
+
+
 
 constexpr int localIndexinFace(uint8_t face_ind, uint8_t local_vertex_idx) {
     auto res = std::find(std::cbegin(Hf2Ve[face_ind]), std::cend(Hf2Ve[face_ind]), local_vertex_idx);
