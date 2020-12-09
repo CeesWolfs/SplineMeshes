@@ -85,13 +85,13 @@ const std::vector<halfFace> QuantitiesOfInterest::getMaximalSegmentOf(halfFace c
 
     std::vector<halfFace> other_dir;
     // Check the first direction in the positive direction
-    auto next2 = gotoAdjacent(halfFace(currFace.getCuboid(), dirs_to_check.second));
+    next = gotoAdjacent(halfFace(currFace.getCuboid(), dirs_to_check.second));
     while (!next.isBorder()) {
         other_dir.push_back(next);
         next = gotoAdjacent(halfFace(next.getCuboid(), dirs_to_check.second));
     }
     // Check the first direction in the negative direction
-    auto prev2 = gotoAdjacent(halfFace(currFace.getCuboid(), mesh.opposite_face(dirs_to_check.second)));
+    prev = gotoAdjacent(halfFace(currFace.getCuboid(), mesh.opposite_face(dirs_to_check.second)));
     while (!prev.isBorder()) {
         other_dir.insert(res.begin(), prev);
         prev = gotoAdjacent(halfFace(prev.getCuboid(), mesh.opposite_face(dirs_to_check.second)));

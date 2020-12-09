@@ -397,21 +397,17 @@ TEST_CASE("Check incidence matrix of initial cuboid") {
 //TEST_CASE("Test non-divided case for maximal segments") {
 //	Mesh mesh;
 //	QuantitiesOfInterest q(mesh);
-//	// Should only contain one half-face id, since there is no split at all.
+//	// Should contain one single face, since there is no split at all.
 //	for (int i = 0; i < 6; i++) {
-//		CHECK(q.getMaximalSegmentOf(i).size() == 1);
-//		CHECK(q.getMaximalSegmentOf(i)[0] == i);
+//		CHECK(q.getMaximalSegmentOf(mesh.getF2f()[i]).size() == 1);
 //	}
 //}
-
+//
 //TEST_CASE("Test simple divided case for maximal segments") {
 //	Mesh mesh;
 //	mesh.SplitAlongXY(0, 0.5);
 //	QuantitiesOfInterest q(mesh);
 //	//TODO: amount of maximal segments of face 2 should be 2.
-//	//CHECK(q.getMaximalSegmentOf(2).size() == 2);
-//	for (auto i : q.getMaximalSegmentOf(2)) {
-//		std::cout << i.id << std::endl;
-//	}
+//	CHECK(q.getMaximalSegmentOf(2).size() == 2);
 //
 //}
