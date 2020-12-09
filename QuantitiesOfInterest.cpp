@@ -40,63 +40,67 @@ int QuantitiesOfInterest::vertexConnectivity(const Vertex& vertex) {
     return x;
 }
 
+static constexpr std::pair<uint8_t, uint8_t> axesToCheck(uint8_t local_face_id) {
+    switch (local_face_id) {
+        case 0: return <3,2>;
+        case 1: return <3,2>;
+        case 2: return <1,3>;
+        case 4: return <1,3>;
+        case 3: return <1,2>;
+        case 5: return <1,2>;
+    }
+}
+
 /**
  * Return the maximal segment which consists of /starts from the given face id.
  */
-const std::vector<uint32_t> QuantitiesOfInterest::getMaximalSegmentOf(const uint32_t startFaceId) {
+const std::vector<halfFace> QuantitiesOfInterest::getMaximalSegmentOf(halfFace currFace) {
     //TODO: doesn't add all the correct face ids. 
-    std::vector<uint32_t> res;
-    const halfFace currFace = mesh.getF2f()[startFaceId];
-    res.push_back(startFaceId);
-    if (currFace.isBorder() && !currFace.isSubdivided()) return res;
-    else {
- /*       const Cuboid currCuboid = mesh.getCuboids()[currFace.getCuboid()];
-        auto prev_cub = currFace.getCuboid() - 1;
-        auto prevHalfFace = halfFace(prev_cub, currFace.getLocalId());
-        auto prevId = prevHalfFace.id;
-        while (prev_cub >= 0 && prevId >= 0 && prevId < mesh.getF2f().size())
-        {
-            if (std::find(res.begin(), res.end(), prevHalfFace.id) == res.end()) {
-                std::cout << "adding prev id" << prevHalfFace.id << std::endl;
-                res.insert(res.begin(), prevHalfFace.id);
-                prev_cub -= 1;
-                prevHalfFace = halfFace(prev_cub, currFace.getLocalId());
-                prevId = prevHalfFace.id;
-            }
-        }
-        auto next_cub = currFace.getCuboid() + 1;
-        auto nextHalfFace = halfFace(next_cub, currFace.getLocalId());
-        auto nextId = nextHalfFace.id;
-        while (next_cub < mesh.getCuboids().size() && nextId >= 0 && nextId < mesh.getF2f().size()) {
-            if (std::find(res.begin(), res.end(), nextHalfFace.id) == res.end()) {
-                std::cout << "adding next id" << nextHalfFace.id << std::endl;
-                res.push_back(nextHalfFace.id);
-                next_cub += 1;
-                nextHalfFace = halfFace(next_cub, currFace.getLocalId());
-                nextId = nextHalfFace.id;
-            }
-        }*/
+    std::vector<halfFace> res;
+    if (currFace.isBorder()) return res;
+    res.push_back(currFace);
+    const auto dirs_to_check = axesToCheck(currFace.getLocalId());
 
-        //TODO: second method also does not seem to get the neighbour half face to the vector. The local face position remains the same while the neighbouring cuboid will change. 
-        auto twin = mesh.Twin(currFace);
-        while (twin.id >= 0 && twin.id < mesh.getF2f().size()) {
-            if (twin.isSubdivided()) {
-                for (auto it = mesh.getSft().cbegin(twin); it != mesh.getSft().cend(); ++it)
-                {
-                    if ((*it).getCuboid() != currFace.getCuboid() && (*it).getLocalId() == currFace.getLocalId()) {
-                        res.push_back((*it).id);
-                    }
-                }
-            }
-            else {
-                if (twin.getCuboid() != currFace.getCuboid() && twin.getLocalId() == currFace.getLocalId()) {
-                    res.push_back(twin.id);
-                }
-            }
-            twin = mesh.Twin(twin);
-        }
-        return res;
+    const auto perfect_match = [](halfFace hf, halfFace twin) {
+        // TODO Check if only split in axis that doesnt matter
+        if(hf.isSubdivided()) return false;
+        return (mesh.Twin(twin) == hf);
     }
+
+    const auto gotoAdjacent = [&](halfFace next) {
+        auto next_elem = mesh.Twin(next);
+        if(!perfect_match(next, next_elem) || next_elem.isBorder()) return border_id;
+        return halfFace(next_elem, currFace.getLocalId());
+    };
+
+    // Check the first direction in the positive direction
+    auto next = gotoAdjacent(halfFace(currFace.getCuboid(), dirs_to_check[0]));
+    while (!next.isBorder()) {
+        res.push_back(next);
+        gotoAdjacent(halfFace(next.getCuboid(), dirs_to_check[0]))
+    }
+    // Check the first direction in the negative direction
+    auto prev = gotoAdjacent(halfFace(currFace.getCuboid(), opposite_face(dirs_to_check[0])));
+    while (!prev.isBorder()) {
+        res.insert(res.begin(), prev);
+        gotoAdjacent(halfFace(prev.getCuboid(), opposite_face(dirs_to_check[0])));
+    }
+
+    std::vector<halfFace> other_dir;
+    // Check the first direction in the positive direction
+    auto next = gotoAdjacent(halfFace(currFace.getCuboid(), dirs_to_check[1]));
+    while (!next.isBorder()) {
+        other_dir.push_back(next);
+        gotoAdjacent(halfFace(next.getCuboid(), dirs_to_check[1]))
+    }
+    // Check the first direction in the negative direction
+    auto prev = gotoAdjacent(halfFace(currFace.getCuboid(), opposite_face(dirs_to_check[1])));
+    while (!prev.isBorder()) {
+        other_dir.insert(res.begin(), prev);
+        gotoAdjacent(halfFace(prev.getCuboid(), opposite_face(dirs_to_check[1])));
+    }
+
+    return (res.size() >= other_dir.size()) ? res : other_dir;
 }
 
 
