@@ -41,13 +41,62 @@ int QuantitiesOfInterest::vertexConnectivity(const Vertex& vertex) {
 }
 
 /**
- * All maximal segments of the given axis. 
- * This should return all the sets of connected half-faces in the given direction/axis.
+ * Return the maximal segment which consists of /starts from the given face id.
  */
-const std::vector<std::vector<halfFace>> QuantitiesOfInterest::maximalSegments(const Axis axis) {
-    //TODO:
-    const std::vector<std::vector<halfFace>> res;
-    return res;
+const std::vector<uint32_t> QuantitiesOfInterest::getMaximalSegmentOf(const uint32_t startFaceId) {
+    //TODO: doesn't add all the correct face ids. 
+    std::vector<uint32_t> res;
+    const halfFace currFace = mesh.getF2f()[startFaceId];
+    res.push_back(startFaceId);
+    if (currFace.isBorder() && !currFace.isSubdivided()) return res;
+    else {
+ /*       const Cuboid currCuboid = mesh.getCuboids()[currFace.getCuboid()];
+        auto prev_cub = currFace.getCuboid() - 1;
+        auto prevHalfFace = halfFace(prev_cub, currFace.getLocalId());
+        auto prevId = prevHalfFace.id;
+        while (prev_cub >= 0 && prevId >= 0 && prevId < mesh.getF2f().size())
+        {
+            if (std::find(res.begin(), res.end(), prevHalfFace.id) == res.end()) {
+                std::cout << "adding prev id" << prevHalfFace.id << std::endl;
+                res.insert(res.begin(), prevHalfFace.id);
+                prev_cub -= 1;
+                prevHalfFace = halfFace(prev_cub, currFace.getLocalId());
+                prevId = prevHalfFace.id;
+            }
+        }
+        auto next_cub = currFace.getCuboid() + 1;
+        auto nextHalfFace = halfFace(next_cub, currFace.getLocalId());
+        auto nextId = nextHalfFace.id;
+        while (next_cub < mesh.getCuboids().size() && nextId >= 0 && nextId < mesh.getF2f().size()) {
+            if (std::find(res.begin(), res.end(), nextHalfFace.id) == res.end()) {
+                std::cout << "adding next id" << nextHalfFace.id << std::endl;
+                res.push_back(nextHalfFace.id);
+                next_cub += 1;
+                nextHalfFace = halfFace(next_cub, currFace.getLocalId());
+                nextId = nextHalfFace.id;
+            }
+        }*/
+
+        //TODO: second method also does not seem to get the neighbour half face to the vector. The local face position remains the same while the neighbouring cuboid will change. 
+        auto twin = mesh.Twin(currFace);
+        while (twin.id >= 0 && twin.id < mesh.getF2f().size()) {
+            if (twin.isSubdivided()) {
+                for (auto it = mesh.getSft().cbegin(twin); it != mesh.getSft().cend(); ++it)
+                {
+                    if ((*it).getCuboid() != currFace.getCuboid() && (*it).getLocalId() == currFace.getLocalId()) {
+                        res.push_back((*it).id);
+                    }
+                }
+            }
+            else {
+                if (twin.getCuboid() != currFace.getCuboid() && twin.getLocalId() == currFace.getLocalId()) {
+                    res.push_back(twin.id);
+                }
+            }
+            twin = mesh.Twin(twin);
+        }
+        return res;
+    }
 }
 
 

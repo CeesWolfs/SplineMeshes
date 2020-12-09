@@ -294,7 +294,7 @@ TEST_CASE("Split a cube equally into fourths") {
 	QuantitiesOfInterest q(mesh);
 	CHECK(q.vertexConnectivity(mesh.getVertices()[12]) == 4);
 	CHECK(q.vertexConnectivity(mesh.getVertices()[13]) == 4);
-	std::cout << q.incidenceMatrix() << std::endl;
+	//std::cout << q.incidenceMatrix() << std::endl;
 	mesh.Save("Fourths");
 }
 
@@ -376,6 +376,7 @@ TEST_CASE("4 by 4 split on the left half") {
 
 	//check some complex vertex connectivities.
 	QuantitiesOfInterest q(mesh);
+
 	//Check that split vertex is connected to 3 cuboids.
 	const Vertex vertex = mesh.getVertices()[30];
 	//TODO: Another bug: mesh vertex with id 30 is connected to 3 cuboids in the visualization, but only connects to 2 of them.
@@ -390,4 +391,26 @@ TEST_CASE("Check incidence matrix of initial cuboid") {
 	for (int i = 0; i < 8; i++) {
 		CHECK(q.incidenceMatrix().coeff(i,0) == true);
 	}
+}
+
+TEST_CASE("Test non-divided case for maximal segments") {
+	Mesh mesh;
+	QuantitiesOfInterest q(mesh);
+	// Should only contain one half-face id, since there is no split at all.
+	for (int i = 0; i < 6; i++) {
+		CHECK(q.getMaximalSegmentOf(i).size() == 1);
+		CHECK(q.getMaximalSegmentOf(i)[0] == i);
+	}
+}
+
+TEST_CASE("Test simple divided case for maximal segments") {
+	Mesh mesh;
+	mesh.SplitAlongXY(0, 0.5);
+	QuantitiesOfInterest q(mesh);
+	//TODO: amount of maximal segments of face 2 should be 2.
+	//CHECK(q.getMaximalSegmentOf(2).size() == 2);
+	for (auto i : q.getMaximalSegmentOf(2)) {
+		std::cout << i << std::endl;
+	}
+
 }
