@@ -384,6 +384,13 @@ TEST_CASE("4 by 4 split on the left half") {
 	mesh.Save("eq_cuboids");
 }
 
+TEST_CASE("Construct a uniform mesh") {
+	Mesh mesh = Mesh(10,10,10);
+	CHECK(SanityChecks::AllAdjacent(mesh));
+	REQUIRE(mesh.getCuboids().size() == 1000);
+	mesh.Save("Uniform_3x3");
+}
+
 TEST_CASE("Check incidence matrix of initial cuboid") {
 	//initial cuboid: 1 cuboid and 8 vertices, so a 8 x 1 matrix, all with ones, since all vertices are connected to the cuboid.
 	Mesh mesh;

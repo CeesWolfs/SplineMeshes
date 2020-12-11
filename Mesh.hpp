@@ -174,6 +174,8 @@ public:
 
     /* Constructor of mesh object */
     Mesh();
+    /* Construct a uniform mesh */
+    Mesh(int Nx, int Ny, int Nz);
 
     /* Destructor of mesh object */
     ~Mesh() = default;

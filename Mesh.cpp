@@ -29,6 +29,58 @@ Mesh::Mesh(/* args */) {
     }
 }
 
+Mesh::Mesh(int Nx, int Ny, int Nz)
+{
+    vertices.reserve((Nx + 1) * (Ny + 1) * (Nz + 1));
+    cuboids.reserve(Nx * Ny * Nz);
+    V2lV.reserve((Nx + 1) * (Ny + 1) * (Nz + 1));
+    F2f.reserve(Nx * Ny * Nz * 6);
+    const float Lx = 1 / static_cast<float>(Nx);
+    const float Ly = 1 / static_cast<float>(Ny);
+    const float Lz = 1 / static_cast<float>(Nz);
+    // Construct all the vertices
+    for (size_t k = 0; k <= Nz; k++)
+    {
+        for (size_t j = 0; j <= Ny; j++)
+        {
+            for (size_t i = 0; i <= Nx; i++)
+            {
+                vertices.emplace_back(Vertex{i*Lx, j*Ly, k*Lz});
+            }
+        }
+    }
+    auto toVertIndex = [=](uint32_t i, uint32_t j, uint32_t k) {return i + j * (Ny + 1) + k * (Nz + 1) * (Ny + 1); };
+    // Construct all the cuboids
+    for (size_t k = 0; k < Nz; k++)
+    {
+        for (size_t j = 0; j < Ny; j++)
+        {
+            for (size_t i = 0; i < Nx; i++)
+            {
+                cuboids.emplace_back(Cuboid{toVertIndex(i,j,k),toVertIndex(i+1,j,k),toVertIndex(i+1,j+1,k),toVertIndex(i,j+1,k),toVertIndex(i,j,k+1),toVertIndex(i + 1,j,k+1),toVertIndex(i + 1,j + 1,k+1),toVertIndex(i,j + 1,k+1) });
+            }
+        }
+    }
+    auto toCubIndex = [=](uint32_t i, uint32_t j, uint32_t k) {return i + j * Ny + k * Nz * Ny; };
+    // Construct all the halfFaces
+    for (size_t k = 0; k < Nz; k++)
+    {
+        for (size_t j = 0; j < Ny; j++)
+        {
+            for (size_t i = 0; i < Nx; i++)
+            {
+                F2f.emplace_back((k == 0) ? border_id : halfFace(toCubIndex(i, j, k - 1), 1));
+                F2f.emplace_back((k == (Nz - 1)) ? border_id : halfFace(toCubIndex(i, j, k + 1), 0));
+                F2f.emplace_back((j == (Ny - 1)) ? border_id : halfFace(toCubIndex(i, j + 1, k), 4));
+                F2f.emplace_back((i == (Nx - 1) ) ? border_id : halfFace(toCubIndex(i+1, j, k), 5));
+                F2f.emplace_back((j == 0) ? border_id : halfFace(toCubIndex(i, j - 1, k), 2));
+                F2f.emplace_back((i == 0) ? border_id : halfFace(toCubIndex(i - 1, j, k), 3));
+            }
+        }
+    }
+    //TODO V2lID
+}
+
 const std::vector<Vertex>& Mesh::getVertices() const {
     return vertices;
 }
