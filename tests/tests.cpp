@@ -393,7 +393,7 @@ TEST_CASE("Check incidence matrix of initial cuboid") {
 	}
 }
 
-//TODO: maximal segments tests do not pass yet
+////TODO: maximal segments tests do not pass yet
 //TEST_CASE("Test non-divided case for maximal segments") {
 //	Mesh mesh;
 //	QuantitiesOfInterest q(mesh);
@@ -402,12 +402,14 @@ TEST_CASE("Check incidence matrix of initial cuboid") {
 //		CHECK(q.getMaximalSegmentOf(mesh.getF2f()[i]).size() == 1);
 //	}
 //}
-//
-//TEST_CASE("Test simple divided case for maximal segments") {
-//	Mesh mesh;
-//	mesh.SplitAlongXY(0, 0.5);
-//	QuantitiesOfInterest q(mesh);
-//	//TODO: amount of maximal segments of face 2 should be 2.
-//	CHECK(q.getMaximalSegmentOf(2).size() == 2);
-//
-//}
+TEST_CASE("Test simple divided case for maximal segments") {
+	Mesh mesh;
+	mesh.SplitAlongXY(0, 0.5);
+	QuantitiesOfInterest q(mesh);
+	//TODO: amount of maximal segments of face 2 should be 2.
+	for (auto i : mesh.getF2f()) {
+		std::cout << q.getMaximalSegmentOf(i).size() << std::endl;
+	}
+	//CHECK(q.getMaximalSegmentOf(mesh.getF2f()[2]).size() == 2);
+	mesh.Save("max_seg");
+}
