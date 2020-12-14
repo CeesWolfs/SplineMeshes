@@ -375,8 +375,15 @@ TEST_CASE("4 by 4 split on the left half") {
 	CHECK(SanityChecks::AllAdjacent(mesh));
 
 	//check some complex vertex connectivities.
+	// This mesh has 3 CORNER CUBOIDS.
 	QuantitiesOfInterest q(mesh);
-
+	int x = 0;
+	for (int i = 0; i < mesh.getCuboids().size(); i++) {
+		if (q.isCornerCuboid(mesh.getCuboids()[i])) {
+			x++;
+		}
+	}
+	CHECK(x == 3);
 	//Check that split vertex is connected to 3 cuboids.
 	const Vertex vertex = mesh.getVertices()[30];
 	//TODO: Another bug: mesh vertex with id 30 is connected to 3 cuboids in the visualization, but only connects to 2 of them.
@@ -393,23 +400,29 @@ TEST_CASE("Check incidence matrix of initial cuboid") {
 	}
 }
 
-////TODO: maximal segments tests do not pass yet
-//TEST_CASE("Test non-divided case for maximal segments") {
-//	Mesh mesh;
-//	QuantitiesOfInterest q(mesh);
-//	// Should contain one single face, since there is no split at all.
-//	for (int i = 0; i < 6; i++) {
-//		CHECK(q.getMaximalSegmentOf(mesh.getF2f()[i]).size() == 1);
-//	}
-//}
-TEST_CASE("Test simple divided case for maximal segments") {
+TEST_CASE("Check border elements") {
 	Mesh mesh;
-	mesh.SplitAlongXY(0, 0.5);
 	QuantitiesOfInterest q(mesh);
-	//TODO: amount of maximal segments of face 2 should be 2.
-	for (auto i : mesh.getF2f()) {
-		std::cout << q.getMaximalSegmentOf(i).size() << std::endl;
-	}
-	//CHECK(q.getMaximalSegmentOf(mesh.getF2f()[2]).size() == 2);
-	mesh.Save("max_seg");
+	CHECK(q.isCornerCuboid(mesh.getCuboids()[0]) == true);
+
 }
+////TODO: maximal segments tests do not pass yet
+TEST_CASE("Test non-divided case for maximal segments") {
+	Mesh mesh;
+	QuantitiesOfInterest q(mesh);
+	// Should contain one single face, since there is no split at all.
+	for (int i = 0; i < 6; i++) {
+		CHECK(q.getMaximalSegmentOf(mesh.getF2f()[i]).size() == 1);
+	}
+}
+//TEST_CASE("Test simple divided case for maximal segments") {
+//	Mesh mesh;
+//	mesh.SplitAlongXY(0, 0.5);
+//	QuantitiesOfInterest q(mesh);
+//	//TODO: amount of maximal segments of face 2 should be 2.
+//	for (auto i : mesh.getF2f()) {
+//		std::cout << q.getMaximalSegmentOf(i).size() << std::endl;
+//	}
+//	//CHECK(q.getMaximalSegmentOf(mesh.getF2f()[2]).size() == 2);
+//	mesh.Save("max_seg");
+//}

@@ -40,6 +40,16 @@ int QuantitiesOfInterest::vertexConnectivity(const Vertex& vertex) {
     return x;
 }
 
+/**
+ * Check whether the given cuboid touches a corner of the mesh. There can be a maximum of 8 corner cuboids, since there are 8 corner vertices.
+ */
+bool QuantitiesOfInterest::isCornerCuboid(const Cuboid &cuboid) {
+    for (auto v : cuboid.vertices) {
+        if (v >= 0 && v <= 7) return true;
+    }
+    return false;
+}
+
 static constexpr std::pair<uint8_t, uint8_t> axesToCheck(uint8_t local_face_id) {
     switch (local_face_id) {
     case 0: case 1: return { 3,2 };
