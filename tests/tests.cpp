@@ -19,6 +19,7 @@ namespace SanityChecks {
 					for (auto it = mesh.getSft().cbegin(twin); it != mesh.getSft().cend(); ++it)
 					{
 						if (!mesh.Adjacent((*it).getCuboid(), cub)) {
+							std::cout << "Failed at " << '<' << cub << ',' << i << '>' << '-' << '<' << (*it).getCuboid() << ',' << (int)((*it).getLocalId()) << '>';
 							return false;
 						}
 					}
@@ -33,6 +34,38 @@ namespace SanityChecks {
 		return true;
 	}
 }
+
+namespace helpers {
+	Mesh* random_mesh(const int N) {
+		// Start with uniform mesh
+		Mesh* mesh = new Mesh(10,10,10);
+		// Select random elements to split
+		//std::random_device random_device;
+		std::mt19937 random_engine(11); // with this seed fails at split YZ cuboid_id = 850
+		std::uniform_real_distribution<float> fl_distr(0.2, 0.8);
+
+		while(mesh->getCuboids().size() < N) {
+			std::uniform_int_distribution<int> distribution(0, mesh->getCuboids().size()-1);
+			std::vector<uint32_t> to_split(20);
+			std::generate(to_split.begin(),to_split.end(), std::bind(distribution, random_engine));
+			for(auto elem : to_split) {
+				auto rand = fl_distr(random_engine);
+				auto bl_corner = mesh->getVertices()[mesh->getCuboids()[elem].v1];
+				auto tr_corner = mesh->getVertices()[mesh->getCuboids()[elem].v7];
+				if(rand < 0.4) {
+					mesh->SplitAlongXY(elem, fl_distr(random_engine)*(tr_corner.z-bl_corner.z) + bl_corner.z);
+				}
+				else if(rand < 0.6) {
+					mesh->SplitAlongXZ(elem, fl_distr(random_engine)*(tr_corner.y-bl_corner.y) + bl_corner.y);
+				}
+				else {
+					mesh->SplitAlongYZ(elem, fl_distr(random_engine)*(tr_corner.x-bl_corner.x) + bl_corner.x);
+				}
+			}
+		}
+		return mesh;
+	}
+} // helpers
 
 
 TEST_CASE("Test for basic quantities of interest constructor") {
@@ -348,7 +381,6 @@ TEST_CASE("Multiple splits on different axis with splitting for each axis done s
 	mesh.Save("separate_axis_splitted_cuboids");
 }
 
-
 TEST_CASE("Simplest case for findVertexRewrite") {
 	Mesh mesh;
 	mesh.SplitAlongXY(0, 0.5); // Split cube in two
@@ -357,6 +389,19 @@ TEST_CASE("Simplest case for findVertexRewrite") {
 	auto [found, id] = mesh.mergeVertexIfExistsRewrite({ 0.5, 0 ,0.5 }, { halfFace(1, 0), halfFace(1, 4) }, 1, Axis::x);
 	CHECK(found);
 	CHECK(mesh.getVertices()[id] == Vertex({ 0.5, 0, 0.5 }));
+}
+
+
+TEST_CASE("Testing splitree") {
+	Mesh mesh;
+	mesh.SplitAlongXY(0, 0.5); // Split cube in two
+	mesh.SplitAlongXZ(0, 0.4); // Spit the botomm again in two
+	mesh.SplitAlongXZ(1, 0.3);
+	uint32_t foo = mesh.SplitAlongYZ(1, 0.7);
+	mesh.SplitAlongXZ(foo, 0.1);
+	mesh.SplitAlongYZ(0, 0.2);
+	CHECK(SanityChecks::AllAdjacent(mesh));
+	
 }
 
 // Test splitting a bigface
@@ -391,11 +436,66 @@ TEST_CASE("4 by 4 split on the left half") {
 	mesh.Save("eq_cuboids");
 }
 
+TEST_CASE("Subdived connect to subdivided") {
+	Mesh mesh;
+	mesh.SplitAlongYZ(0, 0.5);
+	mesh.SplitAlongXY(1, 0.5);
+	mesh.SplitAlongXZ(1, 0.5);
+	mesh.SplitAlongXZ(2, 0.5);
+	uint32_t middle = mesh.SplitAlongXY(0, 0.2);
+	mesh.SplitAlongXY(middle, 0.8);
+	middle = mesh.SplitAlongXZ(middle, 0.2);
+	mesh.SplitAlongXZ(middle, 0.8);
+	middle = mesh.SplitAlongYZ(middle, 0.25);
+	SanityChecks::AllAdjacent(mesh);
+	mesh.Save("Subdiv_Subdiv");
+}
+
+TEST_CASE("Try to invoke tricky find vertex behaviour") {
+	Mesh mesh;
+	mesh.SplitAlongYZ(0, 0.5);
+	mesh.SplitAlongXY(1, 0.5);
+	mesh.SplitAlongXZ(1, 0.5);
+	mesh.SplitAlongXZ(2, 0.5);
+	uint32_t middle = mesh.SplitAlongXY(0, 0.2);
+	mesh.SplitAlongXY(middle, 0.8);
+	middle = mesh.SplitAlongXZ(middle, 0.2);
+	mesh.SplitAlongXZ(middle, 0.8);
+	middle = mesh.SplitAlongYZ(middle, 0.25);
+	mesh.SplitAlongXY(middle, 0.5);
+	CHECK(SanityChecks::AllAdjacent(mesh));
+	mesh.Save("Tricky_findvertex");
+}
+
+TEST_CASE("Test the free list") {
+	Mesh mesh;
+	mesh.SplitAlongYZ(0, 0.5);
+	mesh.SplitAlongXY(1, 0.5);
+	mesh.SplitAlongXZ(1, 0.5);
+	mesh.SplitAlongXZ(2, 0.5);
+	uint32_t top = mesh.SplitAlongXY(0, 0.5);
+	mesh.SplitAlongXY(top, 0.5);
+	mesh.SplitAlongXZ(0, 0.5);
+	mesh.SplitAlongXZ(top, 0.5);
+	mesh.SplitAlongXY(0, 0.25);
+	mesh.SplitAlongXZ(0, 0.25);
+	CHECK(SanityChecks::AllAdjacent(mesh));
+	REQUIRE(mesh.getSft().nodes.size() == 4);
+	mesh.Save("Free_list");
+}
+
 TEST_CASE("Construct a uniform mesh") {
 	Mesh mesh = Mesh(10,10,10);
 	CHECK(SanityChecks::AllAdjacent(mesh));
 	REQUIRE(mesh.getCuboids().size() == 1000);
-	mesh.Save("Uniform_3x3");
+	mesh.Save("Uniform_10x10x10");
+}
+
+TEST_CASE("Construct semi large random mesh") {
+	Mesh* mesh = helpers::random_mesh(5000);
+	CHECK(SanityChecks::AllAdjacent(*mesh));
+	REQUIRE(mesh->getCuboids().size() == 5000);
+	mesh->Save("Random_5000");
 }
 
 TEST_CASE("Check incidence matrix of initial cuboid") {

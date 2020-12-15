@@ -156,7 +156,7 @@ void Mesh::updateHalfFace(const halfFace hf, const halfFace new_hf, const Vertex
         sft.updateParent(twin, new_hf);
         // Update all the subFaces
         for (auto it = sft.cbegin(twin); it != sft.cend(); ++it) {
-            updateTwin(twin, hf, new_hf, middle);
+            updateTwin(*it, hf, new_hf, middle);
         }
     }
     else {
@@ -166,8 +166,8 @@ void Mesh::updateHalfFace(const halfFace hf, const halfFace new_hf, const Vertex
 
 void Mesh::updateTwin(const halfFace twin, const halfFace old_hf, const halfFace new_hf, const Vertex& middle)
 {
-    if (twin.isSubdivided()) {
-        auto it = sft.find(twin, old_hf, middle);
+    if (Twin(twin).isSubdivided()) {
+        auto it = sft.find(Twin(twin), old_hf, middle);
         *it = new_hf;
     }
     else {
@@ -208,7 +208,10 @@ std::pair<bool, uint32_t> Mesh::mergeVertexIfExistsRewrite(const Vertex& v, Half
                 // Find the local id of the vertex in the touching element
                 const auto local_vertex_in_opposite = Hf2Ve[opposite_face(hf.getLocalId())][localIndexinFace(hf.getLocalId(), local_id)];
                 vref = cuboids[face.getCuboid()].vertices[local_vertex_in_opposite];
-                return true;
+                // Check if the vertex actually corresponds, this is sometimes not the case if the other side is also subdivided
+                if (vertices[vref] == v) {
+                    return true;
+                }
             }
         }
         return false;

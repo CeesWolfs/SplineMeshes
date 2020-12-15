@@ -29,8 +29,9 @@ SubFaceIterator<const SubFaceTree>SubFaceTree::cend() const {
 void SubFaceTree::updateSubTreeTwins(const halfFace head, const halfFace old_hf, const halfFace new_hf, const Vertex& split_point, std::vector<halfFace>& F2f)
 {
     auto updateTwin = [&](halfFace twin) {
-        if (twin.isSubdivided()) {
-            auto it = this->find(twin, old_hf, split_point);
+        auto TwinofTwin = F2f[static_cast<size_t>(twin.getCuboid()) * 6 + twin.getLocalId()];
+        if (TwinofTwin.isSubdivided()) {
+            auto it = this->find(TwinofTwin, old_hf, split_point);
             *it = new_hf;
         }
         else {
@@ -41,10 +42,38 @@ void SubFaceTree::updateSubTreeTwins(const halfFace head, const halfFace old_hf,
         updateTwin(head);
         return;
     }
+    // Decouple the head first to only iterate over the subtree
+    const auto par = nodes[toNodeIndex(head)].parent;
+    nodes[toNodeIndex(head)].parent = 0;
     for (auto it = cbegin(head); it != cend(); ++it)
     {
         updateTwin(*it);
     }
+    // Recouple the node
+    nodes[toNodeIndex(head)].parent = par;
+}
+
+uint32_t SubFaceTree::insertNode(Node node)
+{
+    uint32_t new_index;
+    if (free_list_base == static_cast<uint32_t>(-1)) {
+        new_index = nodes.size();
+        nodes.push_back(node); 
+    }
+    else {
+        uint32_t new_base = toNodeIndex(nodes[free_list_base].lower_child);
+        new_index = free_list_base;
+        nodes[free_list_base] = node;
+        if (free_list_base != free_list_head) {
+            free_list_base = new_base;
+        }
+        else {
+            free_list_base = static_cast<uint32_t>(-1);
+            free_list_head = static_cast<uint32_t>(-1);
+        }
+
+    }
+    return new_index;
 }
 
 SubFaceIterator<SubFaceTree> SubFaceTree::find(halfFace start_node, const halfFace toFind, const Vertex& toFindmiddle)
@@ -186,15 +215,12 @@ halfFace SubFaceTree::splitHalfFace(const halfFace start_node, const halfFace tw
         split = split_point.z;
         break;
     }
-    
-    uint32_t new_index = nodes.size();
     // Already a tree node
     if (start_node.isSubdivided())
     {
         const auto ref = find(start_node, lower, split_point); 
         const Node node = {ref.toIndex(), split, split_axis, lower, higher};
-        nodes.push_back(node);
-        // Create a link to the new node
+        const auto new_index = insertNode(node);
         *ref = halfFace(new_index, 6);
         // Return just the head of the tree
         return start_node;   
@@ -202,7 +228,7 @@ halfFace SubFaceTree::splitHalfFace(const halfFace start_node, const halfFace tw
     // Create a new subfacetree
     else {
         const Node node = {twin, split, split_axis, lower, higher};
-        nodes.push_back(node);
+        const auto new_index = insertNode(node);
         // return new head
         return halfFace(new_index, 6);   
     }
@@ -240,7 +266,7 @@ HalfFacePair SubFaceTree::splitTree(const halfFace tree_head, const Axis split_a
             // It is no longer needed so remove it
             lower_head = node.lower_child;
             top_head = node.top_child;
-            removeNode(toNodeIndex(tree_head), F2f);
+            removeNode(toNodeIndex(tree_head));
             // Switch ownership of the right children of top head
             updateSubTreeTwins(top_head, lower, higher, split_point, F2f);
             return {lower_head, top_head};
@@ -274,8 +300,6 @@ HalfFacePair SubFaceTree::splitTree(const halfFace tree_head, const Axis split_a
         // Both directions need to be split, copy the current node
         lower_head = tree_head;
         Node copy = node;
-        // Split the lower child further possible bug if removes happen the node migh be in a different location
-        // TOOD Check if this is likely and fix it
         auto lower_ret = splitTree(node.lower_child, split_axis, split_point, lower, higher, F2f);
         // Split the higher child further 
         auto higher_ret = splitTree(node.top_child, split_axis, split_point, lower, higher, F2f);
@@ -283,36 +307,24 @@ HalfFacePair SubFaceTree::splitTree(const halfFace tree_head, const Axis split_a
         copy.lower_child = lower_ret.second;
         top_head = halfFace(nodes.size(), 6);
         updateParent(lower_ret.second, halfFace(toNodeIndex(top_head), 6));
+        updateParent(lower_ret.first, halfFace(toNodeIndex(lower_head), 6));
         nodes[node_idx].top_child = higher_ret.first;
         copy.top_child = higher_ret.second;
         updateParent(higher_ret.second, halfFace(toNodeIndex(top_head), 7)); 
+        updateParent(higher_ret.first, halfFace(toNodeIndex(lower_head), 7));
         nodes.push_back(copy);
     }
     return {lower_head, top_head};
 }
 
-void SubFaceTree::removeNode(uint32_t node_index, std::vector<halfFace>& F2f) 
+void SubFaceTree::removeNode(uint32_t node_index) 
 {
     assert(nodes.size() > 0);
-    if (node_index == nodes.size() - 1)
-    {
-        nodes.pop_back();
-        return;
+    if (free_list_base == static_cast<uint32_t>(-1)) free_list_base = node_index;
+    if (free_list_head != static_cast<uint32_t>(-1)) {
+        nodes[free_list_head].lower_child = halfFace(node_index, 6);
     }
-    // Swap the removed node with the last node
-    std::swap(nodes[node_index], *(nodes.end() - 1));
-    // Decrease the vector size
-    nodes.pop_back();
-    auto& node = nodes[node_index];
-    if (node.parent.isSubdivided()) {
-        if (isHigher(node.parent))
-            nodes[toNodeIndex(node.parent)].top_child = halfFace(node_index, 6);
-        else 
-            nodes[toNodeIndex(node.parent)].lower_child = halfFace(node_index, 6);
-    }
-    else {
-        F2f[node.parent.id] = halfFace(node_index, 6);
-    }
+    free_list_head = node_index;
 }
 
 SubFaceTree::~SubFaceTree()

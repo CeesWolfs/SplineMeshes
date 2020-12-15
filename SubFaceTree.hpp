@@ -32,6 +32,8 @@ class SubFaceIterator;
 class SubFaceTree
 {
 private:
+    uint32_t free_list_base = static_cast<uint32_t>(-1);
+    uint32_t free_list_head = static_cast<uint32_t>(-1);
     void updateSubTreeTwins(const halfFace head, const halfFace old_hf, const halfFace new_hf, const Vertex& split_point, std::vector<halfFace>& F2f);
 public:
     void updateParent(const halfFace node, halfFace new_parent) {if(!node.isSubdivided()) return; nodes[toNodeIndex(node)].parent = new_parent;}
@@ -50,7 +52,8 @@ public:
     halfFace splitHalfFace(const halfFace start_node, const halfFace twin, const Axis split_axis, const Vertex& split_point,const halfFace lower,const halfFace higher);
     // Split a SubFaceTree in two along a split, returns the two start nodes, also splits twin faces automatically if necassary
     HalfFacePair splitTree(const halfFace tree_head, const Axis split_axis, const Vertex& split_point, const halfFace lower, const halfFace higher, std::vector<halfFace>& F2f);
-    void removeNode(uint32_t node_index, std::vector<halfFace>& F2f);
+    void removeNode(uint32_t node_index);
+    uint32_t insertNode(Node node);
     // Obtain an iterator to iterate through the subHalfFace tree starting at the start node
     SubFaceIterator<SubFaceTree> begin(halfFace start_node);
     SubFaceIterator<SubFaceTree> end();
