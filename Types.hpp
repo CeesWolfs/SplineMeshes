@@ -87,7 +87,7 @@ typedef struct _halfFace
 		return getLocalId() >= 6;
 	}
 	bool isBorder() const {
-		return id == border_id;
+		return getLocalId() == border_id || id == border_id;
 	}
 	_halfFace(uint32_t cuboid_id, uint8_t local_id) {
 		id = (cuboid_id << 3) + local_id;
