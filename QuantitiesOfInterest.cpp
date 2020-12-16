@@ -127,7 +127,7 @@ const std::vector<halfFace> QuantitiesOfInterest::getMaximalSegmentOf(halfFace c
 
 
 /**
- * Indicence matrix which shows connectivity between the elements and their vertices.
+ * Unsigned indicence matrix which shows connectivity between the elements and their vertices.
  * Insert for each element a 1 if it is connected with a vertex.
  * Row indices (outer vector ids) should represent vertex ids and column indices (inner vector ids) 
  * should represent cuboid ids to which the (row) vertex is connected to. 
@@ -150,6 +150,77 @@ const Eigen::SparseMatrix<bool>& QuantitiesOfInterest::incidenceMatrix() {
     }
     incidence.setFromTriplets(tripletList.cbegin(), tripletList.cend());
     return incidence;
+}
+
+/**
+* Signed incidence matrix to show connectivity how vertices are paired with each other. 
+*/
+const MatrixXf QuantitiesOfInterest::VertexEdgeIncidenceMatrix()
+{
+    std::vector<Edge> edges = getAllEdges();
+    std::cout << edges.size() << std::endl;
+    MatrixXf matrix(edges.size(), mesh.getVertices().size());
+
+    //initial matrix
+    for (int i = 0; i < edges.size(); i++) {
+        for (int j = 0; j < mesh.getVertices().size(); j++) {
+            matrix(i, j) = 0;
+        }
+    }
+
+    Vertex origin{ 0,0,0 };
+    for (int i = 0; i < edges.size(); i++) {
+        if (mesh.getVertices()[edges[i].v1] - mesh.getVertices()[edges[i].v2] >= origin) {
+            matrix(i, edges[i].v2) = -1;
+            matrix(i, edges[i].v1) = 1;
+        }
+        else if (mesh.getVertices()[edges[i].v2] - mesh.getVertices()[edges[i].v1] >= origin) {
+            matrix(i, edges[i].v2) = 1;
+            matrix(i, edges[i].v1) = -1;
+        }
+    }
+    return matrix;
+}
+
+/**
+* Retrieving every edge of the mesh.
+*/
+const std::vector<Edge> QuantitiesOfInterest::getAllEdges() const {
+    std::vector<Edge> res;
+    for (auto i = 0; i < mesh.getCuboids().size(); i++) {
+        for (Edge curr : getEdges(mesh.getCuboids()[i])) {
+            bool contains = false;
+            for (Edge known: res) {
+                if (known == curr) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains) {
+                res.push_back(curr);
+            }
+        }
+    }
+    return res;
+}
+/**
+* Retrieving the 12 edges of a given cuboid.
+*/
+const std::vector<Edge> QuantitiesOfInterest::getEdges(const Cuboid &cuboid) const {
+    std::vector<Edge> res;
+    res.push_back(Edge(cuboid.v1, cuboid.v2));
+    res.push_back(Edge(cuboid.v1, cuboid.v4));
+    res.push_back(Edge(cuboid.v1, cuboid.v5));
+    res.push_back(Edge(cuboid.v2, cuboid.v3));
+    res.push_back(Edge(cuboid.v2, cuboid.v6));
+    res.push_back(Edge(cuboid.v3, cuboid.v4));
+    res.push_back(Edge(cuboid.v3, cuboid.v7));
+    res.push_back(Edge(cuboid.v4, cuboid.v8));
+    res.push_back(Edge(cuboid.v5, cuboid.v6));
+    res.push_back(Edge(cuboid.v5, cuboid.v8));
+    res.push_back(Edge(cuboid.v6, cuboid.v7));
+    res.push_back(Edge(cuboid.v7, cuboid.v8));
+    return res;
 }
 
 

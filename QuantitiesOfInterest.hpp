@@ -40,8 +40,17 @@ class QuantitiesOfInterest {
         //maximal segments of the given start face.
         const std::vector<halfFace> getMaximalSegmentOf(halfFace currFace);
 
-        //Indicence matrix which shows connectivity between the half faces and their vertices.
+        //Unsigned indicence matrix which shows connectivity between the half faces and their vertices.
         const Eigen::SparseMatrix<bool>& incidenceMatrix();
+
+        //Signed Vertex-Edge incidence matrix which shows whether the difference between the vertex coordinates >= origin
+        const MatrixXf VertexEdgeIncidenceMatrix();
+
+        //Get all 12 edges of the given cuboid.
+        const std::vector<Edge> getEdges(const Cuboid& cuboid) const;
+
+        // Get all the edges of the mesh.
+        const std::vector<Edge> getAllEdges() const;
 
         //Destructor
         ~QuantitiesOfInterest();

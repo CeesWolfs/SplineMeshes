@@ -19,9 +19,15 @@ typedef struct _vertex
 		const bool same_z = floatSame(this->z, other.z);
 		return (same_x && same_y && same_z);
 	}
+	bool operator>=(const _vertex& other) const {
+		return (x >= other.x && y >= other.y && z >= other.z);
+	}
 	_vertex operator+(const _vertex& other) const {
 		return { x + other.x, y + other.y, z + other.z };
 	}
+	_vertex operator-(const _vertex& other) const {
+		return { x - other.x, y - other.y, z - other.z };
+	} 
 	_vertex& operator+=(const _vertex& other) {
 		x += other.x;
 		y += other.y;
@@ -32,6 +38,18 @@ typedef struct _vertex
 		return { x / div, y / div, z / div };
 	}
 } Vertex;
+
+typedef struct _edge 
+{
+	uint32_t v1, v2;
+	bool operator==(const _edge& other) const {
+		return (v1 == other.v1 && v2 == other.v2) || (v1 == other.v2 && v2 == other.v1);
+	}
+	_edge(uint32_t first, uint32_t second) {
+		v1 = first;
+		v2 = second;
+	}
+} Edge;
 
 typedef union _cuboid {
 	struct

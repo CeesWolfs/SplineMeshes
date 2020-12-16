@@ -386,6 +386,7 @@ TEST_CASE("4 by 4 split on the left half") {
 	CHECK(x == 3);
 	//Check that split vertex is connected to 3 cuboids.
 	const Vertex vertex = mesh.getVertices()[30];
+	std::cout << q.VertexEdgeIncidenceMatrix() << std::endl;
 	//TODO: Another bug: mesh vertex with id 30 is connected to 3 cuboids in the visualization, but only connects to 2 of them.
 	//CHECK(q.vertexConnectivity(vertex) == 3);
 	mesh.Save("eq_cuboids");
