@@ -20,7 +20,6 @@ class QuantitiesOfInterest {
     private:
         Mesh mesh;
         Eigen::SparseMatrix<bool>  incidence;
-
     public:
         //Default constructor
         QuantitiesOfInterest();

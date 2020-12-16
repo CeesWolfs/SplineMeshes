@@ -49,7 +49,7 @@ private:
 
 public:
     /* Static helper functions */
-    constexpr uint8_t opposite_face(uint8_t local_id) {
+    static constexpr uint8_t opposite_face(uint8_t local_id) {
         switch (local_id & 0x7)
         {
         case 0: return 1;
@@ -174,6 +174,8 @@ public:
 
     /* Constructor of mesh object */
     Mesh();
+    /* Construct a uniform mesh */
+    Mesh(int Nx, int Ny, int Nz);
 
     /* Destructor of mesh object */
     ~Mesh() = default;
