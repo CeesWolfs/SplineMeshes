@@ -431,7 +431,6 @@ TEST_CASE("4 by 4 split on the left half") {
 	CHECK(x == 3);
 	//Check that split vertex is connected to 3 cuboids.
 	const Vertex vertex = mesh.getVertices()[30];
-	std::cout << q.VertexEdgeIncidenceMatrix() << std::endl;
 	//TODO: Another bug: mesh vertex with id 30 is connected to 3 cuboids in the visualization, but only connects to 2 of them.
 	//CHECK(q.vertexConnectivity(vertex) == 3);
 	mesh.Save("eq_cuboids");
@@ -506,6 +505,27 @@ TEST_CASE("Check incidence matrix of initial cuboid") {
 	for (int i = 0; i < 8; i++) {
 		CHECK(q.incidenceMatrix().coeff(i,0) == true);
 	}
+}
+
+TEST_CASE("Check the vertex edge incidence matrix of initial mesh")
+{
+	Mesh mesh;
+	QuantitiesOfInterest q(mesh);
+	const MatrixXf m = q.VertexEdgeIncidenceMatrix();
+	const Eigen::FullPivLU<MatrixXf> lu_decomp(m);
+	//Checking the property that the rank of the vertex-edge incidence matrix is less or equal than the amount of vertices minus one.
+	CHECK(lu_decomp.rank() <= mesh.getVertices().size() - 1);
+	for (auto i = 0; i < q.getAllEdges().size(); i++) {
+		//Check that entries from vertex 0 are all -1, since vertex 0 is exactly located at the origin, so there are no vertices further away from vertex 0.
+		if (m(i, 0) != 0) {
+			CHECK(m(i, 0) == -1);
+		}
+		if (m(i, 6) != 0) {
+			CHECK(m(i, 6) == 1);
+		}
+		//Check that entries from vertex 6 are all 1, since vertex 6 is the furthest away from the origin, so there are no vertices further away from the origin compared to vertex 6.
+	}
+	mesh.Save("init");
 }
 
 TEST_CASE("Check border elements") {

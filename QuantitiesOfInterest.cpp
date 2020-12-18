@@ -158,7 +158,6 @@ const Eigen::SparseMatrix<bool>& QuantitiesOfInterest::incidenceMatrix() {
 const MatrixXf QuantitiesOfInterest::VertexEdgeIncidenceMatrix()
 {
     std::vector<Edge> edges = getAllEdges();
-    std::cout << edges.size() << std::endl;
     MatrixXf matrix(edges.size(), mesh.getVertices().size());
 
     //initial matrix
