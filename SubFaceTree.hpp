@@ -19,7 +19,6 @@ typedef struct _node
     halfFace top_child;
 } Node;
 
-typedef std::pair<halfFace, halfFace> HalfFacePair;
 template<typename TreeType>
 class SubFaceIterator;
 
@@ -36,8 +35,8 @@ private:
     uint32_t free_list_head = static_cast<uint32_t>(-1);
     void updateSubTreeTwins(const halfFace head, const halfFace old_hf, const halfFace new_hf, const Vertex& split_point, std::vector<halfFace>& F2f);
 public:
-    void updateParent(const halfFace node, halfFace new_parent) {if(!node.isSubdivided()) return; nodes[toNodeIndex(node)].parent = new_parent;}
     std::vector<Node> nodes; 
+    void updateParent(const halfFace node, halfFace new_parent) { if (!node.isSubdivided()) return; nodes[toNodeIndex(node)].parent = new_parent; }
     SubFaceTree(/* args */) = default;
     SubFaceTree(const SubFaceTree&) = delete; // prevent expensive accidental copies
     static uint32_t toNodeIndex(halfFace from) {return from.id >> 3;}
@@ -56,10 +55,10 @@ public:
     uint32_t insertNode(Node node);
     // Obtain an iterator to iterate through the subHalfFace tree starting at the start node
     SubFaceIterator<SubFaceTree> begin(halfFace start_node);
-    SubFaceIterator<SubFaceTree> end();
+    static SubFaceIterator<SubFaceTree> end();
     // Obtain a constant iterator to iterate through the subHalfFace tree starting at the start node
     SubFaceIterator<const SubFaceTree> cbegin(halfFace start_node) const;
-    SubFaceIterator<const SubFaceTree> cend() const;
+    static SubFaceIterator<const SubFaceTree> cend();
     ~SubFaceTree();
 };
 

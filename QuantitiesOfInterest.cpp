@@ -62,67 +62,45 @@ static constexpr std::pair<uint8_t, uint8_t> axesToCheck(uint8_t local_face_id) 
  * Return the maximal segment which consists of /starts from the given face id.
  */
 const std::vector<halfFace> QuantitiesOfInterest::getMaximalSegmentOf(halfFace currFace) {
-    //TODO: doesn't add all the correct face ids. 
-    std::vector<halfFace> res;
-    res.push_back(currFace);
-    //if (currFace.isBorder()) return res;
+    assert(!currFace.isBorder());
     const auto dirs_to_check = axesToCheck(currFace.getLocalId());
-
-    const auto perfect_match = [](halfFace &hf, halfFace &twin, Mesh &mesh) {
+    const auto perfect_match = [&](const halfFace hf, const halfFace twin) {
         // TODO Check if only split in axis that doesnt matter
-        if(hf.isSubdivided()) return false;
-        auto idx = static_cast<size_t>(twin.getCuboid()) * 6 + twin.getLocalId();
-        auto twin_of_twin = (idx < 0 || idx >= mesh.getF2f().size()) ? halfFace(border_id) : mesh.Twin(twin);
+        if (twin.isSubdivided() || twin.isBorder()) return false;
+        const auto idx = static_cast<size_t>(twin.getCuboid()) * 6 + twin.getLocalId();
+        const auto twin_of_twin = mesh.Twin(twin);
         return (twin_of_twin == hf);
     };
-
-    const auto gotoAdjacent = [&](halfFace next) {
-        auto idx = static_cast<size_t>(next.getCuboid()) * 6 + next.getLocalId();
-        auto next_elem = (idx < 0 || idx >= mesh.getF2f().size()) ? halfFace(border_id) : mesh.Twin(next);
-        if(!perfect_match(next, next_elem, mesh) || next_elem.isBorder()) return halfFace(border_id);
+    const auto gotoAdjacent = [&](const halfFace hf) {
+        auto idx = static_cast<size_t>(hf.getCuboid()) * 6 + hf.getLocalId();
+        auto next_elem = mesh.Twin(hf);
+        if(!perfect_match(hf, next_elem)) return halfFace(border_id);
         return halfFace(next_elem.getCuboid(), currFace.getLocalId());
     };
-
-    // Check the first direction in the positive direction
-    auto next = gotoAdjacent(halfFace(currFace.getCuboid(), dirs_to_check.first));
-    while (!next.isBorder()) {
-        res.push_back(next);
-        next = gotoAdjacent(halfFace(next.getCuboid(), dirs_to_check.first));
-        if (next.isBorder()) {
-            res.push_back(next);
+    const auto goDirection = [&](const halfFace hf, const uint8_t direction, std::vector<halfFace>& segments) {
+        auto next = gotoAdjacent(halfFace(currFace.getCuboid(), direction));
+        while (!next.isBorder()) {
+            segments.push_back(next);
+            next = gotoAdjacent(halfFace(next.getCuboid(), direction));
         }
-    }
+    };
+    std::vector<halfFace> first_direction;
     // Check the first direction in the negative direction
-    auto prev = gotoAdjacent(halfFace(currFace.getCuboid(), mesh.opposite_face(dirs_to_check.first)));
-    while (!prev.isBorder()) {
-        res.insert(res.begin(), prev);
-        prev = gotoAdjacent(halfFace(prev.getCuboid(), mesh.opposite_face(dirs_to_check.first)));
-        if (prev.isBorder()) {
-            res.push_back(prev);
-        }
-    }
+    goDirection(currFace, mesh.opposite_face(dirs_to_check.first), first_direction);
+    std::reverse(first_direction.begin(), first_direction.end());
+    first_direction.push_back(currFace);
+    // Check the first direction in the positive direction;
+    goDirection(currFace, dirs_to_check.first, first_direction);
 
-    std::vector<halfFace> other_dir;
-    // Check the first direction in the positive direction
-    next = gotoAdjacent(halfFace(currFace.getCuboid(), dirs_to_check.second));
-    while (!next.isBorder()) {
-        other_dir.push_back(next);
-        next = gotoAdjacent(halfFace(next.getCuboid(), dirs_to_check.second));
-        if (next.isBorder()) {
-            res.push_back(next);
-        }
-    }
-    // Check the first direction in the negative direction
-    prev = gotoAdjacent(halfFace(currFace.getCuboid(), mesh.opposite_face(dirs_to_check.second)));
-    while (!prev.isBorder()) {
-        other_dir.insert(res.begin(), prev);
-        prev = gotoAdjacent(halfFace(prev.getCuboid(), mesh.opposite_face(dirs_to_check.second)));
-        if (prev.isBorder()) {
-            res.push_back(prev);
-        }
-    }
+    std::vector<halfFace> second_direction;
+    // Check the second direction in the negative direction
+    goDirection(currFace, mesh.opposite_face(dirs_to_check.second), second_direction);
+    std::reverse(first_direction.begin(), first_direction.end());
+    second_direction.push_back(currFace);
+    // Check the second direction in the positive direction;
+    goDirection(currFace, dirs_to_check.second, second_direction);
 
-    return (res.size() >= other_dir.size()) ? res : other_dir;
+    return (first_direction.size() >= second_direction.size()) ? first_direction : second_direction;
 }
 
 

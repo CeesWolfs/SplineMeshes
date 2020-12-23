@@ -80,7 +80,7 @@ struct localVertex {
  * half face stores both its parent cuboid, and its local id
  * like <cuboid, local_id> e.g. <1,4>. Six faces per cuboid so, local
  * id 0-5 -> stored in lowest three bits. Local id 6 means the half face is
- * a reference to the subhalfface data structure. Local id 7 denotes a border half
+ * a reference to the subhalfface data structure.
 */
 constexpr uint32_t border_id = static_cast<uint32_t>(-1 & ~0x7);
 
@@ -112,6 +112,8 @@ typedef struct _halfFace
 	}
 	_halfFace(uint32_t id_num) : id(id_num) {}
 } halfFace;
+
+typedef std::pair<halfFace, halfFace> HalfFacePair;
 
 typedef enum class _axis
 {

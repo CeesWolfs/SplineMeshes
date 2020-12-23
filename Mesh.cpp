@@ -176,7 +176,6 @@ void Mesh::updateTwin(const halfFace twin, const halfFace old_hf, const halfFace
 
 }
 
-
 halfFace& Mesh::Twin(const halfFace& hf) {
     return F2f[static_cast<size_t>(hf.getCuboid()) * 6 + hf.getLocalId()];
 }
@@ -186,16 +185,13 @@ const halfFace& Mesh::Twin(const halfFace& hf) const
     return F2f[static_cast<size_t>(hf.getCuboid())*6  + hf.getLocalId()];
 }
 
-
-
-
 constexpr int localIndexinFace(uint8_t face_ind, uint8_t local_vertex_idx) {
     auto res = std::find(std::cbegin(Hf2Ve[face_ind]), std::cend(Hf2Ve[face_ind]), local_vertex_idx);
     assert(res != std::cend(Hf2Ve[face_ind]));
     return std::distance(std::cbegin(Hf2Ve[face_ind]), res);
 }
 
-std::pair<bool, uint32_t> Mesh::mergeVertexIfExistsRewrite(const Vertex& v, HalfFacePair toCheck, uint8_t local_id, Axis split_axis)
+std::pair<bool, uint32_t> Mesh::mergeVertexIfExists(const Vertex& v, HalfFacePair toCheck, uint8_t local_id, Axis split_axis)
 {
     // HalfFace in which the vertex to be found lays
     halfFace face{border_id};
@@ -283,10 +279,10 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     const auto middle = (v_new[0] + v_new[2]) / 2;
     const uint32_t new_cuboid_id = cuboids.size();
     std::array<uint32_t, 4> vertex_inds;
-    constexpr uint8_t hfsCheck[4][2] = { {5,4}, {4,3}, {3,2}, {2,5} };
+    static constexpr uint8_t hfsCheck[4][2] = { {5,4}, {4,3}, {3,2}, {2,5} };
     for (size_t i = 0; i < vertex_inds.size(); i++)
     {
-        auto [found, vertex] = mergeVertexIfExistsRewrite(v_new[i], { {cuboid_id, hfsCheck[i][0]}, {cuboid_id, hfsCheck[i][1]} }, Hf2Ve[face_to_split][i], Axis::z);
+        const auto [found, vertex] = mergeVertexIfExists(v_new[i], { {cuboid_id, hfsCheck[i][0]}, {cuboid_id, hfsCheck[i][1]} }, Hf2Ve[face_to_split][i], Axis::z);
         if (found) {
             vertex_inds[i] = vertex;
         }
@@ -337,10 +333,10 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
     const auto middle = (v_new[0] + v_new[2]) / 2;
     const uint32_t new_cuboid_id = cuboids.size();
     std::array<uint32_t, 4> vertex_inds;
-    constexpr uint8_t hfsCheck[4][2] = { {0,4}, {0,2}, {1,2}, {1,4} };
+    static constexpr uint8_t hfsCheck[4][2] = { {0,4}, {0,2}, {1,2}, {1,4} };
     for (size_t i = 0; i < vertex_inds.size(); i++)
     {
-        auto [found, vertex] = mergeVertexIfExistsRewrite(v_new[i], { {cuboid_id, hfsCheck[i][0]}, {cuboid_id, hfsCheck[i][1]} }, Hf2Ve[face_to_split][i], Axis::x);
+        const auto [found, vertex] = mergeVertexIfExists(v_new[i], { {cuboid_id, hfsCheck[i][0]}, {cuboid_id, hfsCheck[i][1]} }, Hf2Ve[face_to_split][i], Axis::x);
         if (found) {
             vertex_inds[i] = vertex;
         }
@@ -390,10 +386,10 @@ uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
     const auto middle = (v_new[0] + v_new[2]) / 2;
     const uint32_t new_cuboid_id = cuboids.size();
     std::array<uint32_t, 4> vertex_inds;
-    constexpr uint8_t hfsCheck[4][2] = { {0,5}, {0,3}, {1,3}, {1,5} };
+    static constexpr uint8_t hfsCheck[4][2] = { {0,5}, {0,3}, {1,3}, {1,5} };
     for (size_t i = 0; i < vertex_inds.size(); i++)
     {
-        auto [found, vertex] = mergeVertexIfExistsRewrite(v_new[i], { {cuboid_id,  hfsCheck[i][0]}, {cuboid_id, hfsCheck[i][0]} }, Hf2Ve[face_to_split][i], Axis::y);
+        const auto [found, vertex] = mergeVertexIfExists(v_new[i], { {cuboid_id,  hfsCheck[i][0]}, {cuboid_id, hfsCheck[i][0]} }, Hf2Ve[face_to_split][i], Axis::y);
         if (found) {
             vertex_inds[i] = vertex;
         }

@@ -127,20 +127,7 @@ public:
     /*
     * A simpler generalized find vertex method, finds a vertex on the border of a face, checks all three required elements for the vertex
     */
-    std::pair<bool, uint32_t> mergeVertexIfExistsRewrite(const Vertex& v, HalfFacePair hftoCheck, uint8_t local_id, Axis split_axis);
-
-
-    /*
-    *
-    * Better merging function. Assign vref to merged vertex.
-    * //TODO: implement more complicated but much faster function, returns true if merged
-    */
-    bool mergeVertexIfExistsNew(
-        const Vertex& v,
-        uint32_t& vref,
-        const uint32_t cuboid_id,
-        Axis split_axis
-    );
+    std::pair<bool, uint32_t> mergeVertexIfExists(const Vertex& v, HalfFacePair hftoCheck, uint8_t local_id, Axis split_axis);
 
     /**
      * Add function which pushes the new half and twin half faces of the new cuboid in vector F2F

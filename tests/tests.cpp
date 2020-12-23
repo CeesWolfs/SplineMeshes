@@ -40,8 +40,8 @@ namespace helpers {
 		// Start with uniform mesh
 		Mesh* mesh = new Mesh(10,10,10);
 		// Select random elements to split
-		//std::random_device random_device;
-		std::mt19937 random_engine(11); // with this seed fails at split YZ cuboid_id = 850
+		std::random_device random_device;
+		std::mt19937 random_engine(random_device()); 
 		std::uniform_real_distribution<float> fl_distr(0.2, 0.8);
 
 		while(mesh->getCuboids().size() < N) {
@@ -386,7 +386,7 @@ TEST_CASE("Simplest case for findVertexRewrite") {
 	mesh.SplitAlongXY(0, 0.5); // Split cube in two
 	mesh.SplitAlongYZ(0, 0.5); // Spit the botomm again in two
 	// See if we can find a vertex
-	auto [found, id] = mesh.mergeVertexIfExistsRewrite({ 0.5, 0 ,0.5 }, { halfFace(1, 0), halfFace(1, 4) }, 1, Axis::x);
+	auto [found, id] = mesh.mergeVertexIfExists({ 0.5, 0 ,0.5 }, { halfFace(1, 0), halfFace(1, 4) }, 1, Axis::x);
 	CHECK(found);
 	CHECK(mesh.getVertices()[id] == Vertex({ 0.5, 0, 0.5 }));
 }
@@ -539,18 +539,13 @@ TEST_CASE("Test non-divided case for maximal segments") {
 	Mesh mesh;
 	QuantitiesOfInterest q(mesh);
 	// Should contain one single face, since there is no split at all.
-	for (int i = 0; i < 6; i++) {
-		CHECK(q.getMaximalSegmentOf(mesh.getF2f()[i]).size() == 1);
+	for (uint32_t i = 0; i < 6; i++) {
+		CHECK(q.getMaximalSegmentOf(halfFace(0, i)).size() == 1);
 	}
 }
-//TEST_CASE("Test simple divided case for maximal segments") {
-//	Mesh mesh;
-//	mesh.SplitAlongXY(0, 0.5);
-//	QuantitiesOfInterest q(mesh);
-//	//TODO: amount of maximal segments of face 2 should be 2.
-//	for (auto i : mesh.getF2f()) {
-//		std::cout << q.getMaximalSegmentOf(i).size() << std::endl;
-//	}
-//	//CHECK(q.getMaximalSegmentOf(mesh.getF2f()[2]).size() == 2);
-//	mesh.Save("max_seg");
-//}
+TEST_CASE("Test simple divided case for maximal segments") {
+	Mesh mesh;
+	mesh.SplitAlongXY(0, 0.5);
+	QuantitiesOfInterest q(mesh);
+	CHECK(q.getMaximalSegmentOf(halfFace(0, 2)).size() == 2);
+}
