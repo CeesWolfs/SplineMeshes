@@ -3,6 +3,7 @@ catch2/2.13.3
 tinyply/2.3.2 
 eigen/3.3.8 
 blaze/3.8 
+robin-hood-hashing/3.9.1 
 
 [generators]
 cmake

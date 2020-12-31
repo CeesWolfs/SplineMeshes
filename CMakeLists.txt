@@ -25,7 +25,7 @@ else()
     message(STATUS "IPO / LTO not supported: <${error}>")
 endif()
 
-add_executable(CuboidalSplines main.cpp Mesh.cpp QuantitiesOfInterest.cpp SubFaceTree.cpp Types.hpp QuantitiesOfInterest.hpp SubFaceTree.hpp Mesh.hpp)
+add_executable(CuboidalSplines main.cpp Mesh.cpp QuantitiesOfInterest.cpp Splines.hpp SubFaceTree.cpp Types.hpp QuantitiesOfInterest.hpp SubFaceTree.hpp Mesh.hpp)
 target_link_libraries(CuboidalSplines ${CONAN_LIBS})
 
 if(ENABLE_TESTING)
