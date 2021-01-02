@@ -4,10 +4,18 @@
 */
 #include <robin_hood.h>
 #include <blaze/blaze.h>
+#include <Eigen/Sparse>
+#include <Eigen/Dense>
+#include <unsupported/Eigen/KroneckerProduct>
 #include "Types.hpp"
 #include "Mesh.hpp"
 
-using SparseMat = blaze::CompressedMatrix<float>;
+using SparseMat = Eigen::SparseMatrix<float, Eigen::RowMajor>;
+
+template<int N>
+static constexpr Eigen::Matrix<float, N, N> Identity() {
+    return Eigen::Matrix<float, N, N>::Identity();
+}
 
 static constexpr int factorial(int n) {
     if (n <= 1) return 1;
@@ -40,7 +48,7 @@ constexpr float bernstein(float u, int n, int i) {
 // N -> Degree of the spline Polynomial
 template<int N>
 static inline auto SRHS(float a) {
-    blaze::StaticMatrix<float, N + 1, N + 1> res(0);
+    Eigen::Matrix<float, N + 1, N + 1> res = Eigen::Matrix<float, N + 1, N + 1>::Zero();
     for (int i = 0; i <= N; i++)
     {
         for (int j = 0; j <= N; j++) {
@@ -57,7 +65,7 @@ static inline auto SRHS(float a) {
 template<int N>
 static inline auto SLHS(float a)
 {
-    blaze::StaticMatrix<float, N + 1, N + 1> res(0);
+    Eigen::Matrix<float, N + 1, N + 1> res = Eigen::Matrix<float, N + 1, N + 1>::Zero();
     for (int i = 0; i <= N; i++)
     {
         for (int j = 0; j <= N; j++) {
@@ -74,19 +82,19 @@ static inline auto SLHS(float a)
 // C: to what continuity condition 0: endpoints, 1: first derivative ....
 template<int N, int C>
 constexpr auto CRHS(const float h) {
-    blaze::StaticMatrix<float, C + 1, N + 1> res(0);
-    static_assert(C <= 2); // If the continuity is greater than 3 dont compile
+    Eigen::Matrix<float, C + 1, N + 1> res = Eigen::Matrix<float, C + 1, N + 1>::Zero();
+    static_assert(C < N && C <= 2); // If the continuity is greater than 3 dont compile
     switch (C)
     {
     case 2:
-        res(2, N) = 1 / (h * h);
-        res(2, N - 1) = -2 / (h * h);
-        res(2, N - 2) = 1 / (h * h);
+        res(2, N) = -1 / (h * h);
+        res(2, N - 1) = 2 / (h * h);
+        res(2, N - 2) = -1 / (h * h);
     case 1:
-        res(1, N) = 1 / h;
-        res(1, N - 1) = -1 / h;
+        res(1, N) = -1 / h;
+        res(1, N - 1) = 1 / h;
     case 0:
-        res(0, N) = 1;
+        res(0, N) = -1;
         break;
     default:
         break;
@@ -99,8 +107,8 @@ constexpr auto CRHS(const float h) {
 // C: to what continuity condition 0: endpoints, 1: first derivative ....
 template<int N, int C>
 constexpr auto CLHS(const float h) {
-    blaze::StaticMatrix<float, C + 1, N + 1> res(0);
-    static_assert(C <= 2); // If the continuity is greater than 3 dont compile
+    Eigen::Matrix<float, C + 1, N + 1> res = Eigen::Matrix<float, C + 1, N + 1>::Zero();
+    static_assert(C < N && C <= 2); // If the continuity is greater than 3 dont compile
     switch (C)
     {
     case 2:
@@ -119,13 +127,13 @@ constexpr auto CLHS(const float h) {
     return res;
 }
 template<int N, Axis ax>
-static inline SparseMat STgen(std::pair<float, float> bounds, std::pair<float, float> twin_bounds)
+static inline const auto STgen(std::pair<float, float> bounds, std::pair<float, float> twin_bounds)
 {
     if (((twin_bounds.first - bounds.first) > eps) && ((bounds.second - twin_bounds.second) > eps)) {
         // both need to be split
         const float a0 = (twin_bounds.second - bounds.first) / (bounds.second - bounds.first);
         const float a1 = (twin_bounds.first - bounds.first) / (bounds.second - bounds.first);
-        return SRHS<N>(a1) * SLHS<N>(a0);
+        return (SRHS<N>(a1) * SLHS<N>(a0)).eval();
     }
     else if ((twin_bounds.first - bounds.first) > eps) {
         // Only one split
@@ -137,7 +145,7 @@ static inline SparseMat STgen(std::pair<float, float> bounds, std::pair<float, f
         return SLHS<N>(a0);
     }
     else {
-        return blaze::IdentityMatrix<float>(N + 1);
+        return Identity<N+1>();
     }
 }
 
@@ -146,8 +154,8 @@ static inline SparseMat STgen(std::pair<float, float> bounds, std::pair<float, f
 template<int N, int C>
 struct Face
 {
-    blaze::CompressedMatrix<float> higherConstraint;
-    blaze::CompressedMatrix<float> lowerConstraint;
+    SparseMat higherConstraint;
+    SparseMat lowerConstraint;
 };
 
 inline float getDepth(std::pair<Vertex, Vertex> corners, Axis ax) {
@@ -170,73 +178,97 @@ inline std::pair<Vertex, Vertex> getCorners(const Mesh& mesh, halfFace hf) {
 }
 
 template<int N, int C, Axis ax>
-static inline SparseMat genRMatrix(const Mesh& mesh, HalfFacePair pair, bool needsSplit)
+static inline const SparseMat genRMatrix(const Mesh& mesh, HalfFacePair pair, bool needsSplit)
 {
     const auto first_corners = getCorners(mesh, pair.first);
     const auto second_corners = getCorners(mesh, pair.second);
-    const float h_right = getDepth(second_corners, ax) / N;
+    const float h_right = getDepth(first_corners, ax) / N;
     if (!needsSplit) {
         if constexpr (ax == Axis::x) {
-            return blaze::kron(blaze::IdentityMatrix<float>((N + 1) * (N + 1)), CRHS<N,C>(h_right));
+            SparseMat res = Eigen::kroneckerProduct(Identity<(N + 1)* (N + 1)>(), CRHS<N, C>(h_right)).sparseView();
+            res.makeCompressed();
+            return res;
         }
         else if (ax == Axis::y) {
-            return blaze::kron(blaze::IdentityMatrix<float>(N + 1), blaze::kron(CRHS<N,C>(h_right), blaze::IdentityMatrix<float>(N + 1)));
+            SparseMat res = Eigen::kroneckerProduct(Identity<N + 1>(), Eigen::kroneckerProduct(CRHS<N, C>(h_right), Identity<N + 1>())).sparseView();
+            res.makeCompressed();
+            return res;
         }
         else {
-            return blaze::kron(CRHS<N,C>(h_right), blaze::IdentityMatrix<float>((N + 1) * (N + 1)));
+            SparseMat res = Eigen::kroneckerProduct(CRHS<N, C>(h_right), Identity<(N + 1)* (N + 1)>()).sparseView();
+            res.makeCompressed();
+            return res;
         }
     }
-    const auto X = [&]() -> SparseMat { if constexpr (ax == Axis::x) {
-        return CRHS<N, C>(h_right);
+    if constexpr (ax == Axis::x) {
+        const auto X = CRHS<N, C>(h_right);
+        const auto Y = STgen<N, ax>({ first_corners.first.y, first_corners.second.y }, { second_corners.first.y, second_corners.second.y });
+        const auto Z = STgen<N, ax>({ first_corners.first.z, first_corners.second.z }, { second_corners.first.z, second_corners.second.z });
+        SparseMat res = Eigen::kroneckerProduct(Z, Eigen::kroneckerProduct(Y, X)).sparseView();
+        res.makeCompressed();
+        return res;
     }
-    return STgen<N, ax>({ second_corners.first.x, second_corners.second.x }, { first_corners.first.x, first_corners.second.x });
-    }();
-    const auto Y = [&]() -> SparseMat { if constexpr (ax == Axis::y) {
-        return CRHS<N,C>(h_right);
+    else if (ax == Axis::y) {
+        const auto X = STgen<N, ax>({ first_corners.first.x, first_corners.second.x }, { second_corners.first.x, second_corners.second.x });
+        const auto Y = CRHS<N, C>(h_right);
+        const auto Z = STgen<N, ax>({ first_corners.first.z, first_corners.second.z }, { second_corners.first.z, second_corners.second.z });
+        SparseMat res = Eigen::kroneckerProduct(Z, Eigen::kroneckerProduct(Y, X)).sparseView();
+        res.makeCompressed();
+        return res;
     }
-    return STgen<N, ax>({ second_corners.first.y, second_corners.second.y }, { first_corners.first.y, first_corners.second.y });
-    }();
-    const auto Z = [&]() -> SparseMat { if constexpr (ax == Axis::z) {
-        return CRHS<N, C>(h_right);
-    }
-    return STgen<N, ax>({ second_corners.first.z, second_corners.second.z }, { first_corners.first.z, first_corners.second.z });
-    }();
-    return blaze::kron(Z, blaze::kron(Y, X));
+    const auto X = STgen<N, ax>({ first_corners.first.x, first_corners.second.x }, { second_corners.first.x, second_corners.second.x });
+    const auto Y = STgen<N, ax>({ first_corners.first.y, first_corners.second.y }, { second_corners.first.y, second_corners.second.y });
+    const auto Z = CRHS<N, C>(h_right);
+    SparseMat res = Eigen::kroneckerProduct(Z, Eigen::kroneckerProduct(Y, X)).sparseView();
+    res.makeCompressed();
+    return res;
 }
 
 template<int N, int C, Axis ax>
-static inline SparseMat genLMatrix(const Mesh& mesh, HalfFacePair pair, bool needsSplit)
+static inline const SparseMat genLMatrix(const Mesh& mesh, HalfFacePair pair, bool needsSplit)
 {
     const auto first_corners = getCorners(mesh, pair.first);
     const auto second_corners = getCorners(mesh, pair.second);
     const float h_left = getDepth(first_corners, ax) / N;
     if (!needsSplit) {
         if constexpr (ax == Axis::x) {
-            return blaze::kron(blaze::IdentityMatrix<float>((N + 1) * (N + 1)), CLHS<N,C>(h_left));
+            SparseMat res =  Eigen::kroneckerProduct(Identity<(N + 1)* (N + 1)>(), CLHS<N, C>(h_left)).sparseView();
+            res.makeCompressed();
+            return res;
         }
         else if (ax == Axis::y) {
-            return blaze::kron(blaze::IdentityMatrix<float>(N + 1), blaze::kron(CLHS<N,C>(h_left), blaze::IdentityMatrix<float>(N + 1)));
+            SparseMat res = Eigen::kroneckerProduct(Identity<N + 1>(), Eigen::kroneckerProduct(CLHS<N, C>(h_left), Identity<N + 1>())).sparseView();
+            res.makeCompressed();
+            return res;
         }
         else {
-            return blaze::kron(CLHS<N,C>(h_left), blaze::IdentityMatrix<float>((N + 1) * (N + 1)));
+            SparseMat res =  Eigen::kroneckerProduct(CLHS<N, C>(h_left), Identity<(N + 1)* (N + 1)>()).sparseView();
+            res.makeCompressed();
+            return res;
         }
     }
-    const auto X = [&]() -> SparseMat { if constexpr (ax == Axis::x) {
-        return CLHS<N, C>(h_left);
+    if constexpr (ax == Axis::x) {
+        const auto X = CLHS<N, C>(h_left);
+        const auto Y = STgen<N, ax>({ first_corners.first.y, first_corners.second.y }, { second_corners.first.y, second_corners.second.y });
+        const auto Z = STgen<N, ax>({ first_corners.first.z, first_corners.second.z }, { second_corners.first.z, second_corners.second.z });
+        SparseMat res = Eigen::kroneckerProduct(Z, Eigen::kroneckerProduct(Y, X)).sparseView();
+        res.makeCompressed();
+        return res;
     }
-    return STgen<N, ax>({first_corners.first.x, first_corners.second.x}, { second_corners.first.x, second_corners.second.x });
-    }();
-    const auto Y = [&]() -> SparseMat { if constexpr (ax == Axis::y) {
-        return CLHS<N, C>(h_left);
+    else if (ax == Axis::y) {
+        const auto X = STgen<N, ax>({ first_corners.first.x, first_corners.second.x }, { second_corners.first.x, second_corners.second.x });
+        const auto Y = CLHS<N, C>(h_left);
+        const auto Z = STgen<N, ax>({ first_corners.first.z, first_corners.second.z }, { second_corners.first.z, second_corners.second.z });
+        SparseMat res = Eigen::kroneckerProduct(Z, Eigen::kroneckerProduct(Y, X)).sparseView();
+        res.makeCompressed();
+        return res;
     }
-    return STgen<N, ax>({ first_corners.first.y, first_corners.second.y }, { second_corners.first.y, second_corners.second.y });
-    }();
-    const auto Z = [&]() -> SparseMat { if constexpr (ax == Axis::z) {
-        return CLHS<N, C>(h_left);
-    }
-    return STgen<N, ax>({ first_corners.first.z, first_corners.second.z }, { second_corners.first.z, second_corners.second.z });
-    }();
-    return blaze::kron(Z, blaze::kron(Y, X));
+    const auto X = STgen<N, ax>({ first_corners.first.x, first_corners.second.x }, { second_corners.first.x, second_corners.second.x });
+    const auto Y = STgen<N, ax>({ first_corners.first.y, first_corners.second.y }, { second_corners.first.y, second_corners.second.y });
+    const auto Z = CLHS<N, C>(h_left);
+    SparseMat res = Eigen::kroneckerProduct(Z, Eigen::kroneckerProduct(Y, X)).sparseView();
+    res.makeCompressed();
+    return res;
 }
 
 /*
@@ -252,7 +284,7 @@ private:
 public:
     static const uint64_t toKey(HalfFacePair pair) { return static_cast<uint64_t>(pair.first.id) + (static_cast<uint64_t>(pair.second.id) << 32); }
     static const HalfFacePair fromKey(uint64_t key) { return { halfFace(static_cast<uint32_t>(key)), halfFace(static_cast<uint32_t>(key >> 32)) }; }
-    blaze::CompressedMatrix<float> generateGlobalMatrix() const;
+    SparseMat generateGlobalMatrix() const;
     void regenerateConstraints();
     robin_hood::unordered_map<uint64_t, Face<N,C>> constraints;
     SplineMesh(Mesh&& mesh) { this->mesh = mesh; regenerateConstraints(); constraintsValid = true; }
@@ -261,24 +293,45 @@ public:
 };
 
 template<int N, int C>
-inline blaze::CompressedMatrix<float> SplineMesh<N,C>::generateGlobalMatrix() const
+inline SparseMat SplineMesh<N,C>::generateGlobalMatrix() const
 {
     const size_t numConstraints = constraints.size();
-    const auto subMatSize_N = (N + 1) * (N + 1) * (N + 1);
-    const auto subMatSize_M = (N + 1) * (N + 1) * (C + 1);
-    blaze::CompressedMatrix<float> global(numConstraints * subMatSize_M, numElements * subMatSize_N);
+    const auto subMatSize_N = (N + 1) * (N + 1) * (C + 1);
+    const auto subMatSize_M = (N + 1) * (N + 1) * (N + 1);
+    SparseMat global(numConstraints * subMatSize_N, numElements * subMatSize_M);
     // Iterate over all the constraints
     size_t i = 0;
     for (const auto& [key, Face] : constraints)
     {
-        auto pair = fromKey(key);
-        // Insert the constraints 
-        auto sm = blaze::submatrix(global, /* row */ subMatSize_M * i, /* col */ subMatSize_N * pair.first.getCuboid(), subMatSize_M, subMatSize_N);
-        sm = Face.lowerConstraint;
-        sm = blaze::submatrix(global, /* row */ subMatSize_M * i, /* col */ subMatSize_N * pair.second.getCuboid(), subMatSize_M, subMatSize_N);
-        sm = Face.higherConstraint;
+        const auto pair = fromKey(key);
+        for (size_t n = 0; n < subMatSize_N; n++)
+        {
+            global.startVec(i * subMatSize_N + n);
+            if (pair.first.getCuboid() < pair.second.getCuboid()) {
+                for (SparseMat::InnerIterator it(Face.lowerConstraint, n); it; ++it)
+                {
+                    global.insertBack(i * subMatSize_N + n, it.col() + pair.first.getCuboid() * subMatSize_M) = it.value();
+                }
+                for (SparseMat::InnerIterator it(Face.higherConstraint, n); it; ++it)
+                {
+                    global.insertBack(i * subMatSize_N + n, it.col() + pair.second.getCuboid() * subMatSize_M) = it.value();
+                }
+            }
+            else {
+                for (SparseMat::InnerIterator it(Face.higherConstraint, n); it; ++it)
+                {
+                    global.insertBack(i * subMatSize_N + n, it.col() + pair.second.getCuboid() * subMatSize_M) = it.value();
+                }
+                for (SparseMat::InnerIterator it(Face.lowerConstraint, n); it; ++it)
+                {
+                    global.insertBack(i * subMatSize_N + n, it.col() + pair.first.getCuboid() * subMatSize_M) = it.value();
+                }      
+            }
+        }
         i++;
     }
+    global.finalize();
+    global.makeCompressed();
     return global;
 }
 
