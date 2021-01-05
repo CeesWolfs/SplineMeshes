@@ -3,7 +3,6 @@
 *
 */
 #include <robin_hood.h>
-#include <blaze/blaze.h>
 #include <Eigen/Sparse>
 #include <Eigen/Dense>
 #include <unsupported/Eigen/KroneckerProduct>
@@ -325,7 +324,7 @@ inline SparseMat SplineMesh<N,C>::generateGlobalMatrix() const
                 for (SparseMat::InnerIterator it(Face.lowerConstraint, n); it; ++it)
                 {
                     global.insertBack(i * subMatSize_N + n, it.col() + pair.first.getCuboid() * subMatSize_M) = it.value();
-                }      
+                }
             }
         }
         i++;
@@ -362,7 +361,7 @@ void SplineMesh<N,C>::regenerateConstraints() {
                         else {
                             constraints.insert({ key, Face<N,C>{ genLMatrix<N,C,Axis::y>(mesh, pair, true), genRMatrix<N,C,Axis::y>(mesh, pair, mesh.Twin(*it) == cur_hf) } });
                         }
-                        
+
                     }
                 }
             }
