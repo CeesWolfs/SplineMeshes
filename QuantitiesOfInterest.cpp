@@ -64,15 +64,34 @@ static constexpr std::pair<uint8_t, uint8_t> axesToCheck(uint8_t local_face_id) 
 const std::vector<halfFace> QuantitiesOfInterest::getMaximalSegmentOf(halfFace currFace) {
     assert(!currFace.isBorder());
     const auto dirs_to_check = axesToCheck(currFace.getLocalId());
-    const auto perfect_match = [&](const halfFace hf, const halfFace twin) {
-        // TODO Check if only split in axis that doesnt matter
-        if (twin.isSubdivided() || twin.isBorder()) return false;
-        const auto idx = static_cast<size_t>(twin.getCuboid()) * 6 + twin.getLocalId();
+    const auto perfect_match = [&](const halfFace hf, halfFace& twin) {
+        if (twin.isBorder()) return false;
+        if (twin.isSubdivided()) {
+            // Check if we maybe still have a perfect match
+            // Check for a vertex which exists in both halfFaces
+            const auto local_vertices = Hf2Clv[hf.getLocalId()][currFace.getLocalId()];
+            const auto& verts = mesh.getCuboids()[hf.getCuboid()];
+            const std::array<uint32_t, 2> ver_ids = { verts.vertices[local_vertices[0]],verts.vertices[local_vertices[1]] };
+            const auto twin_hf = *mesh.getSft().find(twin, mesh.getVertices()[ver_ids[0]]);
+            // Check if both the required vertices exist in the found half Face
+            const auto& twin_verts = mesh.getCuboids()[twin_hf.getCuboid()];
+            twin = twin_hf;
+            return contains(twin_verts.vertices, ver_ids[0]) && contains(twin_verts.vertices, ver_ids[1]);
+        }
         const auto twin_of_twin = mesh.Twin(twin);
-        return (twin_of_twin == hf);
+        if (twin_of_twin.isSubdivided()) {
+            // Check if we maybe still have a perfect match
+            // Check for a vertex which exists in both halfFaces
+            const auto local_vertices = Hf2Clv[hf.getLocalId()][currFace.getLocalId()];
+            const auto& verts = mesh.getCuboids()[hf.getCuboid()];
+            const std::array<uint32_t, 2> ver_ids = { verts.vertices[local_vertices[0]],verts.vertices[local_vertices[1]] };
+            // Check if both the required vertices exist in the twin
+            const auto& twin_verts = mesh.getCuboids()[twin.getCuboid()];
+            return contains(twin_verts.vertices, ver_ids[0]) && contains(twin_verts.vertices, ver_ids[1]);
+        }
+        return true;
     };
     const auto gotoAdjacent = [&](const halfFace hf) {
-        auto idx = static_cast<size_t>(hf.getCuboid()) * 6 + hf.getLocalId();
         auto next_elem = mesh.Twin(hf);
         if(!perfect_match(hf, next_elem)) return halfFace(border_id);
         return halfFace(next_elem.getCuboid(), currFace.getLocalId());

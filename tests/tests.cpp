@@ -170,7 +170,7 @@ TEST_CASE("A subface can be changed", "[SubFaceTree]")
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.75, 0.5, 0.5 }, { 5,0 }, { 7,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::x, { 0.75, 0.25, 0.5 }, { 5,0 }, { 8,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.75, 0.75, 0.5 }, { 7,0 }, { 9,0 });
-	auto it =  subfaces.find(F2f[1], {5,0}, {0.625, 0.25, 0.5});
+	auto it =  subfaces.find(F2f[1], {0.625, 0.25, 0.5});
 	*it = {3,0};
 	std::vector<halfFace> subFaces;
 	for (auto it = subfaces.begin(F2f[1]); it != subfaces.end(); ++it) {
@@ -534,7 +534,7 @@ TEST_CASE("Check border elements") {
 	CHECK(q.isCornerCuboid(mesh.getCuboids()[0]) == true);
 
 }
-////TODO: maximal segments tests do not pass yet
+
 TEST_CASE("Test non-divided case for maximal segments") {
 	Mesh mesh;
 	QuantitiesOfInterest q(mesh);
@@ -549,3 +549,26 @@ TEST_CASE("Test simple divided case for maximal segments") {
 	QuantitiesOfInterest q(mesh);
 	CHECK(q.getMaximalSegmentOf(halfFace(0, 2)).size() == 2);
 }
+
+TEST_CASE("Test somewhat non trivial case for maximal segments") {
+	Mesh mesh(3,3,3);
+	mesh.SplitAlongXY(1, 0.1);
+	mesh.SplitAlongXY(0, 0.2);
+	QuantitiesOfInterest q(mesh);
+	CHECK(q.getMaximalSegmentOf(halfFace(0, 0)).size() == 3);
+}
+
+TEST_CASE("Test non trivial case for maximal segments") {
+	Mesh mesh(3, 3, 3);
+	mesh.SplitAlongXY(2, 0.2);
+	mesh.SplitAlongYZ(1, 0.5);
+	mesh.SplitAlongXY(0, 0.1);
+	QuantitiesOfInterest q(mesh);
+	mesh.Save("max_segments_test");
+	CHECK(q.getMaximalSegmentOf(halfFace(0, 0)).size() == 4);
+	for (const auto hf : q.getMaximalSegmentOf(halfFace(0, 0)))
+	{
+		std::cout << '<' << hf.getCuboid() << ',' << static_cast<int>(hf.getLocalId()) << '>';
+	}
+}
+

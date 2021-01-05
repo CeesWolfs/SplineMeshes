@@ -167,7 +167,8 @@ void Mesh::updateHalfFace(const halfFace hf, const halfFace new_hf, const Vertex
 void Mesh::updateTwin(const halfFace twin, const halfFace old_hf, const halfFace new_hf, const Vertex& middle)
 {
     if (Twin(twin).isSubdivided()) {
-        auto it = sft.find(Twin(twin), old_hf, middle);
+        auto it = sft.find(Twin(twin), middle);
+        assert(*it == old_hf);
         *it = new_hf;
     }
     else {

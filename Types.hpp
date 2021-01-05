@@ -10,6 +10,11 @@ static inline bool floatSame(const float a, const float b) {
 	return std::abs(a-b) < eps;
 }
 
+template<typename T, typename T2>
+static constexpr inline bool contains(const T& collection, T2 val) {
+	return std::find(collection.begin(), collection.end(), val) != collection.end();
+}
+
 typedef struct _vertex
 {
 	float x, y, z;
