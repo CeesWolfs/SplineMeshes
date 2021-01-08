@@ -97,7 +97,7 @@ const std::vector<halfFace> QuantitiesOfInterest::getMaximalSegmentOf(halfFace c
         return halfFace(next_elem.getCuboid(), currFace.getLocalId());
     };
     const auto goDirection = [&](const halfFace hf, const uint8_t direction, std::vector<halfFace>& segments) {
-        auto next = gotoAdjacent(halfFace(currFace.getCuboid(), direction));
+        auto next = gotoAdjacent(halfFace(hf.getCuboid(), direction));
         while (!next.isBorder()) {
             segments.push_back(next);
             next = gotoAdjacent(halfFace(next.getCuboid(), direction));
