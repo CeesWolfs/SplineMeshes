@@ -87,8 +87,7 @@ TEST_CASE("Test for basic quantities of interest vertex connectivity") {
 	QuantitiesOfInterest q(mesh);
 	//Check that border vertices are connected to 1 cuboid only.
 	for (int i = 0; i < 8; i++) {
-		const Vertex vertex = mesh.getVertices()[i];
-		CHECK(q.vertexConnectivity(vertex) == 1);
+		CHECK(q.vertexConnectivity(i).number == 1);
 	}
 }
 
@@ -97,8 +96,7 @@ TEST_CASE("Test for divided quantities of interest vertex connectivity") {
 	mesh.SplitAlongXY(0, 0.5);
 	QuantitiesOfInterest q(mesh);
 	//Check that split vertex is connected to 2 cuboids.
-	const Vertex vertex = mesh.getVertices()[10];
-	CHECK(q.vertexConnectivity(vertex) == 2);
+	CHECK(q.vertexConnectivity(10).number == 2);
 }
 
 TEST_CASE("A single subface split works as expected", "[SubFaceTree]")
@@ -170,7 +168,8 @@ TEST_CASE("A subface can be changed", "[SubFaceTree]")
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.75, 0.5, 0.5 }, { 5,0 }, { 7,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::x, { 0.75, 0.25, 0.5 }, { 5,0 }, { 8,0 });
 	F2f[1] = subfaces.splitHalfFace(F2f[1], { 0,1 }, Axis::y, { 0.75, 0.75, 0.5 }, { 7,0 }, { 9,0 });
-	auto it =  subfaces.find(F2f[1], {5,0}, {0.625, 0.25, 0.5});
+	auto it =  subfaces.find(F2f[1], {0.625, 0.25, 0.5});
+	assert(*it == halfFace(5,0));
 	*it = {3,0};
 	std::vector<halfFace> subFaces;
 	for (auto it = subfaces.begin(F2f[1]); it != subfaces.end(); ++it) {
@@ -325,8 +324,8 @@ TEST_CASE("Split a cube equally into fourths") {
 		CHECK(SanityChecks::AllAdjacent(mesh));
 	}
 	QuantitiesOfInterest q(mesh);
-	CHECK(q.vertexConnectivity(mesh.getVertices()[12]) == 4);
-	CHECK(q.vertexConnectivity(mesh.getVertices()[13]) == 4);
+	CHECK(q.vertexConnectivity(12).number == 4);
+	CHECK(q.vertexConnectivity(13).number == 4);
 	//std::cout << q.incidenceMatrix() << std::endl;
 	mesh.Save("Fourths");
 }
@@ -430,10 +429,18 @@ TEST_CASE("4 by 4 split on the left half") {
 	}
 	CHECK(x == 3);
 	//Check that split vertex is connected to 3 cuboids.
-	const Vertex vertex = mesh.getVertices()[30];
-	//TODO: Another bug: mesh vertex with id 30 is connected to 3 cuboids in the visualization, but only connects to 2 of them.
-	//CHECK(q.vertexConnectivity(vertex) == 3);
+	CHECK(q.vertexConnectivity(30).number == 3);
 	mesh.Save("eq_cuboids");
+}
+
+TEST_CASE("Vertex connectivity for middle point is 8") {
+	Mesh mesh(2,2,2);
+	QuantitiesOfInterest q(mesh);
+	//Find the middle vertex
+	uint32_t index = (std::find(mesh.getVertices().begin(), mesh.getVertices().end(), Vertex{ 0.5, 0.5, 0.5 }) - mesh.getVertices().begin());
+	CHECK(q.vertexConnectivity(index).number == 8);
+	index = (std::find(mesh.getVertices().begin(), mesh.getVertices().end(), Vertex{ 1, 0.5, 0.5 }) - mesh.getVertices().begin());
+	CHECK(q.vertexConnectivity(index).number == 4);
 }
 
 TEST_CASE("Subdived connect to subdivided") {

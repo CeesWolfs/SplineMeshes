@@ -4,20 +4,21 @@
 int main(int argc, char const *argv[])
 {
 	Mesh mesh;
-	mesh.SplitAlongXY(0, 0.5); 
-	mesh.SplitAlongXZ(0, 0.4); 
-	mesh.SplitAlongXZ(1, 0.3);
-	uint32_t foo = mesh.SplitAlongYZ(1, 0.7);
-	mesh.SplitAlongXZ(foo, 0.1);
-	mesh.SplitAlongYZ(0, 0.2);
-	mesh.Save("SplineTest");
-	SplineMesh<3, 2> splines(std::move(mesh));
+	mesh.SplitAlongXY(0, 0.5);
+	//auto top = mesh.SplitAlongXY(1, 0.75);
+	mesh.SplitAlongXZ(0, 0.5);
+	//mesh.SplitAlongXZ(1, 0.4);
+	//mesh.SplitAlongYZ(0, 0.6);
+	//mesh.SplitAlongYZ(top, 0.7);
+	SplineMesh<2, 1> splines(std::move(mesh));
 	auto System = splines.generateGlobalMatrix();
 	std::cout << System.cols() << ' ' << System.rows() << '\n';
-	Eigen::SparseMatrix<float> Q;
-	auto QR = Eigen::SparseQR<Eigen::SparseMatrix<float>, Eigen::COLAMDOrdering<int>>(System.transpose());
-	Q = QR.matrixQ();
+	std::cout << System << '\n';
+	//std::cout << System.toDense() << '\n';
+	auto QR = Eigen::FullPivHouseholderQR<Eigen::MatrixXf>(System.transpose());
+	auto Q = QR.matrixQ();
 	auto kernel = Q.block(0, QR.rank(), Q.rows(), Q.cols() - QR.rank());
-	std::cout << Q.cols() << ' ' << Q.rows() << ' ' << QR.rank() << '\n';
+	std::cout << kernel.cols() << ' ' << kernel.rows() << '\n';
+	//std::cout << kernel;
 	return 0;
 }

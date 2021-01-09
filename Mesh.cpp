@@ -79,6 +79,36 @@ Mesh::Mesh(int Nx, int Ny, int Nz)
         }
     }
     //TODO V2lID
+    static constexpr uint8_t lookup[8] = {0, 1, 3, 2, 4, 5, 7, 6};
+    for (size_t k = 0; k <= Nz; k++)
+    {
+        for (size_t j = 0; j <= Ny; j++)
+        {
+            for (size_t i = 0; i <= Nx; i++)
+            {
+                int cube_x = 2*(i/2);
+                int cube_y = 2*(j/2);
+                int cube_z = 2*(k/2);
+                int local_x = i % 2;
+                int local_y = j % 2;
+                int local_z = k % 2;
+                if (cube_x == Nx) {
+                    cube_x--;
+                    local_x = 1;
+                }
+                if (cube_y == Ny) {
+                    cube_y--;
+                    local_y = 1;
+                }
+                if (cube_z == Nz) {
+                    cube_z--;
+                    local_z = 1;
+                }
+                uint8_t local_index = lookup[local_z * 4 + local_y * 2 + local_x];
+                V2lV.emplace_back(localVertex(toCubIndex(cube_x, cube_y, cube_z), local_index));
+            }
+        }
+    }
 }
 
 const std::vector<Vertex>& Mesh::getVertices() const {
@@ -167,7 +197,8 @@ void Mesh::updateHalfFace(const halfFace hf, const halfFace new_hf, const Vertex
 void Mesh::updateTwin(const halfFace twin, const halfFace old_hf, const halfFace new_hf, const Vertex& middle)
 {
     if (Twin(twin).isSubdivided()) {
-        auto it = sft.find(Twin(twin), old_hf, middle);
+        auto it = sft.find(Twin(twin), middle);
+        assert(*it == old_hf);
         *it = new_hf;
     }
     else {

@@ -6,6 +6,11 @@
 
 constexpr float eps = 1e-7;
 
+template<typename T, typename T2>
+static constexpr inline bool contains(const T& collection, T2 val) {
+	return std::find(collection.begin(), collection.end(), val) != collection.end();
+}
+
 static inline bool floatSame(const float a, const float b) {
 	return std::abs(a-b) < eps;
 }
