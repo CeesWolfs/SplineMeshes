@@ -22,6 +22,23 @@ static constexpr std::array<std::array<uint8_t, 4>, 6> Hf2Ve = { {
     {0,3,7,4}
 }};
 
+/* Face to axis */
+static constexpr Axis Hf2Ax[6] = { Axis::z, Axis::z, Axis::y, Axis::x, Axis::y, Axis::x };
+
+/*
+* local vertex to containing half faces
+*/
+static constexpr std::array<std::array<uint8_t, 3>, 8> Lv2Hf = { {
+    {0, 4, 5},
+    {0, 3, 4},
+    {0, 2, 3},
+    {0, 2, 5},
+    {1, 4, 5},
+    {1, 3, 4},
+    {1, 2, 3},
+    {1, 2, 5}
+} };
+
 /* 
 * Common local vertices between to half faces
 */
