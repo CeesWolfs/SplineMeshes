@@ -40,8 +40,9 @@ public:
     SubFaceTree(/* args */) = default;
     SubFaceTree(const SubFaceTree&) = delete; // prevent expensive accidental copies
     static uint32_t toNodeIndex(halfFace from) {return from.id >> 3;}
-    SubFaceIterator<SubFaceTree> find(halfFace start_node, const Vertex& toFindmiddle);
-    SubFaceIterator<const SubFaceTree> find(halfFace start_node, const Vertex& toFindmiddle) const;
+    // Find the halface which bounds the vertex v, in the subfacetree starting at start_node
+    SubFaceIterator<SubFaceTree> find(halfFace start_node, const Vertex& v);
+    SubFaceIterator<const SubFaceTree> find(halfFace start_node, const Vertex& v) const;
 
     /* 
         [description] searches the tree for the vertex that we need to find starting from start_node half face.

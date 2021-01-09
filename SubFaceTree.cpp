@@ -77,33 +77,7 @@ uint32_t SubFaceTree::insertNode(Node node)
     return new_index;
 }
 
-SubFaceIterator<const SubFaceTree> SubFaceTree::find(halfFace start_node, const Vertex& toFindmiddle) const
-{
-    assert(start_node.isSubdivided());
-    bool is_lower = false;
-    auto child = start_node;
-    while (child.isSubdivided())
-    {
-        float split = nodes[toNodeIndex(child)].split_coord;
-        switch (nodes[toNodeIndex(child)].split_axis)
-        {
-        case Axis::x:
-            is_lower = (eps + toFindmiddle.x <= split);
-            break;
-        case Axis::y:
-            is_lower = (eps + toFindmiddle.y <= split);
-            break;
-        case Axis::z:
-            is_lower = (eps + toFindmiddle.z <= split);
-            break;
-        }
-        start_node = child;
-        child = is_lower ? nodes[toNodeIndex(start_node)].lower_child : nodes[toNodeIndex(start_node)].top_child;
-    }
-    return SubFaceIterator<const SubFaceTree>(this, toNodeIndex(start_node), is_lower);
-}
-
-SubFaceIterator<SubFaceTree> SubFaceTree::find(halfFace start_node, const Vertex& toFindmiddle)
+SubFaceIterator<SubFaceTree> SubFaceTree::find(halfFace start_node, const Vertex& v)
 {
     assert(start_node.isSubdivided());
     bool is_lower = false;
@@ -114,19 +88,45 @@ SubFaceIterator<SubFaceTree> SubFaceTree::find(halfFace start_node, const Vertex
         switch (nodes[toNodeIndex(child)].split_axis)
         {
             case Axis::x :
-                is_lower = (eps + toFindmiddle.x <= split);
+                is_lower = (eps + v.x <= split);
                 break;
             case Axis::y :
-                is_lower = (eps + toFindmiddle.y <= split);
+                is_lower = (eps + v.y <= split);
                 break;
             case Axis::z :
-                is_lower = (eps + toFindmiddle.z <= split);
+                is_lower = (eps + v.z <= split);
                 break;
         }
         start_node = child;
         child = is_lower ? nodes[toNodeIndex(start_node)].lower_child : nodes[toNodeIndex(start_node)].top_child;
     }
     return SubFaceIterator<SubFaceTree>(this, toNodeIndex(start_node), is_lower);
+}
+
+SubFaceIterator<const SubFaceTree> SubFaceTree::find(halfFace start_node, const Vertex& v) const
+{
+    assert(start_node.isSubdivided());
+    bool is_lower = false;
+    auto child = start_node;
+    while (child.isSubdivided())
+    {
+        float split = nodes[toNodeIndex(child)].split_coord;
+        switch (nodes[toNodeIndex(child)].split_axis)
+        {
+        case Axis::x:
+            is_lower = (eps + v.x <= split);
+            break;
+        case Axis::y:
+            is_lower = (eps + v.y <= split);
+            break;
+        case Axis::z:
+            is_lower = (eps + v.z <= split);
+            break;
+        }
+        start_node = child;
+        child = is_lower ? nodes[toNodeIndex(start_node)].lower_child : nodes[toNodeIndex(start_node)].top_child;
+    }
+    return SubFaceIterator<const SubFaceTree>(this, toNodeIndex(start_node), is_lower);
 }
 
 bool SubFaceTree::findVertexBorder(halfFace start_node, const Vertex& vertexToFind, const Axis splitAxis, halfFace& found) const

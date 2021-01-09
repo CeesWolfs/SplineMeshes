@@ -541,7 +541,7 @@ TEST_CASE("Check border elements") {
 	CHECK(q.isCornerCuboid(mesh.getCuboids()[0]) == true);
 
 }
-////TODO: maximal segments tests do not pass yet
+
 TEST_CASE("Test non-divided case for maximal segments") {
 	Mesh mesh;
 	QuantitiesOfInterest q(mesh);
@@ -556,3 +556,22 @@ TEST_CASE("Test simple divided case for maximal segments") {
 	QuantitiesOfInterest q(mesh);
 	CHECK(q.getMaximalSegmentOf(halfFace(0, 2)).size() == 2);
 }
+
+TEST_CASE("Test somewhat non trivial case for maximal segments") {
+	Mesh mesh(3,3,3);
+	mesh.SplitAlongXY(1, 0.1);
+	mesh.SplitAlongXY(0, 0.2);
+	QuantitiesOfInterest q(mesh);
+	CHECK(q.getMaximalSegmentOf(halfFace(0, 0)).size() == 3);
+}
+
+TEST_CASE("Test non trivial case for maximal segments") {
+	Mesh mesh(3, 3, 3);
+	mesh.SplitAlongXY(2, 0.2);
+	mesh.SplitAlongYZ(1, 0.5);
+	mesh.SplitAlongXY(0, 0.1);
+	QuantitiesOfInterest q(mesh);
+	mesh.Save("max_segments_test");
+	CHECK(q.getMaximalSegmentOf(halfFace(0, 0)).size() == 4);
+}
+
