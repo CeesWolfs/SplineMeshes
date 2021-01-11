@@ -3,6 +3,7 @@
 #include "../Mesh.hpp"
 #include "../Types.hpp"
 #include "../QuantitiesOfInterest.hpp"
+#include "../SplineMesh.hpp"
 
 namespace SanityChecks {
 	/*
@@ -572,3 +573,14 @@ TEST_CASE("Test non trivial case for maximal segments") {
 	}
 }
 
+TEST_CASE("Spline degree for cartesian mesh is correct") {
+	SplineMesh<3, 2> splines(2,2,3);
+	int N_x = (3 + 1) * 2 - (2 + 1) * (2 - 1);
+	int N_y = (3 + 1) * 2 - (2 + 1) * (2 - 1);
+	int N_z = (3 + 1) * 3 - (2 + 1) * (3 - 1);
+	auto System = splines.generateGlobalMatrix();
+	auto QR = Eigen::FullPivHouseholderQR<Eigen::MatrixXf>(System.transpose());
+	auto Q = QR.matrixQ();
+	auto kernel = Q.block(0, QR.rank(), Q.rows(), Q.cols() - QR.rank());
+	CHECK(kernel.cols() == (N_x*N_y*N_z));
+}

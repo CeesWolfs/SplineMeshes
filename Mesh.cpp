@@ -49,7 +49,7 @@ Mesh::Mesh(int Nx, int Ny, int Nz)
             }
         }
     }
-    auto toVertIndex = [=](uint32_t i, uint32_t j, uint32_t k) {return i + j * (Ny + 1) + k * (Nz + 1) * (Ny + 1); };
+    auto toVertIndex = [=](uint32_t i, uint32_t j, uint32_t k) {return i + j * (Nx + 1) + k * (Nx + 1) * (Ny + 1); };
     // Construct all the cuboids
     for (size_t k = 0; k < Nz; k++)
     {
@@ -61,7 +61,7 @@ Mesh::Mesh(int Nx, int Ny, int Nz)
             }
         }
     }
-    auto toCubIndex = [=](uint32_t i, uint32_t j, uint32_t k) {return i + j * Ny + k * Nz * Ny; };
+    auto toCubIndex = [=](uint32_t i, uint32_t j, uint32_t k) {return i + j * Nx + k * Nx * Ny; };
     // Construct all the halfFaces
     for (size_t k = 0; k < Nz; k++)
     {
