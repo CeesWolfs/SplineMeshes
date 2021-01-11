@@ -22,8 +22,24 @@ For consistency, this is how the cuboids are always structured:
 This is the orientation that we adhere to for consistency and an example of split along XY plane:
 ![alt text](https://github.com/CeesWolfs/SplineMeshes/blob/3D/images/image1.png?raw=true)  
 
-Example split along ZY plane:
+Example split along YZ plane:
 ![alt text](https://github.com/CeesWolfs/SplineMeshes/blob/3D/images/image2.png?raw=true)  
 
-Example split along ZX plane:
+Example split along XY plane:
 ![alt text](https://github.com/CeesWolfs/SplineMeshes/blob/3D/images/image3.png?raw=true)
+
+The 3D mesh domain has its following boundaries set at:
+0 <= x <= 1, 0 <= y <= 1, 0 <= z <= 1
+
+# Mesh division usage
+
+Mesh refinement can be obtained by constructing an initial mesh
+```
+Mesh mesh;
+```
+and calling at least one or more of the split methods, depending on which plane and axis coordinate the splits should happen. 
+For example:
+```
+mesh.SplitAlongYZ(0, 0.5);
+```
+splits the initial cuboid (which can be identified with id 0) along the YZ plane at x = 0.5. This will result in 2 cuboids from which the new cuboid gets id 1 (the old cuboid id incremented by 1).
