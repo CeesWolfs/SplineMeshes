@@ -2,14 +2,12 @@
 /**
  * To check properties of initial mesh.
  */
-QuantitiesOfInterest::QuantitiesOfInterest(): mesh(), incidence(mesh.getVertices().size(), mesh.getCuboids().size()) {}
+QuantitiesOfInterest::QuantitiesOfInterest(): mesh(Mesh()), incidence(mesh.getVertices().size(), mesh.getCuboids().size()) {}
 
 /**
  * To check properties of already existing mesh.
  */
-QuantitiesOfInterest::QuantitiesOfInterest(const Mesh& m): incidence(m.getVertices().size(), m.getCuboids().size()) {
-    this->mesh = m;
-}
+QuantitiesOfInterest::QuantitiesOfInterest(const Mesh& m) : incidence(m.getVertices().size(), m.getCuboids().size()), mesh(m) {}
 
 const Mesh& QuantitiesOfInterest::getMesh() const {
     return mesh;
@@ -17,27 +15,63 @@ const Mesh& QuantitiesOfInterest::getMesh() const {
 
 /**
  * Returns the amount of elements which are connected to/ linked with the given vertex.
+ * Todo optimize away some redundant checks
  */
-int QuantitiesOfInterest::vertexConnectivity(const Vertex& vertex) {
-    //find index of given vertex in vertices vector
-    uint32_t idx = -1;
-    for (auto i = 0; i < mesh.getVertices().size(); i++) {
-        if (mesh.getVertices()[i] == vertex) {
-            idx = i;
-            break;
+VertexConnectivity QuantitiesOfInterest::vertexConnectivity(uint32_t vertex) const {
+    std::array<uint32_t, 8> elements{-1,-1,-1,-1,-1,-1,-1,-1}; // At most 8 elements can be connected to a vertex
+    const Vertex& coord = mesh.getVertices()[vertex];
+    localVertex lv = mesh.getV2lV()[vertex];
+    uint32_t x = 0;
+    auto moveToNext = [&](uint32_t& cuboid, uint8_t direction) {
+        // first check if the vertex lies inside the face
+        const Vertex& face = mesh.getVertices()[mesh.getCuboids()[cuboid].vertices[Hf2Ve[direction][0]]];
+        bool inFace = false;
+        switch (Hf2Ax[direction])
+        {
+
+        case Axis::x: inFace = floatSame(coord.x, face.x); break;
+        case Axis::y: inFace = floatSame(coord.y, face.y); break;
+        case Axis::z: inFace = floatSame(coord.z, face.z); break;
         }
+        if (!inFace) return false;
+        auto twin = mesh.Twin(halfFace(cuboid, direction));
+        uint32_t new_cuboid;
+        if (twin.isBorder()) return false;
+        if (twin.isSubdivided()) { new_cuboid = (*mesh.getSft().find(twin, coord)).getCuboid(); }
+        else new_cuboid = twin.getCuboid();
+        if (contains(elements, new_cuboid)) return false;
+        elements[x++] = new_cuboid;
+        cuboid = new_cuboid;
+        return true;
+    };
+    elements[x++] = lv.getCuboid();
+    auto directions = Lv2Hf[lv.getLocalId()];
+    uint32_t currentCuboid = lv.getCuboid();
+    // Check all 7 neccasarry cuboids with early stopping
+    if (moveToNext(currentCuboid, directions[0])) {
+        uint32_t temp = currentCuboid;
+        if (moveToNext(currentCuboid, directions[1])) moveToNext(currentCuboid, directions[2]);
+        currentCuboid = temp;
+        moveToNext(currentCuboid, directions[2]);
     }
-    int x = 0;
-    //check how many elements are reachable to the given vertex.
-    // TODO implement non O(n) algo
-    for (int j = 0; j < mesh.getCuboids().size(); j++) {
-        for (auto k : mesh.getCuboids()[j].vertices) {
-            if (idx == k) {
-                x++;
-            }
-        }
+    currentCuboid = lv.getCuboid();
+    if (moveToNext(currentCuboid, directions[1])) {
+        moveToNext(currentCuboid, directions[2]);
     }
-    return x;
+    currentCuboid = lv.getCuboid();
+    moveToNext(currentCuboid, directions[2]);
+    return {elements, x};
+}
+
+// Loop over all half faces which contain the vertex
+// If one of those faces the border, then return true
+bool QuantitiesOfInterest::isBorderVertex(uint32_t vertex) const
+{
+    localVertex lv = mesh.getV2lV()[vertex];
+    for (const uint8_t hf : Lv2Hf[lv.getLocalId()]) {
+        if (mesh.Twin(halfFace(lv.getCuboid(), hf)) == border_id) return true;
+    }
+    return false;
 }
 
 /**

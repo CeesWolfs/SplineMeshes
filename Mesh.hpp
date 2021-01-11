@@ -22,6 +22,23 @@ static constexpr std::array<std::array<uint8_t, 4>, 6> Hf2Ve = { {
     {0,3,7,4}
 }};
 
+/* Face to axis */
+static constexpr Axis Hf2Ax[6] = { Axis::z, Axis::z, Axis::y, Axis::x, Axis::y, Axis::x };
+
+/*
+* local vertex to containing half faces
+*/
+static constexpr std::array<std::array<uint8_t, 3>, 8> Lv2Hf = { {
+    {0, 4, 5},
+    {0, 3, 4},
+    {0, 2, 3},
+    {0, 2, 5},
+    {1, 4, 5},
+    {1, 3, 4},
+    {1, 2, 3},
+    {1, 2, 5}
+} };
+
 /* 
 * Common local vertices between to half faces
 */
@@ -108,27 +125,27 @@ public:
      * Helper functions for checks that are needed to find vertex of split on x, y and z axises
      */
     // bool seachVertexByAxis(const std::vector<halfFace>& hfts, const Axis splitAxis, const Vertex& toFind) const;
-    bool findVertexAxisX(
-        const halfFace& hf1,
-        const halfFace& hf2,
-        const halfFace& hf3,
-        const halfFace& hf4,
-        const Vertex& vToFind
-    ) const;
-    bool findVertexAxisY(
-        const halfFace& hf1,
-        const halfFace& hf2,
-        const halfFace& hf3,
-        const halfFace& hf4,
-        const Vertex& vToFind
-    ) const;
-    bool findVertexAxisZ(
-        const halfFace& hf1,
-        const halfFace& hf2,
-        const halfFace& hf3,
-        const halfFace& hf4,
-        const Vertex& vToFind
-    ) const;
+    //bool findVertexAxisX(
+    //    const halfFace& hf1,
+    //    const halfFace& hf2,
+    //    const halfFace& hf3,
+    //    const halfFace& hf4,
+    //    const Vertex& vToFind
+    //) const;
+    //bool findVertexAxisY(
+    //    const halfFace& hf1,
+    //    const halfFace& hf2,
+    //    const halfFace& hf3,
+    //    const halfFace& hf4,
+    //    const Vertex& vToFind
+    //) const;
+    //bool findVertexAxisZ(
+    //    const halfFace& hf1,
+    //    const halfFace& hf2,
+    //    const halfFace& hf3,
+    //    const halfFace& hf4,
+    //    const Vertex& vToFind
+    //) const;
 
     /* 
      * Note not an efficient function, used only for testing purposes

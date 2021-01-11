@@ -73,6 +73,7 @@ inline ControlType VolumeSpline(float u, float v, float w, Eigen::Matrix<Control
 // N -> Degree of the spline Polynomial
 template<int N>
 static inline auto SRHS(float a) {
+    static constexpr auto comb = PascalTriangle<N + 1>();
     Eigen::Matrix<float, N + 1, N + 1> res = Eigen::Matrix<float, N + 1, N + 1>::Zero();
     for (int i = 0; i <= N; i++)
     {
@@ -87,6 +88,7 @@ static inline auto SRHS(float a) {
 template<int N>
 static inline auto SLHS(float a)
 {
+    static constexpr auto comb = PascalTriangle<N + 1>();
     Eigen::Matrix<float, N + 1, N + 1> res = Eigen::Matrix<float, N + 1, N + 1>::Zero();
     for (int i = 0; i <= N; i++)
     {

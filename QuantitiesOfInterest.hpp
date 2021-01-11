@@ -15,10 +15,16 @@
 using Eigen::MatrixXf;
 typedef Eigen::Triplet<double> Triplet;
 
+/* A vertex is connected to at most 8 elements, so the connectivity information fits in this simple struct */
+struct VertexConnectivity {
+    std::array<uint32_t, 8> elements;
+    uint32_t number;
+};
+
 class QuantitiesOfInterest {
 
     private:
-        Mesh mesh;
+        const Mesh& mesh;
         Eigen::SparseMatrix<bool>  incidence;
     public:
         //Default constructor
@@ -31,7 +37,10 @@ class QuantitiesOfInterest {
         const Mesh& getMesh() const;
 
         //The amount of elements connected to the given vertex.
-        int vertexConnectivity(const Vertex& vertex);
+        VertexConnectivity vertexConnectivity(uint32_t vertex) const;
+
+        // Wether a vertex is on the border
+        bool isBorderVertex(uint32_t vertex) const;
 
         //Check if the given element reaches one of the 8 corners of the mesh.
         bool isCornerCuboid(const Cuboid& cuboid);
