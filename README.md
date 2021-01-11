@@ -28,8 +28,7 @@ Example split along YZ plane:
 Example split along XY plane:
 ![alt text](https://github.com/CeesWolfs/SplineMeshes/blob/3D/images/image3.png?raw=true)
 
-The 3D mesh domain has its following boundaries set at:
-0 <= x <= 1, 0 <= y <= 1, 0 <= z <= 1
+The 3D mesh has the following domain: (0, 1) X (0, 1) X (0, 1)
 
 # Mesh division usage
 
