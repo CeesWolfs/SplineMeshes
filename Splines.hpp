@@ -35,6 +35,8 @@ struct PascalTriangle
     int values[N][N];
 };
 
+// N -> Maximum degree of the spline
+template<int N>
 constexpr inline float bernstein(float u, int n, int i) {
     float x = 1 - u;
     float res = 1;
@@ -46,7 +48,26 @@ constexpr inline float bernstein(float u, int n, int i) {
     {
         res *= u;
     }
-    return res;
+    return res*comb.values[n][i];
+}
+
+// N -> Degree of the spline Polynomial
+// ControlType -> A scalar (float/double) or vector for multidimensional spline output
+// Evaluates a volumetric spline at a certain point
+template<int N, typename ControlType>
+inline ControlType VolumeSpline(float u, float v, float w, Eigen::Matrix<ControlType, (N+1)*(N+1)*(N+1), 1> control_points) {
+    ControlType result = 0;
+    for (size_t i0 = 0; i0 <= N; i0++)
+    {
+        for (size_t i1 = 0; i1 <= N; i1++)
+        {
+            for (size_t i2 = 0; i2 <= N; i2++)
+            {
+                result += bernstein<N>(u, N, i2) * bernstein<N>(v, N, i1) * bernstein<N>(w, N, i0) * control_points[i2 + i1 * (N+1) + i0 * (N+1)*(N+1)];
+            }
+        }
+    }
+    return result;
 }
 
 // N -> Degree of the spline Polynomial
@@ -57,7 +78,7 @@ static inline auto SRHS(float a) {
     for (int i = 0; i <= N; i++)
     {
         for (int j = i; j <= N; j++) {
-            res(i, j) = bernstein(a, N - i, N - j) * comb.values[N - i][N - j];
+            res(i, j) = bernstein<N>(a, N - i, N - j);
         }
     }
     return res;
@@ -72,7 +93,7 @@ static inline auto SLHS(float a)
     for (int i = 0; i <= N; i++)
     {
         for (int j = 0; j <= i; j++) {
-            res(i, j) = bernstein(a, i, j) * comb.values[i][j];
+            res(i, j) = bernstein<N>(a, i, j);
         }
     }
     return res;
@@ -250,116 +271,3 @@ static inline const SparseMat genLMatrix(const Mesh& mesh, HalfFacePair pair, bo
     res.makeCompressed();
     return res;
 }
-
-/*
-* Stores all the continuity matrices for all faces
-*/
-template<int N, int C>
-class SplineMesh
-{
-private:
-    int numElements = 0;
-    bool constraintsValid = false;
-    Mesh mesh;
-    void insertFaceConstraints(HalfFacePair pair, bool virtualSplitLeft);
-    static const uint64_t toKey(HalfFacePair pair) { return static_cast<uint64_t>(pair.first.id) + (static_cast<uint64_t>(pair.second.id) << 32); }
-    static const HalfFacePair fromKey(uint64_t key) { return { halfFace(static_cast<uint32_t>(key)), halfFace(static_cast<uint32_t>(key >> 32)) }; }
-public:
-    SparseMat generateGlobalMatrix() const;
-    void regenerateConstraints();
-    robin_hood::unordered_map<uint64_t, Face<N,C>> constraints;
-    SplineMesh(Mesh&& mesh) { this->mesh = mesh; regenerateConstraints(); constraintsValid = true; }
-    SplineMesh() = default;
-    SplineMesh(int Nx, int Ny, int Nz) : mesh(Nx, Ny, Nz) {}
-    ~SplineMesh() = default;
-};
-
-template<int N, int C>
-inline void SplineMesh<N, C>::insertFaceConstraints(HalfFacePair pair, bool virtualSplitLeft)
-{
-    const halfFace hf = pair.first;
-    const halfFace twin = pair.second;
-    const auto key = toKey(pair);
-    if (constraints.find(key) == constraints.end()) {
-        if (hf.getLocalId() == 1) {
-            constraints.insert({ key, Face<N,C>{ genLMatrix<N,C,Axis::z>(mesh, pair, virtualSplitLeft), genRMatrix<N,C,Axis::z>(mesh, pair, mesh.Twin(twin) != hf) } });
-        }
-        else if (hf.getLocalId() == 3) {
-            constraints.insert({ key, Face<N,C>{ genLMatrix<N,C,Axis::x>(mesh, pair, virtualSplitLeft), genRMatrix<N,C,Axis::x>(mesh, pair, mesh.Twin(twin) != hf) } });
-        }
-        else {
-            constraints.insert({ key, Face<N,C>{ genLMatrix<N,C,Axis::y>(mesh, pair, virtualSplitLeft), genRMatrix<N,C,Axis::y>(mesh, pair, mesh.Twin(twin) != hf) } });
-        }
-    }
-}
-
-template<int N, int C>
-inline SparseMat SplineMesh<N,C>::generateGlobalMatrix() const
-{
-    const size_t numConstraints = constraints.size();
-    const auto subMatSize_N = (N + 1) * (N + 1) * (C + 1);
-    const auto subMatSize_M = (N + 1) * (N + 1) * (N + 1);
-    SparseMat global(numConstraints * subMatSize_N, numElements * subMatSize_M);
-    // Iterate over all the constraints
-    size_t i = 0;
-    for (const auto& [key, Face] : constraints)
-    {
-        const auto pair = fromKey(key);
-        // Perform rowwise insertion of the sub matrices in the global matrix
-        for (size_t n = 0; n < subMatSize_N; n++)
-        {
-            global.startVec(i * subMatSize_N + n);
-            if (pair.first.getCuboid() < pair.second.getCuboid()) {
-                for (SparseMat::InnerIterator it(Face.lowerConstraint, n); it; ++it)
-                {
-                    global.insertBack(i * subMatSize_N + n, it.col() + pair.first.getCuboid() * subMatSize_M) = it.value();
-                }
-                for (SparseMat::InnerIterator it(Face.higherConstraint, n); it; ++it)
-                {
-                    global.insertBack(i * subMatSize_N + n, it.col() + pair.second.getCuboid() * subMatSize_M) = it.value();
-                }
-            }
-            else {
-                for (SparseMat::InnerIterator it(Face.higherConstraint, n); it; ++it)
-                {
-                    global.insertBack(i * subMatSize_N + n, it.col() + pair.second.getCuboid() * subMatSize_M) = it.value();
-                }
-                for (SparseMat::InnerIterator it(Face.lowerConstraint, n); it; ++it)
-                {
-                    global.insertBack(i * subMatSize_N + n, it.col() + pair.first.getCuboid() * subMatSize_M) = it.value();
-                }
-            }
-        }
-        i++;
-    }
-    global.finalize();
-    global.makeCompressed();
-    return global;
-}
-
-template<int N, int C>
-void SplineMesh<N,C>::regenerateConstraints() {
-    numElements = mesh.getCuboids().size();
-    // Loop over all the halfFaces with local id 1,2,3 in the mesh
-    for (size_t cub = 0; cub < mesh.getCuboids().size(); ++cub)
-    {
-        for (size_t hf = 0; hf < 6; hf++)
-        {
-            if (hf == 0 || hf == 4 || hf == 5) continue;
-            const auto cur_hf = halfFace(cub, hf);
-            const auto twin = mesh.Twin(cur_hf);
-            if (twin.isBorder()) continue;
-            if (twin.isSubdivided()) {
-                for (auto it = mesh.getSft().cbegin(twin); it != mesh.getSft().cend(); ++it)
-                {
-                    const auto pair = HalfFacePair{ cur_hf, *it };
-                    insertFaceConstraints(pair, true);
-                }
-            }
-            else {
-                const auto pair = HalfFacePair{ cur_hf, twin };
-                insertFaceConstraints(pair, false);
-            }
-        }
-    }
-};
