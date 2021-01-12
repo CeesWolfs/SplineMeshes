@@ -65,5 +65,4 @@ mesh.SplitAlongXY(0, 0.5);
 mesh.Save("Fourths");
 ```
 and running the command ```python visualize.py Fourths.ply``` will render the following mesh:
-
-
+![alt text](https://github.com/CeesWolfs/SplineMeshes/blob/3D/images/Fourths?raw=true)
