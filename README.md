@@ -42,3 +42,28 @@ For example:
 mesh.SplitAlongYZ(0, 0.5);
 ```
 splits the initial cuboid (which can be identified with id 0) along the YZ plane at x = 0.5. This will result in 2 cuboids from which the new cuboid gets id 1 (the old cuboid id incremented by 1).
+
+# Mesh visualization usage
+
+After having the mesh refinement phase, the user can save the mesh to a file as follows:
+```
+mesh.Save("<filename>");
+```
+The python script 'visualize.py' reads the mesh data from the generated '.ply' file.
+Running the following command will display the mesh visualization with help of the pyvista module:
+```
+python visualize.py filename.ply
+```
+Make sure to have the pyvista module installed: https://docs.pyvista.org/getting-started/installation.html
+
+A basic example for saving a mesh which is divided in 4 cuboids:
+```
+Mesh mesh;
+mesh.SplitAlongXZ(0, 0.5);
+mesh.SplitAlongXY(1, 0.5);
+mesh.SplitAlongXY(0, 0.5);
+mesh.Save("Fourths");
+```
+and running the command ```python visualize.py Fourths.ply``` will render the following mesh:
+
+
