@@ -18,6 +18,7 @@ public:
     const Mesh& get_mesh() { return mesh; }
     SparseMat generateGlobalMatrix();
     void regenerateConstraints();
+    void renderBasis(const std::string& filename, Eigen::VectorXf basis, uint32_t samples);
     uint32_t SplitAlongXZ(uint32_t cuboid_id, float y_split);
     uint32_t SplitAlongXY(uint32_t cuboid_id, float z_split);
     uint32_t SplitAlongYZ(uint32_t cuboid_id, float x_split);
@@ -141,6 +142,65 @@ void SplineMesh<N, C>::regenerateConstraints() {
             }
         }
     }
+}
+
+template<int N, int C>
+inline void SplineMesh<N, C>::renderBasis(const std::string& filename, Eigen::VectorXf basis, uint32_t samples)
+{
+    std::vector<double> points;
+    std::vector<int> cells;
+    uint32_t cell_size = 8;
+    std::vector<double> spline_val;
+    samples--;
+    assert(samples > 0);
+    // Render a spline basis
+    for (int cube = 0; cube < mesh.getCuboids().size(); cube++) {
+        const auto bl_corner = mesh.getVertices()[mesh.getCuboids()[cube].v1];
+        const auto tr_corner = mesh.getVertices()[mesh.getCuboids()[cube].v7];
+        const auto depth = tr_corner - bl_corner;
+        // Render all points per cuboid
+        for (size_t z_i = 0; z_i <= samples; z_i++)
+        {
+            float z = z_i * (depth.z / samples) + bl_corner.z;
+            for (size_t y_i = 0; y_i <= samples; y_i++)
+            {
+                float y = y_i * (depth.y / samples) + bl_corner.y;
+                for (size_t x_i = 0; x_i <= samples; x_i++)
+                {
+                    float x = x_i * (depth.x / samples) + bl_corner.x;
+                    const auto u = static_cast<float>(x_i) / static_cast<float>(samples);
+                    const auto v = static_cast<float>(y_i) / static_cast<float>(samples);
+                    const auto w = static_cast<float>(z_i) / static_cast<float>(samples);
+                    points.push_back(x);
+                    points.push_back(y);
+                    points.push_back(z);
+                    spline_val.emplace_back(VolumeSpline<N, float>(u, v, w, basis.middleRows(cube * (N + 1) * (N + 1) * (N + 1), (N + 1) * (N + 1) * (N + 1))));
+                }
+            }
+        }
+        auto toVertIndex = [=](uint32_t i, uint32_t j, uint32_t k) {return cube * (samples + 1) * (samples + 1) * (samples + 1) + i + j * (samples + 1) + k * (samples + 1) * (samples + 1); };
+        // Construct all the cuboids
+        for (size_t k = 0; k < samples; k++)
+        {
+            for (size_t j = 0; j < samples; j++)
+            {
+                for (size_t i = 0; i < samples; i++)
+                {
+                    cells.push_back(toVertIndex(i, j, k));
+                    cells.push_back(toVertIndex(i + 1, j, k));
+                    cells.push_back(toVertIndex(i + 1, j + 1, k));
+                    cells.push_back(toVertIndex(i, j + 1, k));
+                    cells.push_back(toVertIndex(i, j, k + 1));
+                    cells.push_back(toVertIndex(i + 1, j, k + 1));
+                    cells.push_back(toVertIndex(i + 1, j + 1, k + 1));
+                    cells.push_back(toVertIndex(i, j + 1, k + 1));
+                }
+            }
+        }
+    }
+    leanvtk::VTUWriter writer;
+    writer.add_scalar_field("Spline values", spline_val);
+    writer.write_volume_mesh(filename, 3, 8, points, cells);
 }
 
 template<int N, int C>

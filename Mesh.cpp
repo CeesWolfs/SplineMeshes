@@ -78,7 +78,6 @@ Mesh::Mesh(int Nx, int Ny, int Nz)
             }
         }
     }
-    //TODO V2lID
     static constexpr uint8_t lookup[8] = {0, 1, 3, 2, 4, 5, 7, 6};
     for (size_t k = 0; k <= Nz; k++)
     {
@@ -323,6 +322,10 @@ uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
             vertices.push_back(v_new[i]);
         }
     }
+    // Update V2lV for the points that now belong to the new element
+    for (const auto lv : Hf2Ve[face_to_split]) {
+        V2lV[cuboids[cuboid_id].vertices[lv]] = localVertex(new_cuboid_id, lv);
+    }
     // Update all the vertices for the new and old element
     cuboids.push_back(cuboids[cuboid_id]);
     for (size_t i = 0; i < vertex_inds.size(); i++)
@@ -377,6 +380,10 @@ uint32_t Mesh::SplitAlongYZ(uint32_t cuboid_id, float x_split) {
             vertices.push_back(v_new[i]);
         }
     }
+    // Update V2lV for the points that now belong to the new element
+    for (const auto lv : Hf2Ve[face_to_split]) {
+        V2lV[cuboids[cuboid_id].vertices[lv]] = localVertex(new_cuboid_id, lv);
+    }
     // Update all the vertices for the new and old element
     cuboids.push_back(cuboids[cuboid_id]);
     for (size_t i = 0; i < vertex_inds.size(); i++)
@@ -429,6 +436,10 @@ uint32_t Mesh::SplitAlongXZ(uint32_t cuboid_id, float y_split) {
             V2lV.push_back({ new_cuboid_id, Hf2Ve[opposite_face(face_to_split)][i] });
             vertices.push_back(v_new[i]);
         }
+    }
+    // Update V2lV for the points that now belong to the new element
+    for (const auto lv : Hf2Ve[face_to_split]) {
+        V2lV[cuboids[cuboid_id].vertices[lv]] = localVertex(new_cuboid_id, lv);
     }
     // Update all the vertices for the new and old element
     cuboids.push_back(cuboids[cuboid_id]);

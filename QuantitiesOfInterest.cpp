@@ -13,6 +13,34 @@ const Mesh& QuantitiesOfInterest::getMesh() const {
     return mesh;
 }
 
+int QuantitiesOfInterest::interiorFaces() const
+{
+    robin_hood::unordered_set<uint32_t> hfs;
+    int F = 0;
+    for (size_t cub = 0; cub < mesh.getCuboids().size(); cub++) {
+        for (uint8_t hf = 1; hf < 4; hf++) {
+            const halfFace half(cub, hf);
+            const auto twin = mesh.Twin(half);
+            if (twin.isBorder()) continue;
+            if (twin.isSubdivided()) {
+                for (auto it = mesh.getSft().cbegin(twin); it != mesh.getSft().cend(); ++it) {
+                    if (mesh.Twin(*it).isSubdivided()) {
+                        hfs.insert((*it).id);
+                    }
+                    else { F++; }
+                }
+            }
+            else {
+                F++;
+            }
+        }
+    }
+    for (const auto key : hfs) {
+        std::cout << key << '\n';
+    }
+    return F + hfs.size();
+}
+
 /**
  * Returns the amount of elements which are connected to/ linked with the given vertex.
  * Todo optimize away some redundant checks
@@ -72,6 +100,84 @@ bool QuantitiesOfInterest::isBorderVertex(uint32_t vertex) const
         if (mesh.Twin(halfFace(lv.getCuboid(), hf)) == border_id) return true;
     }
     return false;
+}
+
+bool QuantitiesOfInterest::isEVertex(uint32_t vertex) const
+{
+    std::array<uint32_t, 8> elements{ -1,-1,-1,-1,-1,-1,-1,-1 }; // At most 8 elements can be connected to a vertex
+    std::array<uint32_t, 2> non_unique{ -1,-1 };
+    const Vertex& coord = mesh.getVertices()[vertex];
+    localVertex lv = mesh.getV2lV()[vertex];
+    uint32_t x = 0;
+    uint32_t n_u = 0;
+    auto moveToNext = [&](uint32_t& cuboid, uint8_t direction) {
+        // first check if the vertex lies inside the face
+        const Vertex& face = mesh.getVertices()[mesh.getCuboids()[cuboid].vertices[Hf2Ve[direction][0]]];
+        bool inFace = false;
+        switch (Hf2Ax[direction])
+        {
+
+        case Axis::x: inFace = floatSame(coord.x, face.x); break;
+        case Axis::y: inFace = floatSame(coord.y, face.y); break;
+        case Axis::z: inFace = floatSame(coord.z, face.z); break;
+        }
+        if (!inFace) {
+            if (n_u < 2) non_unique[n_u++] = cuboid;
+            return false;
+        }
+        auto twin = mesh.Twin(halfFace(cuboid, direction));
+        uint32_t new_cuboid;
+        if (twin.isBorder()) return false;
+        if (twin.isSubdivided()) { new_cuboid = (*mesh.getSft().find(twin, coord)).getCuboid(); }
+        else new_cuboid = twin.getCuboid();
+        if (contains(elements, new_cuboid)) {
+            if (n_u < 2) non_unique[n_u++] = new_cuboid;
+            return false;
+        }
+        elements[x++] = new_cuboid;
+        cuboid = new_cuboid;
+        return true;
+    };
+    elements[x++] = lv.getCuboid();
+    auto directions = Lv2Hf[lv.getLocalId()];
+    uint32_t currentCuboid = lv.getCuboid();
+    // Check all 7 neccasarry cuboids with early stopping
+    if (moveToNext(currentCuboid, directions[0])) {
+        uint32_t temp = currentCuboid;
+        if (moveToNext(currentCuboid, directions[1])) {
+            moveToNext(currentCuboid, directions[2]);
+        }
+        else {
+            return false;
+        }
+        currentCuboid = temp;
+        moveToNext(currentCuboid, directions[2]);
+    }
+    currentCuboid = lv.getCuboid();
+    if (moveToNext(currentCuboid, directions[1])) {
+        moveToNext(currentCuboid, directions[2]);
+    }
+    currentCuboid = lv.getCuboid();
+    moveToNext(currentCuboid, directions[2]);
+    if (x == 6) {
+        // Check if the duplicates touch each other
+        return !mesh.Adjacent(non_unique[0], non_unique[1]);
+    }
+    return false;
+}
+
+// Loop over all half faces which contain the edge
+bool QuantitiesOfInterest::isBorderEdge(Edge edge) const
+{
+    // Find the local index of the vertex within the face
+    uint8_t local_one = std::find(mesh.getCuboids()[edge.elem].vertices.begin(), mesh.getCuboids()[edge.elem].vertices.end(), edge.v1) - mesh.getCuboids()[edge.elem].vertices.begin();
+    uint8_t local_two = std::find(mesh.getCuboids()[edge.elem].vertices.begin(), mesh.getCuboids()[edge.elem].vertices.end(), edge.v2) - mesh.getCuboids()[edge.elem].vertices.begin();
+    for (uint32_t hf = 0; hf < 6; hf++) {
+        if (contains(Hf2Ve[hf], local_one) && contains(Hf2Ve[hf], local_two)) {
+            if (mesh.Twin(halfFace(edge.elem, hf)).isBorder()) return true;
+        }
+    }
+    return false;   
 }
 
 /**
@@ -218,15 +324,8 @@ const MatrixXf QuantitiesOfInterest::VertexEdgeIncidenceMatrix()
 const std::vector<Edge> QuantitiesOfInterest::getAllEdges() const {
     std::vector<Edge> res;
     for (auto i = 0; i < mesh.getCuboids().size(); i++) {
-        for (Edge curr : getEdges(mesh.getCuboids()[i])) {
-            bool contains = false;
-            for (Edge known: res) {
-                if (known == curr) {
-                    contains = true;
-                    break;
-                }
-            }
-            if (!contains) {
+        for (Edge curr : getEdges(i)) {
+            if (!contains(res, curr)) {
                 res.push_back(curr);
             }
         }
@@ -236,20 +335,21 @@ const std::vector<Edge> QuantitiesOfInterest::getAllEdges() const {
 /**
 * Retrieving the 12 edges of a given cuboid.
 */
-const std::vector<Edge> QuantitiesOfInterest::getEdges(const Cuboid &cuboid) const {
+const std::vector<Edge> QuantitiesOfInterest::getEdges(uint32_t cuboid_id) const {
     std::vector<Edge> res;
-    res.push_back(Edge(cuboid.v1, cuboid.v2));
-    res.push_back(Edge(cuboid.v1, cuboid.v4));
-    res.push_back(Edge(cuboid.v1, cuboid.v5));
-    res.push_back(Edge(cuboid.v2, cuboid.v3));
-    res.push_back(Edge(cuboid.v2, cuboid.v6));
-    res.push_back(Edge(cuboid.v3, cuboid.v4));
-    res.push_back(Edge(cuboid.v3, cuboid.v7));
-    res.push_back(Edge(cuboid.v4, cuboid.v8));
-    res.push_back(Edge(cuboid.v5, cuboid.v6));
-    res.push_back(Edge(cuboid.v5, cuboid.v8));
-    res.push_back(Edge(cuboid.v6, cuboid.v7));
-    res.push_back(Edge(cuboid.v7, cuboid.v8));
+    const Cuboid& cuboid = mesh.getCuboids()[cuboid_id];
+    res.push_back(Edge{ cuboid.v1, cuboid.v2, cuboid_id });
+    res.push_back(Edge{ cuboid.v1, cuboid.v4, cuboid_id });
+    res.push_back(Edge{ cuboid.v1, cuboid.v5, cuboid_id });
+    res.push_back(Edge{ cuboid.v2, cuboid.v3, cuboid_id });
+    res.push_back(Edge{ cuboid.v2, cuboid.v6, cuboid_id });
+    res.push_back(Edge{ cuboid.v3, cuboid.v4, cuboid_id });
+    res.push_back(Edge{ cuboid.v3, cuboid.v7, cuboid_id });
+    res.push_back(Edge{ cuboid.v4, cuboid.v8, cuboid_id });
+    res.push_back(Edge{ cuboid.v5, cuboid.v6, cuboid_id });
+    res.push_back(Edge{ cuboid.v5, cuboid.v8, cuboid_id });
+    res.push_back(Edge{ cuboid.v6, cuboid.v7, cuboid_id });
+    res.push_back(Edge{ cuboid.v7, cuboid.v8, cuboid_id });
     return res;
 }
 

@@ -38,6 +38,7 @@ struct PascalTriangle
 // N -> Maximum degree of the spline
 template<int N>
 constexpr inline float bernstein(float u, int n, int i) {
+    static constexpr auto comb = PascalTriangle<N + 1>();
     float x = 1 - u;
     float res = 1;
     for (int k = 0; k < (n - i); k++)
@@ -73,12 +74,11 @@ inline ControlType VolumeSpline(float u, float v, float w, Eigen::Matrix<Control
 // N -> Degree of the spline Polynomial
 template<int N>
 static inline auto SRHS(float a) {
-    static constexpr auto comb = PascalTriangle<N + 1>();
     Eigen::Matrix<float, N + 1, N + 1> res = Eigen::Matrix<float, N + 1, N + 1>::Zero();
     for (int i = 0; i <= N; i++)
     {
         for (int j = i; j <= N; j++) {
-            res(i, j) = bernstein<N>(a, N - i, N - j);
+            res(i, j) = bernstein<N>(a, N - i, j - i);
         }
     }
     return res;
@@ -88,7 +88,6 @@ static inline auto SRHS(float a) {
 template<int N>
 static inline auto SLHS(float a)
 {
-    static constexpr auto comb = PascalTriangle<N + 1>();
     Eigen::Matrix<float, N + 1, N + 1> res = Eigen::Matrix<float, N + 1, N + 1>::Zero();
     for (int i = 0; i <= N; i++)
     {

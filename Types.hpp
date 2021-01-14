@@ -47,12 +47,9 @@ typedef struct _vertex
 typedef struct _edge 
 {
 	uint32_t v1, v2;
+	uint32_t elem;
 	bool operator==(const _edge& other) const {
 		return (v1 == other.v1 && v2 == other.v2) || (v1 == other.v2 && v2 == other.v1);
-	}
-	_edge(uint32_t first, uint32_t second) {
-		v1 = first;
-		v2 = second;
 	}
 } Edge;
 
