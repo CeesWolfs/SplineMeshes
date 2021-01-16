@@ -1,7 +1,7 @@
 import sys
 import pyvista as pv
 if len(sys.argv) < 2:
-	print("Usage python visualize.py filename.ply")
+	print("Usage: python visualize.py filename.ply")
 	sys.exit(1)
 mesh = pv.read(sys.argv[1])
 p = pv.Plotter()
