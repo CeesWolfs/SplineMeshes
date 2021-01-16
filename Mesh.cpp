@@ -289,6 +289,131 @@ void Mesh::addHalfFaces(const uint32_t cuboid_id, const Axis split_axis) {
 }
 
 
+uint32_t Mesh::SplitAlongAxis(uint32_t cuboid_id, float split_point, Axis axis) {
+
+    uint8_t face_to_split = -1;
+    switch (axis) {
+        case Axis::x : 
+            face_to_split = 3;
+            break;
+        case Axis::y :
+            face_to_split = 2;
+            break;
+        case Axis::z :
+            face_to_split = 1;
+            break;
+        default:
+            std::cout << "Invalid axis given. Returning -1 ..." << std::endl;
+            return -1;
+    }
+
+    // border checks, return -1 if splitpoint is not in cuboid
+    if (axis == Axis::x) {
+        if ((split_point <= vertices[cuboids[cuboid_id].v1].x) || split_point >= vertices[cuboids[cuboid_id].v2].x) {
+            return -1;
+        }
+    }
+    else if (axis == Axis::y) {
+        if ((split_point <= vertices[cuboids[cuboid_id].v2].y) || split_point >= vertices[cuboids[cuboid_id].v3].y) {
+            return -1;
+        }
+    }
+    else {
+        if ((split_point <= vertices[cuboids[cuboid_id].v1].z) || split_point >= vertices[cuboids[cuboid_id].v5].z) {
+            return -1;
+        }
+    }
+
+    // All the old vertices
+    std::array<Vertex, 4> v_old;
+    std::generate(v_old.begin(), v_old.end(), [&, idx = 0]() mutable {
+        switch (axis) {
+            case Axis::z:
+                return vertices[cuboids[cuboid_id].vertices[idx++]];
+            default:
+                return vertices[cuboids[cuboid_id].vertices[Hf2Ve[face_to_split][idx++]]];;
+        }
+    });
+
+    // All the new vertices
+    std::array<Vertex, 4> v_new;
+    std::generate(v_new.begin(), v_new.end(), [&, idx = 0]() mutable {
+        switch (axis) {
+            case Axis::x :
+                return Vertex{ split_point, v_old[idx].y, v_old[idx++].z };
+            case Axis::y :
+                return Vertex{ v_old[idx].x, split_point, v_old[idx++].z };
+            default:
+                return Vertex{ v_old[idx].x, v_old[idx++].y, split_point };
+        }
+    });
+
+    const auto middle = (v_new[0] + v_new[2]) / 2;
+    const uint32_t new_cuboid_id = cuboids.size();
+    std::array<uint32_t, 4> vertex_inds;
+    
+    // TODO: make this more efficient, as now hfsCheck arrays of all cases are initialized whilst only one is going be to be used
+    //       at a time.
+    static constexpr uint8_t hfsCheckZ[4][2] = { {5,4}, {4,3}, {3,2}, {2,5} };
+    static constexpr uint8_t hfsCheckY[4][2] = { {0,5}, {0,3}, {1,3}, {1,5} };
+    static constexpr uint8_t hfsCheckX[4][2] = { {0,4}, {0,2}, {1,2}, {1,4} };
+
+    for (size_t i = 0; i < vertex_inds.size(); i++)
+    {
+        std::pair<bool, uint32_t> fv;
+        switch (axis) {
+            case Axis::x:
+                fv = mergeVertexIfExists(v_new[i], { {cuboid_id, hfsCheckX[i][0]}, {cuboid_id, hfsCheckX[i][1]} }, Hf2Ve[face_to_split][i], axis);
+                break;
+            case Axis::y:
+                fv = mergeVertexIfExists(v_new[i], { {cuboid_id,  hfsCheckY[i][0]}, {cuboid_id, hfsCheckY[i][0]} }, Hf2Ve[face_to_split][i], axis);
+                break;
+            default:
+                fv = mergeVertexIfExists(v_new[i], { {cuboid_id, hfsCheckZ[i][0]}, {cuboid_id, hfsCheckZ[i][1]} }, Hf2Ve[face_to_split][i], axis);
+                break;
+        }
+
+        // fv = [found, vertex]
+        if (fv.first) {
+            vertex_inds[i] = fv.second;
+        }
+        else {
+            vertex_inds[i] = vertices.size();
+            V2lV.push_back({ new_cuboid_id, Hf2Ve[opposite_face(face_to_split)][i] });
+            vertices.push_back(v_new[i]);
+        }
+    }
+
+    // Update V2lV for the points that now belong to the new element
+    for (const auto lv : Hf2Ve[face_to_split]) {
+        V2lV[cuboids[cuboid_id].vertices[lv]] = localVertex(new_cuboid_id, lv);
+    }
+
+    // Update all the vertices for the new and old element
+    cuboids.push_back(cuboids[cuboid_id]);
+    for (size_t i = 0; i < vertex_inds.size(); i++)
+    {
+        cuboids[cuboid_id].vertices[Hf2Ve[face_to_split][i]] = vertex_inds[i];
+        cuboids[new_cuboid_id].vertices[Hf2Ve[opposite_face(face_to_split)][i]] = vertex_inds[i];
+    }
+
+    addHalfFaces(cuboid_id, axis);
+
+    // Update the twin faces (mark them as subdivided).
+    for (size_t hf = 0; hf < 6; hf++)
+    {
+        if (hf == face_to_split || hf == opposite_face(face_to_split)) continue;
+        splitHalfFace(halfFace(cuboid_id, hf), halfFace(cuboid_id, hf), halfFace(new_cuboid_id, hf), axis, middle);
+    }
+
+    // Update the top halfFace
+    updateHalfFace(halfFace(cuboid_id, face_to_split), halfFace(new_cuboid_id, face_to_split), middle);
+    
+    // Point the top of the old cuboid to the new cuboid
+    Twin(halfFace(cuboid_id, face_to_split)) = halfFace(new_cuboid_id, opposite_face(face_to_split));
+
+    return new_cuboid_id;
+}
 
 uint32_t Mesh::SplitAlongXY(uint32_t cuboid_id, float z_split) {
     constexpr uint8_t face_to_split = 1;

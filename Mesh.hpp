@@ -40,7 +40,7 @@ static constexpr std::array<std::array<uint8_t, 3>, 8> Lv2Hf = { {
 } };
 
 /* 
-* Common local vertices between to half faces
+* Common local vertices between two half faces
 */
 static constexpr std::array<std::array<std::array<uint8_t, 2>, 6>, 6> Hf2Clv = {{
     {{{0,1},{-1,-1},{2,3},{1,2},{0,1},{0,3}}},
@@ -121,32 +121,6 @@ public:
     */
     bool mergeVertexIfExists(const Vertex& v, uint32_t& vref);
 
-    /*
-     * Helper functions for checks that are needed to find vertex of split on x, y and z axises
-     */
-    // bool seachVertexByAxis(const std::vector<halfFace>& hfts, const Axis splitAxis, const Vertex& toFind) const;
-    //bool findVertexAxisX(
-    //    const halfFace& hf1,
-    //    const halfFace& hf2,
-    //    const halfFace& hf3,
-    //    const halfFace& hf4,
-    //    const Vertex& vToFind
-    //) const;
-    //bool findVertexAxisY(
-    //    const halfFace& hf1,
-    //    const halfFace& hf2,
-    //    const halfFace& hf3,
-    //    const halfFace& hf4,
-    //    const Vertex& vToFind
-    //) const;
-    //bool findVertexAxisZ(
-    //    const halfFace& hf1,
-    //    const halfFace& hf2,
-    //    const halfFace& hf3,
-    //    const halfFace& hf4,
-    //    const Vertex& vToFind
-    //) const;
-
     /* 
      * Note not an efficient function, used only for testing purposes
      * Tests wether two elements are directly adjacent, that is touch at a face
@@ -187,9 +161,12 @@ public:
      * Create 4 new vertices, merge if vertex already exists in neigboring element.
     */
     uint32_t SplitAlongXZ(uint32_t cuboid_id, float y_split);
+       
+    uint32_t SplitAlongAxis(uint32_t cuboid_id, float split_point, Axis axis);
 
     /* Constructor of mesh object */
     Mesh();
+
     /* Construct a uniform mesh */
     Mesh(int Nx, int Ny, int Nz);
 
