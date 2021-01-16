@@ -161,7 +161,10 @@ public:
      * Create 4 new vertices, merge if vertex already exists in neigboring element.
     */
     uint32_t SplitAlongXZ(uint32_t cuboid_id, float y_split);
-       
+      
+    /**
+     * General split method for splitting cuboid along a given axis.
+    */
     uint32_t SplitAlongAxis(uint32_t cuboid_id, float split_point, Axis axis);
 
     /* Constructor of mesh object */
