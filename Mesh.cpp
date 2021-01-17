@@ -352,24 +352,22 @@ uint32_t Mesh::SplitAlongAxis(uint32_t cuboid_id, float split_point, Axis axis) 
     const uint32_t new_cuboid_id = cuboids.size();
     std::array<uint32_t, 4> vertex_inds;
     
-    // TODO: make this more efficient, as now hfsCheck arrays of all cases are initialized whilst only one is going be to be used
-    //       at a time.
-    static constexpr uint8_t hfsCheckZ[4][2] = { {5,4}, {4,3}, {3,2}, {2,5} };
-    static constexpr uint8_t hfsCheckY[4][2] = { {0,5}, {0,3}, {1,3}, {1,5} };
-    static constexpr uint8_t hfsCheckX[4][2] = { {0,4}, {0,2}, {1,2}, {1,4} };
+    //static constexpr uint8_t hfsCheckZ[4][2] = { {5,4}, {4,3}, {3,2}, {2,5} };
+    //static constexpr uint8_t hfsCheckY[4][2] = { {0,5}, {0,3}, {1,3}, {1,5} };
+    //static constexpr uint8_t hfsCheckX[4][2] = { {0,4}, {0,2}, {1,2}, {1,4} };
 
     for (size_t i = 0; i < vertex_inds.size(); i++)
     {
         std::pair<bool, uint32_t> fv;
         switch (axis) {
             case Axis::x:
-                fv = mergeVertexIfExists(v_new[i], { {cuboid_id, hfsCheckX[i][0]}, {cuboid_id, hfsCheckX[i][1]} }, Hf2Ve[face_to_split][i], axis);
+                fv = mergeVertexIfExists(v_new[i], { {cuboid_id, Hfs2Check[0][i][0]}, {cuboid_id, Hfs2Check[0][i][1]} }, Hf2Ve[face_to_split][i], axis);
                 break;
             case Axis::y:
-                fv = mergeVertexIfExists(v_new[i], { {cuboid_id,  hfsCheckY[i][0]}, {cuboid_id, hfsCheckY[i][0]} }, Hf2Ve[face_to_split][i], axis);
+                fv = mergeVertexIfExists(v_new[i], { {cuboid_id,  Hfs2Check[1][i][0]}, {cuboid_id, Hfs2Check[1][i][0]} }, Hf2Ve[face_to_split][i], axis);
                 break;
             default:
-                fv = mergeVertexIfExists(v_new[i], { {cuboid_id, hfsCheckZ[i][0]}, {cuboid_id, hfsCheckZ[i][1]} }, Hf2Ve[face_to_split][i], axis);
+                fv = mergeVertexIfExists(v_new[i], { {cuboid_id, Hfs2Check[2][i][0]}, {cuboid_id, Hfs2Check[2][i][1]} }, Hf2Ve[face_to_split][i], axis);
                 break;
         }
 

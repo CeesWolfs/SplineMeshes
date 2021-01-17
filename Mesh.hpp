@@ -51,6 +51,18 @@ static constexpr std::array<std::array<std::array<uint8_t, 2>, 6>, 6> Hf2Clv = {
     {{{0,3},{4,7},{3,7},{-1,-1},{0,4},{0,3}}}
 }};
 
+/*
+* Half faces to check depending on the split along an axis (used in splitting algorithm only).  
+* Hfs2Check[0] array contains half faces to check for split along X Axis 
+* Hfs2Check[1] array contains half faces to check for split along Y Axis
+* Hfs2Check[2] array contains half faces to check for split along Z Axis
+*/
+static constexpr std::array<std::array<std::array<uint8_t, 2>, 4>, 3> Hfs2Check = {{
+    {{ {0,4}, {0,2}, {1,2}, {1,4} }},
+    {{ {0,5}, {0,3}, {1,3}, {1,5} }},
+    {{ {5,4}, {4,3}, {3,2}, {2,5} }}
+}};
+
 class Mesh
 {
 private:
