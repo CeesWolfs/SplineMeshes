@@ -55,16 +55,16 @@ constexpr inline float bernstein(float u, int n, int i) {
 // N -> Degree of the spline Polynomial
 // ControlType -> A scalar (float/double) or vector for multidimensional spline output
 // Evaluates a volumetric spline at a certain point
-template<int N, typename ControlType>
-inline ControlType VolumeSpline(float u, float v, float w, Eigen::Matrix<ControlType, (N+1)*(N+1)*(N+1), 1> control_points) {
+template<typename ControlType, int Nx, int Ny = Nx, int Nz = Nx>
+inline ControlType VolumeSpline(float u, float v, float w, Eigen::Matrix<ControlType, (Nx+1)*(Ny+1)*(Nz+1), 1> control_points) {
     ControlType result = 0;
-    for (size_t i0 = 0; i0 <= N; i0++)
+    for (size_t i0 = 0; i0 <= Nz; i0++)
     {
-        for (size_t i1 = 0; i1 <= N; i1++)
+        for (size_t i1 = 0; i1 <= Ny; i1++)
         {
-            for (size_t i2 = 0; i2 <= N; i2++)
+            for (size_t i2 = 0; i2 <= Nx; i2++)
             {
-                result += bernstein<N>(u, N, i2) * bernstein<N>(v, N, i1) * bernstein<N>(w, N, i0) * control_points[i2 + i1 * (N+1) + i0 * (N+1)*(N+1)];
+                result += bernstein<Nx>(u, Nx, i2) * bernstein<Ny>(v, Ny, i1) * bernstein<Nz>(w, Nz, i0) * control_points[i2 + i1 * (Nx+1) + i0 * (Nx+1)*(Ny+1)];
             }
         }
     }
@@ -171,7 +171,6 @@ static inline const auto STgen(std::pair<float, float> bounds, std::pair<float, 
 
 
 // Store the constraints that correspond to a pair of halfFaces
-template<int N, int C>
 struct Face
 {
     SparseMat lowerConstraint;
@@ -197,75 +196,85 @@ inline std::pair<Vertex, Vertex> getCorners(const Mesh& mesh, halfFace hf) {
     return { bl_corner, tr_corner };
 }
 
-template<int N, int C, Axis ax>
+template<Axis ax, int Nx, int Cx, int Ny=Nx, int Cy=Cx, int Nz=Nx, int Cz=Cx>
 static inline const SparseMat genRMatrix(const Mesh& mesh, HalfFacePair pair, bool needsSplit)
 {
     const auto first_corners = getCorners(mesh, pair.second);
     const auto second_corners = getCorners(mesh, pair.first);
-    const float h_right = getDepth(first_corners, ax) / N;
     if (!needsSplit) {
         if constexpr (ax == Axis::x) {
-            SparseMat res = Eigen::kroneckerProduct(Identity<(N + 1)* (N + 1)>(), CRHS<N, C>(h_right)).sparseView();
+            const float h_right = getDepth(first_corners, ax) / Nx;
+            SparseMat res = Eigen::kroneckerProduct(Identity<(Nz + 1)* (Ny + 1)>(), CRHS<Nx, Cx>(h_right)).sparseView();
             res.makeCompressed();
             return res;
         }
         else if (ax == Axis::y) {
-            SparseMat res = Eigen::kroneckerProduct(Identity<N + 1>(), Eigen::kroneckerProduct(CRHS<N, C>(h_right), Identity<N + 1>())).sparseView();
+            const float h_right = getDepth(first_corners, ax) / Ny;
+            SparseMat res = Eigen::kroneckerProduct(Identity<Nz + 1>(), Eigen::kroneckerProduct(CRHS<Ny, Cy>(h_right), Identity<Nx + 1>())).sparseView();
             res.makeCompressed();
             return res;
         }
         else {
-            SparseMat res = Eigen::kroneckerProduct(CRHS<N, C>(h_right), Identity<(N + 1)* (N + 1)>()).sparseView();
+            const float h_right = getDepth(first_corners, ax) / Nz;
+            SparseMat res = Eigen::kroneckerProduct(CRHS<Nz, Cz>(h_right), Identity<(Ny + 1)* (Nx + 1)>()).sparseView();
             res.makeCompressed();
             return res;
         }
     }
     const auto X = [&]() { 
-        if constexpr (ax == Axis::x) return CRHS<N, C>(h_right);
-        else return STgen<N>({ first_corners.first.x, first_corners.second.x }, { second_corners.first.x, second_corners.second.x }); }();
+        const float h_right = getDepth(first_corners, ax) / Nx;
+        if constexpr (ax == Axis::x) return CRHS<Nx, Cx>(h_right);
+        else return STgen<Nx>({ first_corners.first.x, first_corners.second.x }, { second_corners.first.x, second_corners.second.x }); }();
     const auto Y = [&]() { 
-        if constexpr (ax == Axis::y) return CRHS<N, C>(h_right);
-        else return STgen<N>({ first_corners.first.y, first_corners.second.y }, { second_corners.first.y, second_corners.second.y }); }();
+        const float h_right = getDepth(first_corners, ax) / Ny;
+        if constexpr (ax == Axis::y) return CRHS<Ny, Cy>(h_right);
+        else return STgen<Ny>({ first_corners.first.y, first_corners.second.y }, { second_corners.first.y, second_corners.second.y }); }();
     const auto Z = [&]() { 
-        if constexpr (ax == Axis::z) return CRHS<N, C>(h_right);
-        else return STgen<N>({ first_corners.first.z, first_corners.second.z }, { second_corners.first.z, second_corners.second.z }); }();
+        const float h_right = getDepth(first_corners, ax) / Nz;
+        if constexpr (ax == Axis::z) return CRHS<Nz, Cz>(h_right);
+        else return STgen<Nz>({ first_corners.first.z, first_corners.second.z }, { second_corners.first.z, second_corners.second.z }); }();
     SparseMat res = Eigen::kroneckerProduct(Z, Eigen::kroneckerProduct(Y, X)).sparseView();
     res.makeCompressed();
     return res;
 }
 
-template<int N, int C, Axis ax>
+template<Axis ax, int Nx, int Cx, int Ny = Nx, int Cy = Cx, int Nz = Nx, int Cz = Cx>
 static inline const SparseMat genLMatrix(const Mesh& mesh, HalfFacePair pair, bool needsSplit)
 {
     const auto first_corners = getCorners(mesh, pair.first);
     const auto second_corners = getCorners(mesh, pair.second);
-    const float h_left = getDepth(first_corners, ax) / N;
     if (!needsSplit) {
         if constexpr (ax == Axis::x) {
-            SparseMat res =  Eigen::kroneckerProduct(Identity<(N + 1)* (N + 1)>(), CLHS<N, C>(h_left)).sparseView();
+            const float h_left = getDepth(first_corners, ax) / Nx;
+            SparseMat res =  Eigen::kroneckerProduct(Identity<(Nz + 1)* (Ny + 1)>(), CLHS<Nx, Cx>(h_left)).sparseView();
             res.makeCompressed();
             return res;
         }
         else if (ax == Axis::y) {
-            SparseMat res = Eigen::kroneckerProduct(Identity<N + 1>(), Eigen::kroneckerProduct(CLHS<N, C>(h_left), Identity<N + 1>())).sparseView();
+            const float h_left = getDepth(first_corners, ax) / Ny;
+            SparseMat res = Eigen::kroneckerProduct(Identity<Nz + 1>(), Eigen::kroneckerProduct(CLHS<Ny, Cy>(h_left), Identity<Nx + 1>())).sparseView();
             res.makeCompressed();
             return res;
         }
         else {
-            SparseMat res =  Eigen::kroneckerProduct(CLHS<N, C>(h_left), Identity<(N + 1)* (N + 1)>()).sparseView();
+            const float h_left = getDepth(first_corners, ax) / Nz;
+            SparseMat res =  Eigen::kroneckerProduct(CLHS<Nz, Cz>(h_left), Identity<(Ny + 1)* (Nx + 1)>()).sparseView();
             res.makeCompressed();
             return res;
         }
     }
     const auto X = [&]() { 
-        if constexpr (ax == Axis::x) return CLHS<N, C>(h_left);
-        else return STgen<N>({ first_corners.first.x, first_corners.second.x }, { second_corners.first.x, second_corners.second.x }); }();
+        const float h_left = getDepth(first_corners, ax) / Nx;
+        if constexpr (ax == Axis::x) return CLHS<Nx, Cx>(h_left);
+        else return STgen<Nx>({ first_corners.first.x, first_corners.second.x }, { second_corners.first.x, second_corners.second.x }); }();
     const auto Y = [&]() { 
-        if constexpr (ax == Axis::y) return CLHS<N, C>(h_left);
-        else return STgen<N>({ first_corners.first.y, first_corners.second.y }, { second_corners.first.y, second_corners.second.y }); }();
+        const float h_left = getDepth(first_corners, ax) / Ny;
+        if constexpr (ax == Axis::y) return CLHS<Ny, Cy>(h_left);
+        else return STgen<Ny>({ first_corners.first.y, first_corners.second.y }, { second_corners.first.y, second_corners.second.y }); }();
     const auto Z = [&]() { 
-        if constexpr (ax == Axis::z) return CLHS<N, C>(h_left);
-        else return STgen<N>({ first_corners.first.z, first_corners.second.z }, { second_corners.first.z, second_corners.second.z }); }();
+        const float h_left = getDepth(first_corners, ax) / Nz;
+        if constexpr (ax == Axis::z) return CLHS<Nz, Cz>(h_left);
+        else return STgen<Nz>({ first_corners.first.z, first_corners.second.z }, { second_corners.first.z, second_corners.second.z }); }();
     SparseMat res = Eigen::kroneckerProduct(Z, Eigen::kroneckerProduct(Y, X)).sparseView();
     res.makeCompressed();
     return res;
