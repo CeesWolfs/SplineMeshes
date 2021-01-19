@@ -577,10 +577,10 @@ TEST_CASE("Test non trivial case for maximal segments") {
 }
 
 TEST_CASE("Spline degree for cartesian mesh is correct") {
-	SplineMesh<3, 2> splines(2,2,3);
-	int N_x = (3 + 1) * 2 - (2 + 1) * (2 - 1);
+	SplineMesh<3, 1, 3, 2, 2, 0> splines(3,2,2);
+	int N_x = (3 + 1) * 3 - (1 + 1) * (3 - 1);
 	int N_y = (3 + 1) * 2 - (2 + 1) * (2 - 1);
-	int N_z = (3 + 1) * 3 - (2 + 1) * (3 - 1);
+	int N_z = (2 + 1) * 2 - (0 + 1) * (2 - 1);
 	auto System = splines.generateGlobalMatrix();
 	auto QR = Eigen::FullPivHouseholderQR<Eigen::MatrixXf>(System.transpose());
 	auto Q = QR.matrixQ();
