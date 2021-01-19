@@ -28,7 +28,7 @@ public:
     robin_hood::unordered_map<uint64_t, Face> constraints;
     SplineMesh(Mesh&& mesh) { this->mesh = mesh; regenerateConstraints(); constraintsValid = true; }
     SplineMesh() = default;
-    SplineMesh(int Cellsx, int Cellsy, int Cellsz) : mesh(Cellsz, Cellsy, Cellsz) {}
+    SplineMesh(int Cellsx, int Cellsy, int Cellsz) : mesh(Cellsx, Cellsy, Cellsz) {}
     ~SplineMesh() = default;
 };
 
