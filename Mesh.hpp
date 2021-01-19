@@ -152,32 +152,26 @@ public:
     void addHalfFaces(const uint32_t cuboid_id, const Axis split_axis);
 
     /**
-     * Create a new cuboid above the split line, and let its bottom face point to top face bottom element
-     * Split the four original faces in two, update all twin faces
-     * Create 4 new vertices, merge if vertex already exists in neigboring element
+     * Split method for splitting cuboid along a given axis and creating the required half faces and necessary updates.
+    */
+    uint32_t SplitAlongAxis(uint32_t cuboid_id, float split_point, Axis axis);
+
+    /**
+     * Alias method that executes split method "SplitAlongAxis" along XY plane
      *
     */
     uint32_t SplitAlongXY(uint32_t cuboid_id, float z_split);
 
     /**
-     * Create a new cuboid to the left of split line, and let its right face point to left face right element.
-     * Split the four original faces in two, update all twin faces.
-     * Create 4 new vertices, merge if vertex already exists in neigboring element.
+     * Alias method that executes split method "SplitAlongAxis" along YZ plane
      *
     */
     uint32_t SplitAlongYZ(uint32_t cuboid_id, float x_split);
 
     /**
-     * w.r.t XZ plane, same needs to happens as the splits defined above but now with another orientation.
-     * Split the four original faces in two, update all twin faces.
-     * Create 4 new vertices, merge if vertex already exists in neigboring element.
+     * Alias method that executes split method "SplitAlongAxis" along XZ plane
     */
     uint32_t SplitAlongXZ(uint32_t cuboid_id, float y_split);
-      
-    /**
-     * General split method for splitting cuboid along a given axis.
-    */
-    uint32_t SplitAlongAxis(uint32_t cuboid_id, float split_point, Axis axis);
 
     /* Constructor of mesh object */
     Mesh();
