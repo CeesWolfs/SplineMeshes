@@ -63,32 +63,37 @@ static constexpr std::array<std::array<std::array<uint8_t, 2>, 4>, 3> Hfs2Check 
     {{ {5,4}, {4,3}, {3,2}, {2,5} }}
 }};
 
-class Mesh
+
+class Mesh 
 {
+
 private:
     /* data */
     std::vector<Vertex> vertices;
     std::vector<Cuboid> cuboids;
-    SubFaceTree sft;
     // Stores a mapping of Half faces to twin half faces
     std::vector<halfFace> F2f;
     // Map vertex IDs to a local vertex within an element that contains the vertex
     std::vector<localVertex> V2lV;
+    SubFaceTree sft;
 
     /*
     * Split a halfFace in two, divide subhalfFaces and update all twins
     */
     void splitHalfFace(const halfFace toSplit, const halfFace lower, const halfFace higher, const Axis split_axis, const Vertex& split_point);
+    
     /*
     * Updates a halfFace to a new halfFace, auto update all twins
     */
     void updateHalfFace(const halfFace hf, const halfFace new_hf, const Vertex& middle);
+    
     /*
     * Update the twin to point to a new halfFace
     */
     void updateTwin(const halfFace twin, const halfFace old_hf, const halfFace new_hf, const Vertex& middle);
 
 public:
+
     /* Static helper functions */
     static constexpr uint8_t opposite_face(uint8_t local_id) {
         switch (local_id & 0x7)
@@ -111,27 +116,22 @@ public:
     const std::vector<Cuboid>& getCuboids() const;
     const std::vector<halfFace>& getF2f() const;
     const std::vector<localVertex>& getV2lV() const;
-
     const SubFaceTree& getSft() const;
 
+    /*
+    * Saves the mesh structure in a .ply file format to be used to visualize the mesh
+    */
     void Save(const std::string& filename);
 
     /**
      * Returns a reference to the twin half face of the given half face "hf"
     */
     halfFace& Twin(const halfFace& hf);
+
     /**
      * Returns a constant reference to the twin half face of the given half face "hf"
     */
     const halfFace& Twin(const halfFace& hf) const;
-
-    /**
-     * Gets vertex index of a vertex in the vertices vector if it exists.
-     * Otherwise -1 is returned which means that vertex is not in the vertices vector.
-     *
-     * Wordt case time complexity = O(n) = bad and inefficient
-    */
-    bool mergeVertexIfExists(const Vertex& v, uint32_t& vref);
 
     /* 
      * Note not an efficient function, used only for testing purposes
@@ -147,7 +147,6 @@ public:
     /**
      * Add function which pushes the new half and twin half faces of the new cuboid in vector F2F
      * This method adds 6 half faces to the new cuboid.
-     *
     */
     void addHalfFaces(const uint32_t cuboid_id, const Axis split_axis);
 
@@ -158,13 +157,11 @@ public:
 
     /**
      * Alias method that executes split method "SplitAlongAxis" along XY plane
-     *
     */
     uint32_t SplitAlongXY(uint32_t cuboid_id, float z_split);
 
     /**
      * Alias method that executes split method "SplitAlongAxis" along YZ plane
-     *
     */
     uint32_t SplitAlongYZ(uint32_t cuboid_id, float x_split);
 
@@ -182,5 +179,4 @@ public:
     /* Destructor of mesh object */
     ~Mesh() = default;
 };
-
 #endif
