@@ -327,7 +327,7 @@ TEST_CASE("Split a cube equally into fourths") {
 	QuantitiesOfInterest q(mesh);
 	CHECK(q.vertexConnectivity(12).number == 4);
 	CHECK(q.vertexConnectivity(13).number == 4);
-	//std::cout << q.incidenceMatrix() << std::endl;
+	std::cout << q.incidenceMatrix() << std::endl;
 	mesh.Save("Fourths");
 }
 

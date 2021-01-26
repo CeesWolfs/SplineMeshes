@@ -254,7 +254,7 @@ const std::vector<halfFace> QuantitiesOfInterest::getMaximalSegmentOf(halfFace c
     std::vector<halfFace> second_direction;
     // Check the second direction in the negative direction
     goDirection(currFace, mesh.opposite_face(dirs_to_check.second), second_direction);
-    std::reverse(first_direction.begin(), first_direction.end());
+    std::reverse(second_direction.begin(), second_direction.end());
     second_direction.push_back(currFace);
     // Check the second direction in the positive direction;
     goDirection(currFace, dirs_to_check.second, second_direction);
