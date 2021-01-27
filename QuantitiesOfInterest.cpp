@@ -168,15 +168,8 @@ bool QuantitiesOfInterest::isEVertex(uint32_t vertex) const
 // Loop over all half faces which contain the edge
 bool QuantitiesOfInterest::isBorderEdge(Edge edge) const
 {
-    // Find the local index of the vertex within the face
-    uint8_t local_one = std::find(mesh.getCuboids()[edge.elem].vertices.begin(), mesh.getCuboids()[edge.elem].vertices.end(), edge.v1) - mesh.getCuboids()[edge.elem].vertices.begin();
-    uint8_t local_two = std::find(mesh.getCuboids()[edge.elem].vertices.begin(), mesh.getCuboids()[edge.elem].vertices.end(), edge.v2) - mesh.getCuboids()[edge.elem].vertices.begin();
-    for (uint32_t hf = 0; hf < 6; hf++) {
-        if (contains(Hf2Ve[hf], local_one) && contains(Hf2Ve[hf], local_two)) {
-            if (mesh.Twin(halfFace(edge.elem, hf)).isBorder()) return true;
-        }
-    }
-    return false;   
+    //Both edge vertices should be at the border.
+    return isBorderVertex(edge.v1) && isBorderVertex(edge.v2);   
 }
 
 /**

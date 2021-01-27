@@ -459,7 +459,16 @@ TEST_CASE("Subdived connect to subdivided") {
 	//In this sample mesh, there is exactly one cuboid that doesn't lie at the mesh border
 	QuantitiesOfInterest q(mesh);
 	for (auto i = 0; i < mesh.getCuboids().size() - 1;i++) {
-		CHECK(q.isBorderCuboid(mesh.getCuboids()[i]));
+		bool check = q.isBorderCuboid(mesh.getCuboids()[i]);
+		CHECK(check);
+		//Check that each border cuboid has at least 4 out of 12 border edges.
+		int x = 0;
+		for (auto edge : q.getEdges(i)) {
+			if (q.isBorderEdge(edge)) {
+				x++;
+			}
+		}
+		CHECK(x >= 4);
 	}
 	//LAST ELEMENT DOESN'T LIE AT THE MESH BOUNDARY.
 	CHECK(!q.isBorderCuboid(mesh.getCuboids()[mesh.getCuboids().size() - 1]));
