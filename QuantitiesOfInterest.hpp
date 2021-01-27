@@ -61,7 +61,7 @@ class QuantitiesOfInterest {
         const std::vector<halfFace> getMaximalSegmentOf(halfFace currFace);
 
         //Unsigned indicence matrix which shows connectivity between the half faces and their vertices.
-        const Eigen::SparseMatrix<bool>& incidenceMatrix();
+        const Eigen::SparseMatrix<bool>& ElementVertexIncidenceMatrix();
 
         //Signed Vertex-Edge incidence matrix which shows whether the difference between the vertex coordinates >= origin
         const MatrixXf VertexEdgeIncidenceMatrix();

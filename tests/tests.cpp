@@ -327,7 +327,7 @@ TEST_CASE("Split a cube equally into fourths") {
 	QuantitiesOfInterest q(mesh);
 	CHECK(q.vertexConnectivity(12).number == 4);
 	CHECK(q.vertexConnectivity(13).number == 4);
-	std::cout << q.incidenceMatrix() << std::endl;
+	std::cout << q.ElementVertexIncidenceMatrix() << std::endl;
 	mesh.Save("Fourths");
 }
 
@@ -518,7 +518,7 @@ TEST_CASE("Check incidence matrix of initial cuboid") {
 	Mesh mesh;
 	QuantitiesOfInterest q(mesh);
 	for (int i = 0; i < 8; i++) {
-		CHECK(q.incidenceMatrix().coeff(i,0) == true);
+		CHECK(q.ElementVertexIncidenceMatrix().coeff(i,0) == true);
 	}
 }
 

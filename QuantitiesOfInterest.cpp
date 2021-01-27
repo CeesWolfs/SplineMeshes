@@ -43,7 +43,6 @@ int QuantitiesOfInterest::interiorFaces() const
 
 /**
  * Returns the amount of elements which are connected to/ linked with the given vertex.
- * Todo optimize away some redundant checks
  */
 VertexConnectivity QuantitiesOfInterest::vertexConnectivity(uint32_t vertex) const {
     std::array<uint32_t, 8> elements{-1,-1,-1,-1,-1,-1,-1,-1}; // At most 8 elements can be connected to a vertex
@@ -281,9 +280,8 @@ const std::vector<halfFace> QuantitiesOfInterest::getMaximalSegmentOf(halfFace c
  * Row indices (outer vector ids) should represent vertex ids and column indices (inner vector ids) 
  * should represent cuboid ids to which the (row) vertex is connected to. 
  * If there is no connection between the cuboid and vertex, then a 0 is inserted at that position.
- * Todo check if needed, and implement faster algorithm
  */
-const Eigen::SparseMatrix<bool>& QuantitiesOfInterest::incidenceMatrix() {
+const Eigen::SparseMatrix<bool>& QuantitiesOfInterest::ElementVertexIncidenceMatrix() {
     std::vector<Triplet> tripletList;
     tripletList.reserve(mesh.getV2lV().size() * 3);
     for (int j = 0; j < mesh.getV2lV().size(); j++) {
