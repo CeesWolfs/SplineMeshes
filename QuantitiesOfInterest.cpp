@@ -190,6 +190,18 @@ bool QuantitiesOfInterest::isCornerCuboid(const Cuboid &cuboid) {
     return false;
 }
 
+bool QuantitiesOfInterest::isBorderCuboid(const Cuboid& cuboid)
+{
+    int x = 0;
+    //in any scenario of a border cuboid, the element should have at least 4 border vertices.
+    for (auto v : cuboid.vertices) {
+        if (isBorderVertex(v)) {
+            x++;
+        }
+    }
+    return x >= 4;
+}
+
 static constexpr std::pair<uint8_t, uint8_t> axesToCheck(uint8_t local_face_id) {
     switch (local_face_id) {
     case 0: case 1: return { 3,2 };
