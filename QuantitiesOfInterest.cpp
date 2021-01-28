@@ -43,7 +43,6 @@ int QuantitiesOfInterest::interiorFaces() const
 
 /**
  * Returns the amount of elements which are connected to/ linked with the given vertex.
- * Todo optimize away some redundant checks
  */
 VertexConnectivity QuantitiesOfInterest::vertexConnectivity(uint32_t vertex) const {
     std::array<uint32_t, 8> elements{-1,-1,-1,-1,-1,-1,-1,-1}; // At most 8 elements can be connected to a vertex
@@ -169,15 +168,8 @@ bool QuantitiesOfInterest::isEVertex(uint32_t vertex) const
 // Loop over all half faces which contain the edge
 bool QuantitiesOfInterest::isBorderEdge(Edge edge) const
 {
-    // Find the local index of the vertex within the face
-    uint8_t local_one = std::find(mesh.getCuboids()[edge.elem].vertices.begin(), mesh.getCuboids()[edge.elem].vertices.end(), edge.v1) - mesh.getCuboids()[edge.elem].vertices.begin();
-    uint8_t local_two = std::find(mesh.getCuboids()[edge.elem].vertices.begin(), mesh.getCuboids()[edge.elem].vertices.end(), edge.v2) - mesh.getCuboids()[edge.elem].vertices.begin();
-    for (uint32_t hf = 0; hf < 6; hf++) {
-        if (contains(Hf2Ve[hf], local_one) && contains(Hf2Ve[hf], local_two)) {
-            if (mesh.Twin(halfFace(edge.elem, hf)).isBorder()) return true;
-        }
-    }
-    return false;   
+    //Both edge vertices should be at the border.
+    return isBorderVertex(edge.v1) && isBorderVertex(edge.v2);   
 }
 
 /**
@@ -188,6 +180,18 @@ bool QuantitiesOfInterest::isCornerCuboid(const Cuboid &cuboid) {
         if (v >= 0 && v <= 7) return true;
     }
     return false;
+}
+
+bool QuantitiesOfInterest::isBorderCuboid(const Cuboid& cuboid)
+{
+    int x = 0;
+    //in any scenario of a border cuboid, the element should have at least 4 border vertices.
+    for (auto v : cuboid.vertices) {
+        if (isBorderVertex(v)) {
+            x++;
+        }
+    }
+    return x >= 4;
 }
 
 static constexpr std::pair<uint8_t, uint8_t> axesToCheck(uint8_t local_face_id) {
@@ -254,7 +258,7 @@ const std::vector<halfFace> QuantitiesOfInterest::getMaximalSegmentOf(halfFace c
     std::vector<halfFace> second_direction;
     // Check the second direction in the negative direction
     goDirection(currFace, mesh.opposite_face(dirs_to_check.second), second_direction);
-    std::reverse(first_direction.begin(), first_direction.end());
+    std::reverse(second_direction.begin(), second_direction.end());
     second_direction.push_back(currFace);
     // Check the second direction in the positive direction;
     goDirection(currFace, dirs_to_check.second, second_direction);
@@ -269,9 +273,8 @@ const std::vector<halfFace> QuantitiesOfInterest::getMaximalSegmentOf(halfFace c
  * Row indices (outer vector ids) should represent vertex ids and column indices (inner vector ids) 
  * should represent cuboid ids to which the (row) vertex is connected to. 
  * If there is no connection between the cuboid and vertex, then a 0 is inserted at that position.
- * Todo check if needed, and implement faster algorithm
  */
-const Eigen::SparseMatrix<bool>& QuantitiesOfInterest::incidenceMatrix() {
+const Eigen::SparseMatrix<bool>& QuantitiesOfInterest::ElementVertexIncidenceMatrix() {
     std::vector<Triplet> tripletList;
     tripletList.reserve(mesh.getV2lV().size() * 3);
     for (int j = 0; j < mesh.getV2lV().size(); j++) {

@@ -327,7 +327,7 @@ TEST_CASE("Split a cube equally into fourths") {
 	QuantitiesOfInterest q(mesh);
 	CHECK(q.vertexConnectivity(12).number == 4);
 	CHECK(q.vertexConnectivity(13).number == 4);
-	//std::cout << q.incidenceMatrix() << std::endl;
+	std::cout << q.ElementVertexIncidenceMatrix() << std::endl;
 	mesh.Save("Fourths");
 }
 
@@ -456,6 +456,22 @@ TEST_CASE("Subdived connect to subdivided") {
 	mesh.SplitAlongXZ(middle, 0.8);
 	middle = mesh.SplitAlongYZ(middle, 0.25);
 	SanityChecks::AllAdjacent(mesh);
+	//In this sample mesh, there is exactly one cuboid that doesn't lie at the mesh border
+	QuantitiesOfInterest q(mesh);
+	for (auto i = 0; i < mesh.getCuboids().size() - 1;i++) {
+		bool check = q.isBorderCuboid(mesh.getCuboids()[i]);
+		CHECK(check);
+		//Check that each border cuboid has at least 4 out of 12 border edges.
+		int x = 0;
+		for (auto edge : q.getEdges(i)) {
+			if (q.isBorderEdge(edge)) {
+				x++;
+			}
+		}
+		CHECK(x >= 4);
+	}
+	//LAST ELEMENT DOESN'T LIE AT THE MESH BOUNDARY.
+	CHECK(!q.isBorderCuboid(mesh.getCuboids()[mesh.getCuboids().size() - 1]));
 	mesh.Save("Subdiv_Subdiv");
 }
 
@@ -511,7 +527,7 @@ TEST_CASE("Check incidence matrix of initial cuboid") {
 	Mesh mesh;
 	QuantitiesOfInterest q(mesh);
 	for (int i = 0; i < 8; i++) {
-		CHECK(q.incidenceMatrix().coeff(i,0) == true);
+		CHECK(q.ElementVertexIncidenceMatrix().coeff(i,0) == true);
 	}
 }
 
