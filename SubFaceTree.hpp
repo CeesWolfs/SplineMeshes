@@ -10,14 +10,6 @@
 #include <string>
 #include <fstream>
 
-typedef struct _node
-{
-    halfFace parent;
-    float split_coord;
-    Axis split_axis;
-    halfFace lower_child;
-    halfFace top_child;
-} Node;
 
 template<typename TreeType>
 class SubFaceIterator;

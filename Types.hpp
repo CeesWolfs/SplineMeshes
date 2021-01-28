@@ -127,4 +127,14 @@ enum class Axis
  	y,
     z
 };
+
+//Node struct
+struct Node
+{
+	halfFace parent;
+	float split_coord;
+	Axis split_axis;
+	halfFace lower_child;
+	halfFace top_child;
+};
 #endif
