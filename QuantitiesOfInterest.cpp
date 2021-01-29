@@ -165,6 +165,15 @@ bool QuantitiesOfInterest::isEVertex(uint32_t vertex) const
     return false;
 }
 
+bool QuantitiesOfInterest::isPVertex(uint32_t vertex) const
+{
+    const auto [elements, count] = vertexConnectivity(vertex);
+    for (int i = 0; i < count; ++i) {
+        if (!contains(mesh.getCuboids()[elements[i]], vertex)) return false;
+    }
+    return true;
+}
+
 // Loop over all half faces which contain the edge
 bool QuantitiesOfInterest::isBorderEdge(Edge edge) const
 {

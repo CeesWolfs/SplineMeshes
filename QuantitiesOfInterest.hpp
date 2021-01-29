@@ -48,6 +48,9 @@ class QuantitiesOfInterest {
         // Wether a vertex is a e-vertex (see http://staff.ustc.edu.cn/~dengjs/files/papers/44%203dtmesh.pdf)
         bool isEVertex(uint32_t vertex) const;
 
+        // Wether a vertex is a p-vertex (lies only at the corners of elements)
+        bool isPVertex(uint32_t vertex) const;
+
         // Wether a vertex is on the border
         bool isBorderEdge(Edge edge) const;
 
