@@ -138,8 +138,7 @@ bool SubFaceTree::findVertexBorder(halfFace start_node, const Vertex& vertexToFi
     bool vertexFound = false;
     auto child = start_node;
     while (child.isSubdivided())
-    {
-        
+    { 
         const Node nodeToCheck = nodes[toNodeIndex(child)];
         const float split = nodeToCheck.split_coord;
         switch (nodeToCheck.split_axis)

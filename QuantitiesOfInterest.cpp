@@ -182,16 +182,14 @@ bool QuantitiesOfInterest::isCornerCuboid(const Cuboid &cuboid) {
     return false;
 }
 
-bool QuantitiesOfInterest::isBorderCuboid(const Cuboid& cuboid)
+bool QuantitiesOfInterest::isBorderCuboid(uint32_t cuboid_id)
 {
-    int x = 0;
-    //in any scenario of a border cuboid, the element should have at least 4 border vertices.
-    for (auto v : cuboid.vertices) {
-        if (isBorderVertex(v)) {
-            x++;
-        }
+    //if any halffaces touch a border, the cuboid is at the border
+    for (uint8_t hf = 0; hf < 6; ++hf)
+    {
+        if(mesh.Twin(halfFace(cuboid_id, hf)).isBorder()) return true;
     }
-    return x >= 4;
+    return true;
 }
 
 static constexpr std::pair<uint8_t, uint8_t> axesToCheck(uint8_t local_face_id) {

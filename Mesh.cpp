@@ -290,7 +290,6 @@ void Mesh::addHalfFaces(const uint32_t cuboid_id, const Axis split_axis) {
 
 
 uint32_t Mesh::SplitAlongAxis(uint32_t cuboid_id, float split_point, Axis axis) {
-
     uint8_t face_to_split = -1;
     switch (axis) {
         case Axis::x : 

@@ -1,6 +1,15 @@
 #pragma once
 #include "Splines.hpp"
+#include "QuantitiesOfInterest.hpp"
 #include "lean_vtk.hpp"
+
+struct LocalNullSpace {
+    Eigen::MatrixXf kernel;
+    std::vector<int> coefficients;
+    std::array<uint32_t, 8> elements;
+    uint32_t numControlPointsElement() { return coefficients.size()/8; }
+};
+
 /*
 * Stores all the continuity matrices for all faces
 */
@@ -18,13 +27,15 @@ private:
 public:
     const Mesh& get_mesh() { return mesh; }
     template<int i>
-    int LocalNullspace(uint32_t vertex);
+    LocalNullSpace LocalNullspace(uint32_t vertex);
     SparseMat generateGlobalMatrix();
     void regenerateConstraints();
     void renderBasis(const std::string& filename, Eigen::VectorXf basis, uint32_t samples);
     uint32_t SplitAlongXZ(uint32_t cuboid_id, float y_split);
     uint32_t SplitAlongXY(uint32_t cuboid_id, float z_split);
     uint32_t SplitAlongYZ(uint32_t cuboid_id, float x_split);
+    uint32_t numControlPoints() const { return mesh.getCuboids().size() * (Nx + 1) * (Ny + 1) * (Nz + 1); }
+    static uint32_t numControlPointsElement() { return (Nx + 1) * (Ny + 1) * (Nz + 1); }
     robin_hood::unordered_map<uint64_t, Face> constraints;
     SplineMesh(Mesh&& mesh) { this->mesh = mesh; regenerateConstraints(); constraintsValid = true; }
     SplineMesh() = default;
@@ -126,6 +137,9 @@ inline SparseMat SplineMesh<Nx, Cx, Ny, Cy, Nz, Cz>::generateGlobalMatrix()
 
 template<int Nx, int Cx, int Ny, int Cy, int Nz, int Cz>
 inline void SplineMesh<Nx, Cx, Ny, Cy, Nz, Cz>::regenerateConstraints() {
+    static_assert(Cx < Nx, "Smoothness degree must be lower than the spline degree");
+    static_assert(Cy < Ny, "Smoothness degree must be lower than the spline degree");
+    static_assert(Cz < Nz, "Smoothness degree must be lower than the spline degree");
     numElements = mesh.getCuboids().size();
     // Loop over all the halfFaces with local id 1,2,3 in the mesh
     for (size_t cub = 0; cub < mesh.getCuboids().size(); ++cub)
@@ -233,86 +247,77 @@ inline uint32_t SplineMesh<Nx, Cx, Ny, Cy, Nz, Cz>::SplitAlongYZ(uint32_t cuboid
 
 template<int Nx, int Cx, int Ny, int Cy, int Nz, int Cz>
 template<int i>
-inline int SplineMesh<Nx, Cx, Ny, Cy, Nz, Cz>::LocalNullspace(uint32_t vertex)
+inline LocalNullSpace SplineMesh<Nx, Cx, Ny, Cy, Nz, Cz>::LocalNullspace(uint32_t vertex)
 {
+    static_assert(i < std::min({ Nx,Ny,Nz }), "We must have at least two non zero coefficients per direction");
+    static_assert(i > 0, "i must be > 0");
     // Check if the vertex is conformal
-    localVertex lv = mesh.getV2lV()[vertex];
-    uint32_t x = 0;
-    std::array<uint32_t, 8> elements{-1,-1,-1,-1,-1,-1,-1,-1};
-    auto moveToNext = [&](uint32_t& cuboid, uint8_t direction) {
-        auto twin = mesh.Twin(halfFace(cuboid, direction));
-        if (twin.isBorder()) return false;
-        if (twin.isSubdivided()) { return false; }
-        auto new_cuboid = twin.getCuboid();
-        if (contains(elements, new_cuboid)) return false;
-        elements[x++] = new_cuboid;
-        cuboid = new_cuboid;
-        return true;
-    };
-    elements[x++] = lv.getCuboid();
-    auto directions = Lv2Hf[lv.getLocalId()];
-    uint32_t currentCuboid = lv.getCuboid();
-    // Check all 7 neccasarry cuboids with early stopping
-    if (moveToNext(currentCuboid, directions[0])) {
-        uint32_t temp = currentCuboid;
-        if (moveToNext(currentCuboid, directions[1])) moveToNext(currentCuboid, directions[2]);
-        else { return 0; }
-        currentCuboid = temp;
-        moveToNext(currentCuboid, directions[2]);
-    }
-    else { return 0; }
-    currentCuboid = lv.getCuboid();
-    if (moveToNext(currentCuboid, directions[1])) {
-        moveToNext(currentCuboid, directions[2]);
-    }
-    else { return 0; }
-    currentCuboid = lv.getCuboid();
-    moveToNext(currentCuboid, directions[2]);
-    if (x != 8) return 0;
-    const auto subMatSize_N_z = (Ny-i + 1) * (Nx-i + 1) * (Cz + 1);
-    const auto subMatSize_N_y = (Nz - i + 1) * (Nx - i + 1) * (Cy + 1);
-    const auto subMatSize_N_x = (Nz - i + 1) * (Ny - i + 1) * (Cx + 1);
-    const auto subMatSize_M = (Nz-i + 1) * (Ny-i + 1) * (Nx-i + 1);
-    Eigen::MatrixXf localMatrix(4 * subMatSize_N_x + 4 * subMatSize_N_y * 4 + subMatSize_N_z * 4, 8 * subMatSize_M);
+    QuantitiesOfInterest q(mesh);
+    const auto [elements, num] = q.vertexConnectivity(vertex);
+    if (num != 8) return {};
+    if (!constraintsValid) regenerateConstraints();
+    const auto subMatSize_N_z = (Ny + 1) * (Nx + 1) * (Cz + 1);
+    const auto subMatSize_N_y = (Nz + 1) * (Nx + 1) * (Cy + 1);
+    const auto subMatSize_N_x = (Nz + 1) * (Ny + 1) * (Cx + 1);
+    const auto subMatSize_M = (Nz - i + 1) * (Ny - i + 1) * (Nx - i + 1);
+    Eigen::MatrixXf localMatrix(4 * subMatSize_N_x + 4 * subMatSize_N_y + subMatSize_N_z * 4, 8 * subMatSize_M);
+    std::vector<int> non_zeros;
+    non_zeros.reserve(subMatSize_M * 8);
+    localMatrix.setZero();
     uint32_t row{ 0 };
     uint8_t index{ 0 };
-    for (const auto elem: elements)
+    std::for_each(elements.begin(), elements.end(), [&](uint32_t elem){
+        // Find the local index of the vertex
+        const auto& vertices = mesh.getCuboids()[elem].vertices;
+        const uint8_t local_index = std::find(vertices.begin(), vertices.end(), vertex) - vertices.begin();
+        // find the points which are non-zero
+        static constexpr bool x_lower[] = { true, false, false, true, true, false, false, true };
+        static constexpr bool y_lower[] = { true, true, false, false, true, true, false, false };
+        static constexpr bool z_lower[] = { true, true, true, true, false, false, false, false };
+        for (int z_i = 0; z_i < Nz - i + 1; z_i++)
+        {
+            for (int y_i = 0; y_i < Ny - i + 1; y_i++)
+            {
+                for (int x_i = 0; x_i < Nx - i + 1; x_i++)
+                {
+                    int Z_i = z_i + (z_lower[local_index] ? 0 : i);
+                    int Y_i = y_i + (y_lower[local_index] ? 0 : i);
+                    int X_i = x_i + (x_lower[local_index] ? 0 : i);
+                    non_zeros.push_back(Z_i * (Nx + 1) * (Ny + 1) + Y_i * (Nx + 1) + X_i);
+                }
+            }
+        }
+    });
+    for (const auto elem : elements)
     {
         // Find the local index of the vertex
         const auto& vertices = mesh.getCuboids()[elem].vertices;
         const uint8_t local_index = std::find(vertices.begin(), vertices.end(), vertex) - vertices.begin();
-        if (local_index > 7) return 0;
-        // The faces which contain
-        for (uint8_t local_face : Lv2Hf[local_index]) {
-            if (local_face < 1 || local_face > 3) continue;
-            // build constraint
-            halfFace face = halfFace(elem, local_face);
-            const halfFace twin = mesh.Twin(face);
-            // find the twin element in the local elements
-            uint8_t second_elem = std::find(elements.begin(), elements.end(), twin.getCuboid()) - elements.begin();
-            if (face.getLocalId() == 1) {
-                localMatrix.block(row, subMatSize_M * index, subMatSize_N_z, subMatSize_M) = genLMatrix<Axis::z, Nx - i, Cx, Ny - i, Cy, Nz - i, Cz>(mesh, { face,twin }, false);
-                localMatrix.block(row, subMatSize_M * second_elem, subMatSize_N_z, subMatSize_M) = genRMatrix<Axis::z, Nx - i, Cx, Ny - i, Cy, Nz - i, Cz>(mesh, { face,twin }, false);
-                row += subMatSize_N_z;
+        if (local_index > 7) return {};
+        // find the touching faces constraints
+        for (uint8_t l_face : Lv2Hf[local_index]) {
+            if (l_face < 1 || l_face > 3) continue;
+            halfFace face = halfFace(elem, l_face);
+            halfFace twin = mesh.Twin(face);
+            if (twin.isSubdivided())
+            {
+                // find the halfface which contains the vertex
+                twin = *mesh.getSft().find(twin, mesh.getVertices()[vertex]);
             }
-            else if (face.getLocalId() == 2) {
-                localMatrix.block(row, subMatSize_M * index, subMatSize_N_y, subMatSize_M) = genLMatrix<Axis::y, Nx - i, Cx, Ny - i, Cy, Nz - i, Cz>(mesh, { face,twin }, false);
-                localMatrix.block(row, subMatSize_M * second_elem, subMatSize_N_y, subMatSize_M) = genRMatrix<Axis::y, Nx - i, Cx, Ny - i, Cy, Nz - i, Cz>(mesh, { face,twin }, false);
-                row += subMatSize_N_y;
+            uint32_t second_index = std::find(elements.begin(), elements.end(), twin.getCuboid()) - elements.begin();
+            //find the given constraint
+            auto constraintFace = (*constraints.find(toKey({face,twin}))).second;
+            // iterate over all the columns
+            for (int col = 0; col < subMatSize_M; ++col) {
+                localMatrix.block(row, index * subMatSize_M + col, constraintFace.lowerConstraint.rows(), 1) = constraintFace.lowerConstraint.col(non_zeros[index * subMatSize_M + col]);
+                localMatrix.block(row, second_index * subMatSize_M + col, constraintFace.higherConstraint.rows(), 1) = constraintFace.higherConstraint.col(non_zeros[second_index * subMatSize_M + col]);
             }
-            else {
-                localMatrix.block(row, subMatSize_M * index, subMatSize_N_x, subMatSize_M) = genLMatrix<Axis::x, Nx - i, Cx, Ny - i, Cy, Nz - i, Cz>(mesh, { face,twin }, false);
-                localMatrix.block(row, subMatSize_M * second_elem, subMatSize_N_x, subMatSize_M) = genRMatrix<Axis::x, Nx - i, Cx, Ny - i, Cy, Nz - i, Cz>(mesh, { face,twin }, false);
-                row += subMatSize_N_x;
-            }
+            row += constraintFace.lowerConstraint.rows();
         }
         index++;
     }
-    // Solve for the nullspace
     auto QR = Eigen::FullPivHouseholderQR<Eigen::MatrixXf>(localMatrix.transpose());
     auto Q = QR.matrixQ();
     auto kernel = Q.block(0, QR.rank(), Q.rows(), Q.cols() - QR.rank());
-    //std::cout << kernel;
-    return Q.cols() - QR.rank();
-    return 0;
+    return LocalNullSpace{kernel, non_zeros, elements};
 }

@@ -55,7 +55,7 @@ class QuantitiesOfInterest {
         bool isCornerCuboid(const Cuboid& cuboid);
 
         //Check if the given element is at the border of the mesh.
-        bool isBorderCuboid(const Cuboid& cuboid);
+        bool isBorderCuboid(uint32_t cuboid_id);
 
         //maximal segments of the given start face.
         const std::vector<halfFace> getMaximalSegmentOf(halfFace currFace);

@@ -104,13 +104,12 @@ static inline auto SLHS(float a)
 template<int N, int C>
 auto CLHS(const float h) {
     Eigen::Matrix<float, C + 1, N + 1> res = Eigen::Matrix<float, C + 1, N + 1>::Zero();
-    static_assert(C < N, "Smoothness degree must be lower than the spline degree");
-    static constexpr auto comb = PascalTriangle<N>();
+    static constexpr auto comb = PascalTriangle<std::max(C + 1, N + 1)>();
     float multiplier = 1;
     for (auto i = 0; i <= C; i++)
     {
         float sign = 1;
-        for (auto j = 0; j <= i; j++)
+        for (auto j = 0; j <= std::min(i, N); j++)
         {
             res(i, N - j) = multiplier * comb.values[i][j] * sign;
             sign = -sign;
@@ -127,14 +126,13 @@ auto CLHS(const float h) {
 template<int N, int C>
 auto CRHS(const float h) {
     Eigen::Matrix<float, C + 1, N + 1> res = Eigen::Matrix<float, C + 1, N + 1>::Zero();
-    static_assert(C < N, "Smoothness degree must be lower than the spline degree");
-    static constexpr auto comb = PascalTriangle<N>();
+    static constexpr auto comb = PascalTriangle<std::max(C+1,N+1)>();
     float multiplier = 1;
     for (auto i = 0; i <= C; i++)
     {
         // Generate all right constraints with a minus
         float sign = -1;
-        for (auto j = i; j >= 0; j--)
+        for (auto j = std::min(i, N); j >= 0; j--)
         {
             res(i, j) = multiplier * comb.values[i][j] * sign;
             sign = -sign;
