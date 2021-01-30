@@ -286,12 +286,8 @@ const Eigen::SparseMatrix<bool>& QuantitiesOfInterest::ElementVertexIncidenceMat
     tripletList.reserve(mesh.getV2lV().size() * 3);
     for (int j = 0; j < mesh.getV2lV().size(); j++) {
         for (int i = 0; i < mesh.getCuboids().size(); i++) {
-            if (mesh.getV2lV()[j].getCuboid() == i) {
-                for (auto k : mesh.getCuboids()[i].vertices) {
-                    if (k == j) {
-                        tripletList.push_back({ j,i,true });
-                    }
-                }
+            if (contains(mesh.getCuboids()[i].vertices, j)) {
+                tripletList.push_back({ j,i,true });
             }
         }
     }
