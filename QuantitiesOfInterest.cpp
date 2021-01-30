@@ -169,7 +169,7 @@ bool QuantitiesOfInterest::isPVertex(uint32_t vertex) const
 {
     const auto [elements, count] = vertexConnectivity(vertex);
     for (int i = 0; i < count; ++i) {
-        if (!contains(mesh.getCuboids()[elements[i]], vertex)) return false;
+        if (!contains(mesh.getCuboids()[elements[i]].vertices, vertex)) return false;
     }
     return true;
 }
