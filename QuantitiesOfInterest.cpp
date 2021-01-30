@@ -198,7 +198,7 @@ bool QuantitiesOfInterest::isBorderCuboid(uint32_t cuboid_id)
     {
         if(mesh.Twin(halfFace(cuboid_id, hf)).isBorder()) return true;
     }
-    return true;
+    return false;
 }
 
 static constexpr std::pair<uint8_t, uint8_t> axesToCheck(uint8_t local_face_id) {
