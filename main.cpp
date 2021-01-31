@@ -19,23 +19,25 @@ int CalcSplineDegree(const Mesh& mesh, int m, int alpha, int numConstraints) {
 	return (m + 1) * (m + 1) * (m + 1) + (C - 1) * (m + 1) * (m - alpha) * (m + alpha + 2) - F * (m + 1) * (alpha + 1) * (m - alpha) + V * (alpha + 1) * (alpha + 1) * (m - alpha);
  }
 
-#define N 3
-#define C 1
+#define N 5
+#define C 2
 
 int main(int argc, char const *argv[])
 {
-	Mesh mesh(3,3,3);
-	/*uint32_t newelem  = mesh.SplitAlongXY(9 + 4, 0.5);
-	uint32_t newelem1 = mesh.SplitAlongYZ(9 + 4, 0.5);
-	uint32_t newelem2 = mesh.SplitAlongYZ(newelem, 0.5);
-	mesh.SplitAlongXZ(9+4, 0.5);
-	mesh.SplitAlongXZ(newelem, 0.5);
-	mesh.SplitAlongXZ(newelem1, 0.5);
-	mesh.SplitAlongXZ(newelem2, 0.5);
-	mesh.Save("localtest");*/
-	SplineMesh<N, C, 2, 0, 3, 1> splines(std::move(mesh));
+	Mesh mesh(1, 2, 2);
+	//mesh.SplitAlongYZ(0, 0.3);
+	/*uint32_t newelem  = mesh.SplitAlongXY(0, 0.25);
+	uint32_t newelem1 = mesh.SplitAlongYZ(0, 0.25);
+	uint32_t newelem2 = mesh.SplitAlongYZ(newelem, 0.25);
+	mesh.SplitAlongXZ(0, 0.25);
+	mesh.SplitAlongXZ(newelem, 0.25);
+	mesh.SplitAlongXZ(newelem1, 0.25);
+	mesh.SplitAlongXZ(newelem2, 0.25);*/
+	//mesh.Save("dimtest");
+	SplineMesh<N, C> splines(std::move(mesh));
 	Eigen::VectorXf controlpoints(splines.numControlPoints());
 	controlpoints.setZero();
+	mesh.Save("localtest");
 	//uint32_t top = splines.SplitAlongXY(0,0.5);
 	//mesh.SplitAlongXZ(0, 0.5);
 	//mesh.SplitAlongXY(1, 0.5);
@@ -52,14 +54,15 @@ int main(int argc, char const *argv[])
 	std::cout << CalcSplineDegree(splines.get_mesh(), N, C, splines.constraints.size()) << '\n';
 	//
 	QuantitiesOfInterest q(splines.get_mesh());
-	/*int sum{ 0 };
+	int sum{ 0 };
 	for (uint32_t v = 0; v < splines.get_mesh().getVertices().size(); v++) {
-		if (!q.isBorderVertex(v)) {
-			auto localNullspace = splines.LocalNullspace<2 >(v);
+		if (q.isPVertex(v)) {
+			auto localNullspace = splines.LocalNullspace<3>(v);
 			if (localNullspace.coefficients.size() == 0) continue;
+			//std::cout << localNullspace.kernel << '\n';
 			sum += localNullspace.kernel.cols();
 
-			std::for_each(localNullspace.elements.begin(), localNullspace.elements.end(), [&, element = 0](uint32_t elem) mutable {
+			std::for_each(localNullspace.elements.begin(), localNullspace.elements.begin()+localNullspace.num, [&, element = 0](uint32_t elem) mutable {
 				for (size_t i = 0; i < localNullspace.numControlPointsElement(); ++i)
 				{
 					auto coeff = elem * splines.numControlPointsElement() + localNullspace.coefficients[element * localNullspace.numControlPointsElement() + i];
@@ -68,7 +71,8 @@ int main(int argc, char const *argv[])
 				element++;
 				});
 		}
-	}*/
-	splines.renderBasis("CartesianSpline.vtu", kernel.col(0), 20);
+	}
+	splines.renderBasis("Localtest.vtu", controlpoints, 20);
+	std::cout << sum << '\n';
 	return 0;
 }

@@ -7,7 +7,8 @@ struct LocalNullSpace {
     Eigen::MatrixXf kernel;
     std::vector<int> coefficients;
     std::array<uint32_t, 8> elements;
-    uint32_t numControlPointsElement() { return coefficients.size()/8; }
+    uint32_t num;
+    uint32_t numControlPointsElement() { return coefficients.size()/num; }
 };
 
 /*
@@ -253,20 +254,20 @@ inline LocalNullSpace SplineMesh<Nx, Cx, Ny, Cy, Nz, Cz>::LocalNullspace(uint32_
     static_assert(i > 0, "i must be > 0");
     // Check if the vertex is conformal
     QuantitiesOfInterest q(mesh);
+    assert(q.isPVertex(vertex));
     const auto [elements, num] = q.vertexConnectivity(vertex);
-    if (num != 8) return {};
     if (!constraintsValid) regenerateConstraints();
     const auto subMatSize_N_z = (Ny + 1) * (Nx + 1) * (Cz + 1);
     const auto subMatSize_N_y = (Nz + 1) * (Nx + 1) * (Cy + 1);
     const auto subMatSize_N_x = (Nz + 1) * (Ny + 1) * (Cx + 1);
     const auto subMatSize_M = (Nz - i + 1) * (Ny - i + 1) * (Nx - i + 1);
-    Eigen::MatrixXf localMatrix(4 * subMatSize_N_x + 4 * subMatSize_N_y + subMatSize_N_z * 4, 8 * subMatSize_M);
+    Eigen::MatrixXf localMatrix(4 * subMatSize_N_x + 4 * subMatSize_N_y + subMatSize_N_z * 4, num * subMatSize_M);
     std::vector<int> non_zeros;
-    non_zeros.reserve(subMatSize_M * 8);
+    non_zeros.reserve(subMatSize_M * num);
     localMatrix.setZero();
     uint32_t row{ 0 };
     uint8_t index{ 0 };
-    std::for_each(elements.begin(), elements.end(), [&](uint32_t elem){
+    std::for_each(elements.begin(), elements.begin() + num, [&](uint32_t elem){
         // Find the local index of the vertex
         const auto& vertices = mesh.getCuboids()[elem].vertices;
         const uint8_t local_index = std::find(vertices.begin(), vertices.end(), vertex) - vertices.begin();
@@ -288,9 +289,10 @@ inline LocalNullSpace SplineMesh<Nx, Cx, Ny, Cy, Nz, Cz>::LocalNullspace(uint32_
             }
         }
     });
-    for (const auto elem : elements)
+    for (int index = 0; index < num; ++index)
     {
         // Find the local index of the vertex
+        auto elem = elements[index];
         const auto& vertices = mesh.getCuboids()[elem].vertices;
         const uint8_t local_index = std::find(vertices.begin(), vertices.end(), vertex) - vertices.begin();
         if (local_index > 7) return {};
@@ -304,6 +306,7 @@ inline LocalNullSpace SplineMesh<Nx, Cx, Ny, Cy, Nz, Cz>::LocalNullspace(uint32_
                 // find the halfface which contains the vertex
                 twin = *mesh.getSft().find(twin, mesh.getVertices()[vertex]);
             }
+            if (twin.isBorder()) continue;
             uint32_t second_index = std::find(elements.begin(), elements.end(), twin.getCuboid()) - elements.begin();
             //find the given constraint
             auto constraintFace = (*constraints.find(toKey({face,twin}))).second;
@@ -314,10 +317,10 @@ inline LocalNullSpace SplineMesh<Nx, Cx, Ny, Cy, Nz, Cz>::LocalNullspace(uint32_
             }
             row += constraintFace.lowerConstraint.rows();
         }
-        index++;
     }
+    localMatrix.conservativeResize(row, Eigen::NoChange);
     auto QR = Eigen::FullPivHouseholderQR<Eigen::MatrixXf>(localMatrix.transpose());
     auto Q = QR.matrixQ();
     auto kernel = Q.block(0, QR.rank(), Q.rows(), Q.cols() - QR.rank());
-    return LocalNullSpace{kernel, non_zeros, elements};
+    return LocalNullSpace{kernel, non_zeros, elements, num};
 }
